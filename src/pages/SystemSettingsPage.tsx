@@ -118,22 +118,22 @@ export const SystemSettingsPage: React.FC = () => {
               When a booking is confirmed, all enabled copies are queued and printed in sequence.
             </p>
 
-            <div className="border border-border rounded-xs overflow-hidden">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted/50 border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="border border-border rounded-xs overflow-x-auto">
+              <table className="w-full text-xs text-left whitespace-nowrap min-w-120">
+                <thead className="bg-muted/50 border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                   <tr>
-                    <th className="px-3 py-2.5">#</th>
-                    <th className="px-3 py-2.5">Copy Name</th>
-                    <th className="px-3 py-2.5 w-10 text-center">Print Label</th>
-                    <th className="px-3 py-2.5 text-center">Enabled</th>
-                    <th className="px-3 py-2.5">Purpose</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">#</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">Copy Name</th>
+                    <th className="px-3 py-2.5 w-16 text-center whitespace-nowrap">Print Label</th>
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap">Enabled</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">Purpose</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border whitespace-nowrap">
                   {copies.map((c) => (
                     <tr key={c.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-3 py-2.5 text-muted-foreground font-bold text-[11px]">{c.print_order}</td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-2.5 text-muted-foreground font-bold text-[11px] whitespace-nowrap">{c.print_order}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                         <Input
                           value={c.copy_name}
                           onChange={(e) => handleUpdateCopyName(c.id, e.target.value)}
@@ -141,7 +141,7 @@ export const SystemSettingsPage: React.FC = () => {
                           placeholder="e.g. Customer"
                         />
                       </td>
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="px-3 py-2.5 text-center whitespace-nowrap">
                         <Input
                           value={c.header_label}
                           onChange={(e) => handleUpdateLabel(c.id, e.target.value)}
@@ -150,7 +150,7 @@ export const SystemSettingsPage: React.FC = () => {
                           placeholder="D/A/C"
                         />
                       </td>
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="px-3 py-2.5 text-center whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={Boolean(c.is_enabled)}
@@ -158,7 +158,7 @@ export const SystemSettingsPage: React.FC = () => {
                           className="rounded-xs text-primary h-4 w-4 cursor-pointer"
                         />
                       </td>
-                      <td className="px-3 py-2.5 text-muted-foreground text-[11px]">{c.purpose}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground text-[11px] whitespace-nowrap">{c.purpose}</td>
                     </tr>
                   ))}
                 </tbody>

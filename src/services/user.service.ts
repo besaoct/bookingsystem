@@ -117,4 +117,137 @@ export const userService = {
       }
     }
   },
+
+  async getLoginCredentialsSummary(): Promise<Array<{
+    id: number;
+    username: string;
+    name: string;
+    role: string;
+    password_hash: string;
+    is_active: number;
+  }>> {
+    await dbService.init();
+    return dbService.query(
+      "SELECT id, username, name, role, password_hash, is_active FROM users ORDER BY CASE role WHEN 'SYSTEM_ADMIN' THEN 1 WHEN 'OPERATOR' THEN 2 ELSE 3 END, id ASC"
+    );
+  },
+
+  async isInitialSetupCompleted(): Promise<boolean> {
+    await dbService.init();
+    const row = dbService.queryOne<{ setting_value: string }>(
+      "SELECT setting_value FROM system_settings WHERE setting_key = 'initial_setup_completed'"
+    );
+    if (row && row.setting_value === 'true') return true;
+    if (localStorage.getItem('initial_setup_completed') === 'true') return true;
+
+    // If the system already has active SYSTEM_ADMIN and OPERATOR accounts, skip first-time setup
+    const hasAdmin = dbService.queryOne<{ count: number }>(
+      "SELECT count(*) as count FROM users WHERE role = 'SYSTEM_ADMIN' AND is_active = 1"
+    )?.count || 0;
+    const hasOperator = dbService.queryOne<{ count: number }>(
+      "SELECT count(*) as count FROM users WHERE role = 'OPERATOR' AND is_active = 1"
+    )?.count || 0;
+
+    if (hasAdmin > 0 && hasOperator > 0) {
+      return true;
+    }
+
+    return false;
+  },
+
+  async getInitialAccountInfo(): Promise<{
+    admin: { username: string; name: string };
+    operator: { username: string; name: string };
+  }> {
+    await dbService.init();
+    const admin = dbService.queryOne<{ username: string; name: string }>(
+      "SELECT username, name FROM users WHERE role = 'SYSTEM_ADMIN' LIMIT 1"
+    );
+    const operator = dbService.queryOne<{ username: string; name: string }>(
+      "SELECT username, name FROM users WHERE role = 'OPERATOR' LIMIT 1"
+    );
+
+    return {
+      admin: {
+        username: admin?.username || 'sysadmin',
+        name: admin?.name || 'System Administrator',
+      },
+      operator: {
+        username: operator?.username || 'operator',
+        name: operator?.name || 'Box Office Operator',
+      },
+    };
+  },
+
+  async setupInitialAccounts(
+    adminData: { username: string; name: string; password?: string },
+    operatorData: { username: string; name: string; password?: string }
+  ): Promise<void> {
+    await dbService.init();
+
+    // 1. Update/Insert Admin Account
+    const adminExists = dbService.queryOne<{ id: number }>(
+      "SELECT id FROM users WHERE id = 1 OR role = 'SYSTEM_ADMIN' LIMIT 1"
+    );
+    if (adminExists) {
+      if (adminData.password && adminData.password.trim()) {
+        dbService.run(
+          "UPDATE users SET username = ?, name = ?, password_hash = ? WHERE id = ?",
+          [adminData.username.trim(), adminData.name.trim(), adminData.password.trim(), adminExists.id]
+        );
+      } else {
+        dbService.run(
+          "UPDATE users SET username = ?, name = ? WHERE id = ?",
+          [adminData.username.trim(), adminData.name.trim(), adminExists.id]
+        );
+      }
+    } else {
+      dbService.run(
+        "INSERT INTO users (id, username, password_hash, name, role, is_active) VALUES (1, ?, ?, ?, 'SYSTEM_ADMIN', 1)",
+        [adminData.username.trim(), adminData.password?.trim() || 'admin123', adminData.name.trim()]
+      );
+    }
+
+    // 2. Update/Insert Operator Account
+    const opExists = dbService.queryOne<{ id: number }>(
+      "SELECT id FROM users WHERE id = 2 OR role = 'OPERATOR' LIMIT 1"
+    );
+    if (opExists) {
+      if (operatorData.password && operatorData.password.trim()) {
+        dbService.run(
+          "UPDATE users SET username = ?, name = ?, password_hash = ? WHERE id = ?",
+          [operatorData.username.trim(), operatorData.name.trim(), operatorData.password.trim(), opExists.id]
+        );
+      } else {
+        dbService.run(
+          "UPDATE users SET username = ?, name = ? WHERE id = ?",
+          [operatorData.username.trim(), operatorData.name.trim(), opExists.id]
+        );
+      }
+    } else {
+      dbService.run(
+        "INSERT INTO users (id, username, password_hash, name, role, is_active) VALUES (2, ?, ?, ?, 'OPERATOR', 1)",
+        [operatorData.username.trim(), operatorData.password?.trim() || 'operator123', operatorData.name.trim()]
+      );
+    }
+
+    // 3. Set initial_setup_completed = 'true'
+    const existingSetting = dbService.queryOne<{ id: number }>(
+      "SELECT id FROM system_settings WHERE setting_key = 'initial_setup_completed'"
+    );
+    if (existingSetting) {
+      dbService.run(
+        "UPDATE system_settings SET setting_value = 'true' WHERE id = ?",
+        [existingSetting.id]
+      );
+    } else {
+      dbService.run(
+        "INSERT INTO system_settings (setting_key, setting_value, group_name) VALUES ('initial_setup_completed', 'true', 'general')"
+      );
+    }
+
+    localStorage.setItem('initial_setup_completed', 'true');
+    dbService.saveToStorage();
+  },
 };
+

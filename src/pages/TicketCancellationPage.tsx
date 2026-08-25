@@ -168,33 +168,39 @@ export const TicketCancellationPage: React.FC = () => {
 
         {/* Status Filter Badges */}
         <div className="flex items-center space-x-1.5 shrink-0">
-          <Button
+          <button
             type="button"
-            variant={statusFilter === 'ALL' ? 'default' : 'outline'}
-            size="xs"
             onClick={() => setStatusFilter('ALL')}
-            className="font-bold text-[11px]"
+            className={`h-7 px-2.5 text-[11px] rounded-xs font-bold transition-all border cursor-pointer ${
+              statusFilter === 'ALL'
+                ? 'bg-primary text-primary-foreground border-primary shadow-xs hover:bg-primary/90'
+                : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+            }`}
           >
             All ({bookings.length})
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant={statusFilter === 'ACTIVE' ? 'default' : 'outline'}
-            size="xs"
             onClick={() => setStatusFilter('ACTIVE')}
-            className="font-bold text-[11px] text-success border-success/30 hover:bg-success/10"
+            className={`h-7 px-2.5 text-[11px] rounded-xs font-bold transition-all border cursor-pointer ${
+              statusFilter === 'ACTIVE'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs hover:bg-emerald-700'
+                : 'bg-card text-emerald-600 border-emerald-600/40 hover:bg-emerald-500/10'
+            }`}
           >
             Active ({activeCount})
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant={statusFilter === 'CANCELLED' ? 'default' : 'outline'}
-            size="xs"
             onClick={() => setStatusFilter('CANCELLED')}
-            className="font-bold text-[11px] text-destructive border-destructive/30 hover:bg-destructive/10"
+            className={`h-7 px-2.5 text-[11px] rounded-xs font-bold transition-all border cursor-pointer ${
+              statusFilter === 'CANCELLED'
+                ? 'bg-destructive text-destructive-foreground border-destructive shadow-xs hover:bg-destructive/90'
+                : 'bg-card text-destructive border-destructive/40 hover:bg-destructive/10'
+            }`}
           >
             Cancelled ({cancelledCount})
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -298,7 +304,7 @@ export const TicketCancellationPage: React.FC = () => {
                           {b.show_name} • {b.start_time}
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 text-muted-foreground font-medium">{b.screen_name || 'Audi 1'}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground font-medium">{b.screen_name || '—'}</td>
                       <td className="px-3 py-2.5 font-bold text-primary">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -319,10 +325,10 @@ export const TicketCancellationPage: React.FC = () => {
                       </td>
                       <td className="px-3 py-2.5">
                         <Badge variant="outline" className="text-[10px]">
-                          {b.payment_mode_name || 'CASH'}
+                          {b.payment_mode_name || '—'}
                         </Badge>
                       </td>
-                      <td className="px-3 py-2.5 text-muted-foreground font-medium">{b.booked_by_name || 'Counter'}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground font-medium">{b.booked_by_name || '—'}</td>
                       <td className="px-3 py-2.5 text-center">
                         {isCancelled ? (
                           <Badge variant="destructive" className="text-[10px] font-bold">

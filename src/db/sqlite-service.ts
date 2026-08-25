@@ -383,12 +383,10 @@ class SQLiteService {
           // Run declarative seed data (INSERT OR REPLACE — always up to date)
           this.db!.run(SEED_DATA_SQL);
 
-          // Ensure standard role and credential consistency
+          // Ensure standard role consistency
           try {
             this.db!.run("UPDATE users SET role = 'OPERATOR' WHERE role = 'ADMIN';");
             this.db!.run("UPDATE role_permissions SET role = 'OPERATOR' WHERE role = 'ADMIN';");
-            this.db!.run("UPDATE users SET password_hash = 'operator123', role = 'OPERATOR', is_active = 1 WHERE LOWER(TRIM(username)) = 'operator';");
-            this.db!.run("UPDATE users SET password_hash = 'admin123', role = 'SYSTEM_ADMIN', is_active = 1 WHERE LOWER(TRIM(username)) = 'sysadmin';");
             this.saveToStorage();
           } catch (e) {
             console.warn('Migration note:', e);

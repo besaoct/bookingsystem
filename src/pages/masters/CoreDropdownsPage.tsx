@@ -191,15 +191,15 @@ export const CoreDropdownsPage: React.FC = () => {
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center space-x-1 border border-border bg-card p-1.5 rounded-xs shadow-xs">
+      <div className="flex flex-wrap items-center gap-1 border border-border bg-muted/60 p-1 rounded-xs shadow-xs">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xs transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 text-xs rounded-xs transition-all cursor-pointer ${
               activeTab === tab.id
-                ? 'bg-primary text-primary-foreground shadow-xs font-bold hover:bg-primary/90 hover:text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                ? 'bg-primary text-primary-foreground shadow-xs font-bold hover:bg-primary/90'
+                : 'text-muted-foreground font-semibold hover:text-foreground hover:bg-background/80'
             }`}
           >
             {tab.label}

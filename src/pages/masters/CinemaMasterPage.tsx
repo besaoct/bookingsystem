@@ -209,22 +209,104 @@ export const CinemaMasterPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Right Info Column */}
+        {/* Right Info Column: Live Thermal Ticket Preview */}
         <div className="space-y-4">
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-3 bg-muted/40 border-b border-border">
               <CardTitle className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center">
-                <MapPin className="w-3.5 h-3.5 mr-1.5 text-primary" />
-                Live Ticket Header Preview
+                <FileText className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                Live Ticket Header &amp; Slip Preview
               </CardTitle>
+              <CardDescription className="text-2xs text-muted-foreground">
+                Real-time thermal print representation based on current cinema profile
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-3 text-xs space-y-2">
-              <div className="border border-dashed border-border p-3 rounded-xs bg-muted/10 text-center font-mono space-y-1 select-text">
-                <div className="font-black text-xs uppercase">{formData.header_text || formData.name || 'CINEMA NAME'}</div>
-                <div className="text-2xs text-muted-foreground">{formData.address || 'Cinema Address, City'}</div>
-                <div className="text-2xs font-semibold">GSTIN: {formData.gstin || '18AJVPD0031E3Z1'}</div>
-                <div className="border-t border-border pt-1 text-2xs text-muted-foreground">
-                  {formData.footer_text || 'Thank you for visiting!'}
+            <CardContent className="p-3 text-xs flex flex-col items-center bg-slate-100 dark:bg-slate-900/50">
+              <div
+                className="bg-white text-black rounded-xs shadow-sm select-text w-full max-w-85"
+                style={{
+                  padding: '5px 8px',
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: '8px',
+                  lineHeight: 1.15,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '3px',
+                  background: '#fff',
+                  color: '#000',
+                  border: '1px solid #000',
+                }}
+              >
+                {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '3px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', fontWeight: 900, fontSize: '9px', borderRadius: '2px' }}>
+                      C
+                    </span>
+                    <span style={{ fontWeight: 900, fontSize: '9.5px', letterSpacing: '0.2px', textTransform: 'uppercase' }}>
+                      {formData.header_text || formData.name || 'GRAND MULTIPLEX CINEMAS'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '9px' }}>
+                    2
+                  </div>
+                </div>
+
+                {/* Movie Title Line */}
+                <div style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  AVATAR : FIRE AND ASH 3D
+                </div>
+
+                {/* Middle 3-Column Section */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.1fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '7.5px' }}>
+                  {/* Column 1: Financial & Tax Breakup */}
+                  <div style={{ borderRight: '1px solid #000', paddingRight: '4px', lineHeight: 1.15 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>ADM</span>
+                      <span style={{ fontWeight: 700 }}>240.00</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>CGST</span>
+                      <span style={{ fontWeight: 700 }}>21.60</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>SGST</span>
+                      <span style={{ fontWeight: 700 }}>21.60</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>S.CH</span>
+                      <span style={{ fontWeight: 700 }}>24.00</span>
+                    </div>
+                    <div style={{ fontWeight: 900, fontSize: '8.5px', marginTop: '1px' }}>
+                      Total: 307.20
+                    </div>
+                  </div>
+
+                  {/* Column 2: Date, Showtime & SAC Code */}
+                  <div style={{ borderRight: '1px solid #000', padding: '0 4px', lineHeight: 1.25 }}>
+                    <div style={{ fontWeight: 800, fontSize: '8.5px' }}>Tue, 25-08-2026</div>
+                    <div style={{ fontWeight: 800, fontSize: '9px', marginTop: '1px' }}>Evening, 06:30 PM</div>
+                    <div style={{ fontWeight: 700, fontSize: '7.5px', marginTop: '2px' }}>SAC 997321</div>
+                  </div>
+
+                  {/* Column 3: Auditorium, Seat Numbers & Class */}
+                  <div style={{ paddingLeft: '4px', lineHeight: 1.2, textAlign: 'left' }}>
+                    <div style={{ fontWeight: 800, fontSize: '8.5px' }}>{screens[0]?.name || 'Nakshatra'}</div>
+                    <div style={{ fontWeight: 900, fontSize: '9.5px', letterSpacing: '0.3px' }}>A-1, A-2</div>
+                    <div style={{ fontWeight: 900, fontSize: '9px', textTransform: 'uppercase', marginTop: '1px' }}>GOLD</div>
+                  </div>
+                </div>
+
+                {/* Footer Section: Tax IDs & Audit Tracking */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6.5px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
+                  <div>
+                    {formData.gstin && <div>GSTIN: {formData.gstin}</div>}
+                    {formData.cin && <div>CIN: {formData.cin}</div>}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div>Ticket No: 009571&nbsp;&nbsp;L.No. Transaction No: A000001-71W</div>
+                    <div>INV No. : 000000001&nbsp;&nbsp;Issued on: 25-Aug-26 06:30:15 PM</div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -334,7 +416,7 @@ export const CinemaMasterPage: React.FC = () => {
             <Input
               value={editingScreen?.name || ''}
               onChange={(e) => setEditingScreen({ ...editingScreen, name: e.target.value })}
-              placeholder="e.g. Screen 1 (Audi 1)"
+              placeholder="e.g. Nakshatra"
               required
             />
           </div>

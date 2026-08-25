@@ -54,23 +54,23 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     is_enabled: true,
     print_order: 1,
     header_label: 'C',
-    purpose: 'Guest copy',
+    purpose: 'Customer Entry Ticket',
   }];
 
   const seatsList = booking.seats || [];
   const seatLabels = seatsList.map((s) => `${s.row_name}-${s.seat_number}`).join(', ');
-  const seatClass = seatsList[0]?.seat_class_name?.toUpperCase() || 'GOLD';
+  const seatClass = seatsList[0]?.seat_class_name?.toUpperCase() || '';
   const qty = seatsList.length;
 
   const tickets = booking.tickets || [];
-  const firstTicketNo = tickets[0]?.ticket_no || booking.booking_no.slice(-7);
-  const txnNo = `A${String(booking.id).padStart(6, '0')}-${firstTicketNo.slice(-2)}W`;
+  const firstTicketNo = tickets[0]?.ticket_no || (booking.booking_no ? booking.booking_no.slice(-7) : '');
+  const txnNo = `A${String(booking.id).padStart(6, '0')}-${firstTicketNo ? firstTicketNo.slice(-2) : '01'}W`;
   const invNo = `000${String(booking.id).padStart(6, '0')}`;
 
   // Date breakdown
   const bookingDateObj = new Date(booking.booking_date || new Date());
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const dayName = dayNames[bookingDateObj.getDay()] || 'Tue';
+  const dayName = dayNames[bookingDateObj.getDay()] || '';
   const dStr = String(bookingDateObj.getDate()).padStart(2, '0');
   const mStr = String(bookingDateObj.getMonth() + 1).padStart(2, '0');
   const yStr = bookingDateObj.getFullYear();
@@ -80,8 +80,16 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const threeDNet = is3D ? (40.00 * qty).toFixed(2) : '00.00';
   const admNet = is3D ? Math.max(0, booking.total_net - Number(threeDNet)).toFixed(2) : booking.total_net.toFixed(2);
 
-  const showPrefix = (booking.show_name || 'Mor').slice(0, 3);
-  const showTimeDisplay = `${showPrefix}, ${booking.start_time || '11:30 AM'}`;
+  let showTimeDisplay = booking.start_time || '';
+  if (booking.show_name && booking.show_name.trim()) {
+    const cleanName = booking.show_name.trim();
+    const isTimeString = /^\d{1,2}:\d{2}/.test(cleanName);
+    if (!isTimeString) {
+      showTimeDisplay = `${cleanName}, ${booking.start_time || ''}`;
+    } else if (!booking.start_time) {
+      showTimeDisplay = cleanName;
+    }
+  }
   const now = new Date();
   const issuedOn = `${dStr}-${bookingDateObj.toLocaleString('en-US', { month: 'short' })}-${String(yStr).slice(-2)} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}`;
 
@@ -95,7 +103,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #000; padding-bottom: 2px;">
           <div style="display: flex; align-items: center; gap: 4px;">
             <span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1.5px solid #000; font-weight: 900; font-size: 9px; border-radius: 2px;">${copyBadge}</span>
-            <span style="font-weight: 900; font-size: 9.5px; letter-spacing: 0.2px; text-transform: uppercase;">${cinema.header_text || cinema.name}</span>
+            <span style="font-weight: 900; font-size: 9.5px; letter-spacing: 0.2px; text-transform: uppercase;">${cinema.header_text || cinema.name || ''}</span>
           </div>
           <div style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1.5px solid #000; border-radius: 50%; font-weight: 900; font-size: 9px;">
             ${qty}
@@ -103,8 +111,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         </div>
 
         <!-- Movie Title Line -->
-        <div style="font-weight: 800; font-size: 9.5px; text-transform: uppercase; padding-left: 18px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          ${booking.movie_name || 'SPIDER-MAN : BRAND NEW DAY 3D'} ${booking.movie_type_name && !booking.movie_name?.includes(booking.movie_type_name) ? booking.movie_type_name : ''}
+        <div style="font-weight: 800; font-size: 9.5px; text-transform: uppercase; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${booking.movie_name || ''} ${booking.movie_type_name && !booking.movie_name?.includes(booking.movie_type_name) ? booking.movie_type_name : ''}
         </div>
 
         <!-- Middle 3-Column Section -->
@@ -145,7 +153,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
 
           <!-- Column 3: Auditorium, Seat Numbers & Class -->
           <div style="padding-left: 4px; line-height: 1.2; text-align: left;">
-            <div style="font-weight: 800; font-size: 8.5px;">${booking.screen_name || 'Audi 1'}</div>
+            <div style="font-weight: 800; font-size: 8.5px;">${booking.screen_name || ''}</div>
             <div style="font-weight: 900; font-size: 9.5px; letter-spacing: 0.3px;">${seatLabels}</div>
             <div style="font-weight: 900; font-size: 9px; text-transform: uppercase; margin-top: 1px;">${seatClass}</div>
           </div>
@@ -154,8 +162,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         <!-- Footer Section: Tax IDs and Audit Tracking -->
         <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 6.5px; line-height: 1.1; padding-top: 1px;">
           <div style="font-weight: 600;">
-            <div>GSTIN: ${cinema.gstin || '18AJVPD0031E3Z1'}</div>
-            <div>CIN: ${cinema.cin || '0'}</div>
+            ${cinema.gstin ? `<div>GSTIN: ${cinema.gstin}</div>` : ''}
+            ${cinema.cin ? `<div>CIN: ${cinema.cin}</div>` : ''}
           </div>
           <div style="text-align: right; font-weight: 600;">
             <div>Ticket No: ${firstTicketNo}&nbsp;&nbsp;L.No. Transaction No: ${txnNo}</div>

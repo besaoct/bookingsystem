@@ -6,6 +6,8 @@ import {
   Clock,
   User,
   Settings,
+  Building2,
+  Database,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
@@ -26,7 +28,13 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, hasPermission } = useAuthStore();
+  const isSystemAdmin = user?.role === 'SYSTEM_ADMIN';
+  const canReadSettings = isSystemAdmin || hasPermission('settings', 'can_read');
+  const canReadUsers = isSystemAdmin || hasPermission('users', 'can_read');
+  const canReadCinema = isSystemAdmin || hasPermission('settings', 'can_read');
+  const canReadAudit = isSystemAdmin;
+
   const [timeStr, setTimeStr] = useState<string>('');
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -114,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
           <span className="text-xs font-semibold tabular-nums">{timeStr}</span>
         </div>
 
-        {/* User Avatar Menu — matches ReqruitBook UserMenu */}
+        {/* User Avatar Menu */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -142,8 +150,22 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                   {roleLabel}
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {onNavigate && (
+
+              {(canReadSettings || canReadUsers || canReadCinema || canReadAudit) && (
+                <DropdownMenuSeparator />
+              )}
+
+              {onNavigate && canReadCinema && (
+                <DropdownMenuItem
+                  onClick={() => onNavigate('master_cinema')}
+                  className="gap-2 text-xs cursor-pointer"
+                >
+                  <Building2 className="size-3.5" />
+                  <span>Cinema Profile</span>
+                </DropdownMenuItem>
+              )}
+
+              {onNavigate && canReadSettings && (
                 <DropdownMenuItem
                   onClick={() => onNavigate('system_settings')}
                   className="gap-2 text-xs cursor-pointer"
@@ -152,7 +174,8 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                   <span>Printer &amp; System Settings</span>
                 </DropdownMenuItem>
               )}
-              {onNavigate && (
+
+              {onNavigate && canReadUsers && (
                 <DropdownMenuItem
                   onClick={() => onNavigate('users_permissions')}
                   className="gap-2 text-xs cursor-pointer"
@@ -161,6 +184,17 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                   <span>Users &amp; Permissions</span>
                 </DropdownMenuItem>
               )}
+
+              {onNavigate && canReadAudit && (
+                <DropdownMenuItem
+                  onClick={() => onNavigate('audit_backup')}
+                  className="gap-2 text-xs cursor-pointer"
+                >
+                  <Database className="size-3.5" />
+                  <span>Audit Log &amp; Backup</span>
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={logout}

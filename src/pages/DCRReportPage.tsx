@@ -108,7 +108,7 @@ export const DCRReportPage: React.FC = () => {
       <div className="flex-1 bg-card border border-border rounded-xs p-5 overflow-y-auto print:border-none print:p-0 print:overflow-visible print:shadow-none shadow-xs dcr-report-sheet">
         <div className="text-center pb-4 border-b border-border mb-4 space-y-1">
           <h1 className="text-base font-extrabold tracking-widest text-foreground uppercase">
-            {cinema?.name || reportData?.cinema_name || 'BOOKING SYSTEM'} - DAILY COLLECTION REPORT
+            {(cinema?.name || reportData?.cinema_name) ? `${String(cinema?.name || reportData?.cinema_name).toUpperCase()} — ` : ''}DAILY COLLECTION REPORT
           </h1>
           {cinema?.address && (
             <p className="text-[11px] text-muted-foreground font-medium">

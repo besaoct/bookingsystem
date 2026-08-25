@@ -1,8 +1,8 @@
 // Database Seeding Logic for Offline Cinema Ticketing & Management System
 
 export const SEED_DATA_SQL = `
--- 1. Default Users (Passwords: admin123 / operator123)
-INSERT OR REPLACE INTO users (id, username, password_hash, name, role, is_active) VALUES
+-- 1. Default Users (Initial setup: admin123 / operator123)
+INSERT OR IGNORE INTO users (id, username, password_hash, name, role, is_active) VALUES
 (1, 'sysadmin', 'admin123', 'System Administrator', 'SYSTEM_ADMIN', 1),
 (2, 'operator', 'operator123', 'Box Office Operator', 'OPERATOR', 1);
 
@@ -82,8 +82,7 @@ INSERT OR REPLACE INTO seat_classes (id, name, color, display_order, is_active) 
 (6, 'Balcony', '#06b6d4', 6, 1);
 
 INSERT OR REPLACE INTO screens (id, name, capacity, is_active) VALUES
-(1, 'Audi 1 (Main Hall)', 10, 1),
-(2, 'Audi 2 (VIP Recliner)', 20, 1);
+(1, 'Nakshatra', 10, 1);
 
 -- 5. Exact 10 Seat Layout for Screen 1
 -- Row A: 1 2 3 (Silver)
@@ -181,9 +180,9 @@ INSERT OR REPLACE INTO cancellation_reasons (id, reason, is_active) VALUES
 
 -- 12. Ticket Copy Configurations (Printed cleanly with single header labels)
 INSERT OR REPLACE INTO ticket_copy_configs (id, copy_name, is_enabled, print_order, header_label, purpose) VALUES
-(1, 'Distributor', 1, 1, 'D', 'Distributor Copy'),
-(2, 'Auditorium', 1, 2, 'A', 'Auditorium Gate Copy'),
-(3, 'Customer', 1, 3, 'C', 'Guest Entry Ticket');
+(1, 'Office', 1, 1, 'O', 'Office Copy'),
+(2, 'Security', 1, 2, 'S', 'Security Gate Copy'),
+(3, 'Customer', 1, 3, 'C', 'Customer Entry Ticket');
 
 -- 13. Report Parameters for Daily Collection Report (DCR)
 INSERT OR REPLACE INTO report_parameters (id, column_key, column_label, is_visible, display_order, formula) VALUES

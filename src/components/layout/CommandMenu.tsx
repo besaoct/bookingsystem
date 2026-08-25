@@ -74,11 +74,11 @@ export const CommandMenu: React.FC<CommandMenuProps> = ({
   return (
     <CommandDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <CommandInput placeholder="Type a command, search pages, movies, shows, or masters..." />
-      <CommandList>
+      <CommandList >
         <CommandEmpty>No results found.</CommandEmpty>
 
         {/* Operations & Counter */}
-        <CommandGroup heading="Operations & Counter">
+        <CommandGroup heading="Operations & Counter" >
           {(isSystemAdmin || hasPermission('reports', 'can_read')) && (
             <CommandItem onSelect={() => handleSelect('dashboard')}>
               <LayoutDashboard className="mr-2 h-4 w-4 text-primary transition-colors" />
@@ -176,16 +176,19 @@ export const CommandMenu: React.FC<CommandMenuProps> = ({
           <>
             <CommandSeparator />
             <CommandGroup heading="Running Movies">
-              {movies.map((m) => (
-                <CommandItem
-                  key={m.id}
-                  onSelect={() => handleSelect('pos')}
-                >
-                  <Film className="mr-2 h-3.5 w-3.5 text-primary transition-colors" />
-                  <span className="font-medium">{m.name}</span>
-                  <span className="ml-2 text-2xs opacity-75">({m.language_name || 'Hindi'} • {m.movie_type_name || '2D'})</span>
-                </CommandItem>
-              ))}
+              {movies.map((m) => {
+                const meta = [m.language_name, m.movie_type_name].filter(Boolean).join(' • ');
+                return (
+                  <CommandItem
+                    key={m.id}
+                    onSelect={() => handleSelect('pos')}
+                  >
+                    <Film className="mr-2 h-3.5 w-3.5 text-primary transition-colors" />
+                    <span className="font-medium">{m.name}</span>
+                    {meta && <span className="ml-2 text-2xs opacity-75">({meta})</span>}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </>
         )}

@@ -224,7 +224,16 @@ export const AuditBackupPage: React.FC = () => {
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap font-medium text-xs">{l.created_at}</td>
                     <td className="px-3 py-2.5 font-semibold text-foreground">{l.username}</td>
                     <td className="px-3 py-2.5">
-                      <Badge variant={l.action.includes('CANCEL') ? 'destructive' : 'outline'} className="text-[10px]">
+                      <Badge
+                        variant={
+                          l.action.includes('CANCEL') || l.action.includes('DELETE')
+                            ? 'destructive'
+                            : l.action.includes('CREATE') || l.action.includes('UPDATE')
+                            ? 'blue'
+                            : 'outline'
+                        }
+                        className="text-[10px]"
+                      >
                         {l.action}
                       </Badge>
                     </td>

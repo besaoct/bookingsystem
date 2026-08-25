@@ -149,14 +149,16 @@ export const MovieMasterPage: React.FC = () => {
                       <span>{m.name}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-muted-foreground font-medium">{m.distributor_name || 'Direct / Studio'}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground font-medium">{m.language_name || 'English'}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground font-medium">{m.distributor_name || '—'}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground font-medium">{m.language_name || '—'}</td>
                   <td className="px-3 py-2.5">
-                    <Badge variant="blue" className="text-[10px]">
-                      {m.movie_type_name || '2D'}
-                    </Badge>
+                    {m.movie_type_name ? (
+                      <Badge variant="blue" className="text-[10px]">
+                        {m.movie_type_name}
+                      </Badge>
+                    ) : '—'}
                   </td>
-                  <td className="px-3 py-2.5 font-bold text-foreground">{m.category_name || 'UA'}</td>
+                  <td className="px-3 py-2.5 font-bold text-foreground">{m.category_name || '—'}</td>
                   <td className="px-3 py-2.5 text-center text-muted-foreground font-medium">{m.duration_min} min</td>
                   <td className="px-3 py-2.5 text-center">
                     {m.is_active ? (

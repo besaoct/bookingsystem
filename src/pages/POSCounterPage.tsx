@@ -78,26 +78,25 @@ export const POSCounterPage: React.FC = () => {
   const selectedScreen = screens.find((s: Screen) => s.id === selectedScreenId) || screens.find((s: Screen) => s.id === selectedShow?.screen_id);
 
   const currentShows = useMemo(() => {
-    let dateShows = shows;
-    if (selectedDate) {
-      const matchingDate = shows.filter((s: Show) => s.show_date === selectedDate);
-      if (matchingDate.length > 0) {
-        dateShows = matchingDate;
+    if (!shows || shows.length === 0) return [];
+
+    if (selectedMovieId) {
+      const forMovie = shows.filter((s: Show) => s.movie_id === selectedMovieId);
+      if (forMovie.length > 0) {
+        const onDate = selectedDate ? forMovie.filter((s: Show) => s.show_date === selectedDate) : [];
+        return onDate.length > 0 ? onDate : forMovie;
       }
     }
 
-    let list = dateShows.filter((s: Show) => {
-      const matchMovie = selectedMovieId ? s.movie_id === selectedMovieId : true;
-      const matchScreen = selectedScreenId ? s.screen_id === selectedScreenId : true;
-      return matchMovie && matchScreen;
-    });
-    if (list.length === 0 && selectedMovieId) {
-      list = dateShows.filter((s: Show) => s.movie_id === selectedMovieId);
+    if (selectedDate) {
+      const onDate = shows.filter((s: Show) => s.show_date === selectedDate);
+      if (onDate.length > 0) {
+        const onScreen = selectedScreenId ? onDate.filter((s: Show) => s.screen_id === selectedScreenId) : [];
+        return onScreen.length > 0 ? onScreen : onDate;
+      }
     }
-    if (list.length === 0 && selectedScreenId) {
-      list = dateShows.filter((s: Show) => s.screen_id === selectedScreenId);
-    }
-    return list.length > 0 ? list : dateShows;
+
+    return shows;
   }, [shows, selectedDate, selectedMovieId, selectedScreenId]);
 
   const selectedSeatsList = useMemo(() => {
@@ -258,16 +257,21 @@ export const POSCounterPage: React.FC = () => {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  {movies.map((m: Movie) => (
-                    <SelectItem key={m.id} value={String(m.id)}>
-                      <div className="flex items-center justify-between w-full space-x-2 min-w-0 truncate">
-                        <span className="font-normal truncate">{m.name}</span>
-                        <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
-                          ({m.language_name || 'Hindi'} • {m.movie_type_name || '2D'})
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {movies.map((m: Movie) => {
+                    const meta = [m.language_name, m.movie_type_name].filter(Boolean).join(' • ');
+                    return (
+                      <SelectItem key={m.id} value={String(m.id)}>
+                        <div className="flex items-center justify-between w-full space-x-2 min-w-0 truncate">
+                          <span className="font-normal truncate">{m.name}</span>
+                          {meta && (
+                            <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
+                              ({meta})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -360,15 +364,15 @@ export const POSCounterPage: React.FC = () => {
                   </TooltipTrigger>
                   {selectedMovie && (
                     <TooltipContent side="top">
-                      <span>{selectedMovie.name} ({selectedMovie.language_name || 'Hindi'} • {selectedMovie.movie_type_name || '2D'})</span>
+                      <span>{selectedMovie.name} {[selectedMovie.language_name, selectedMovie.movie_type_name].filter(Boolean).length > 0 ? `(${[selectedMovie.language_name, selectedMovie.movie_type_name].filter(Boolean).join(' • ')})` : ''}</span>
                     </TooltipContent>
                   )}
                 </Tooltip>
-                <span className="shrink-0 font-semibold">{selectedShow?.show_name || 'Show'}</span>
+                <span className="shrink-0 font-semibold">{selectedShow?.show_name || ''}</span>
               </div>
               <div className="flex justify-between text-muted-foreground font-semibold items-center text-[11px]">
-                <span className="truncate max-w-35">{selectedScreen?.name || 'Audi 1'}</span>
-                <span className="shrink-0">{selectedShow?.start_time || '--:--'}</span>
+                <span className="truncate max-w-35">{selectedScreen?.name || ''}</span>
+                <span className="shrink-0">{selectedShow?.start_time || ''}</span>
               </div>
             </div>
 
@@ -437,9 +441,9 @@ export const POSCounterPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={toggleApplyGst}
-                    className={`px-1.5 py-0.5 text-[9px] font-bold rounded-xs transition-colors border cursor-pointer ${
+                    className={`px-2 py-0.5 text-[10px] font-extrabold rounded-xs transition-all border cursor-pointer ${
                       applyGst
-                        ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:text-primary-foreground'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs hover:bg-emerald-700'
                         : 'bg-muted text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground'
                     }`}
                   >
@@ -474,10 +478,10 @@ export const POSCounterPage: React.FC = () => {
                           type="button"
                           onClick={() => setPaymentModeId(pm.id)}
                           className={cn(
-                            'h-8 px-2 py-1 rounded-xs text-xs font-semibold transition-all border flex items-center justify-center text-center cursor-pointer select-none',
+                            'h-8 px-2 py-1 rounded-xs text-xs transition-all border flex items-center justify-center text-center cursor-pointer select-none',
                             isSelected
-                              ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs hover:bg-primary/90 hover:text-primary-foreground'
-                              : 'bg-background text-foreground border-input hover:bg-muted hover:text-foreground'
+                              ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs hover:bg-primary/90'
+                              : 'bg-card text-muted-foreground font-semibold border-border hover:bg-muted hover:text-foreground'
                           )}
                         >
                           <span className="truncate">{pm.name}</span>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { reportService } from '@/services';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader,  CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
@@ -87,11 +87,11 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
         <div>
           <div className="flex items-center space-x-2">
             <h1 className="text-base font-bold uppercase tracking-wider text-white">
-              {cinema?.name || 'Grand Multiplex'}
+              {cinema?.name || 'Box Office'}
             </h1>
           </div>
           <div className="text-xs text-primary-foreground/90 font-medium mt-1">
-            {todayDisplay} | GSTIN: {cinema?.gstin || '18AJVPD0031E3Z1'}
+            {todayDisplay} {cinema?.gstin ? `| GSTIN: ${cinema.gstin}` : ''}
           </div>
         </div>
 
@@ -227,9 +227,11 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
                         <span>{show.movie_name}</span>
                       </TooltipContent>
                     </Tooltip>
-                    <Badge variant="blue" className="text-[10px] px-1.5 py-0.5">
-                      {show.movie_type_name || '2D'}
-                    </Badge>
+                    {show.movie_type_name && (
+                      <Badge variant="blue" className="text-[10px] px-1.5 py-0.5">
+                        {show.movie_type_name}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-xs font-semibold text-primary mt-1">
                     {show.show_name} • {show.start_time}

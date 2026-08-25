@@ -5,6 +5,8 @@ import { Header } from '@/components/layout/Header';
 import { Sidebar, NavPage } from '@/components/layout/Sidebar';
 import { TitleBar } from '@/components/layout/TitleBar';
 import { LoginView } from '@/components/auth/LoginModal';
+import { FirstTimeSetupView } from '@/components/auth/FirstTimeSetupView';
+import { userService } from '@/services';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,10 +34,15 @@ export const App: React.FC = () => {
   const { fetchSettings } = useSettingsStore();
   const [activePage, setActivePage] = useState<NavPage>('dashboard');
   const [collapsed, setCollapsed] = useState(false);
+  const [isSetupDone, setIsSetupDone] = useState<boolean | null>(null);
+  const [forceSetupScreen, setForceSetupScreen] = useState(false);
 
   useEffect(() => {
     loadInitialAuth();
     fetchSettings();
+    userService.isInitialSetupCompleted().then((completed) => {
+      setIsSetupDone(completed);
+    });
   }, []);
 
   // Set appropriate default page on login/session load
@@ -75,7 +82,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleGlobalKeys);
   }, [user, hasPermission]);
 
-  if (isLoading) {
+  if (isLoading || isSetupDone === null) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center font-sans" style={{ background: 'hsl(217 88% 46%)' }}>
         <TitleBar />
@@ -84,6 +91,21 @@ export const App: React.FC = () => {
           <span className="text-white text-base font-bold tracking-widest uppercase" style={{ letterSpacing: '0.18em' }}>Booking System</span>
         </div>
       </div>
+    );
+  }
+
+  // First-time user setup screen
+  if (isSetupDone === false || forceSetupScreen) {
+    return (
+      <>
+        <TitleBar />
+        <FirstTimeSetupView
+          onComplete={() => {
+            setIsSetupDone(true);
+            setForceSetupScreen(false);
+          }}
+        />
+      </>
     );
   }
 
