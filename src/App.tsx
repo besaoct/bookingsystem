@@ -38,11 +38,29 @@ export const App: React.FC = () => {
   const [forceSetupScreen, setForceSetupScreen] = useState(false);
 
   useEffect(() => {
-    loadInitialAuth();
-    fetchSettings();
-    userService.isInitialSetupCompleted().then((completed) => {
-      setIsSetupDone(completed);
+    loadInitialAuth().catch((err) => {
+      console.error('Failed to load initial auth:', err);
     });
+    fetchSettings().catch((err) => {
+      console.error('Failed to load settings:', err);
+    });
+    userService
+      .isInitialSetupCompleted()
+      .then((completed) => {
+        setIsSetupDone(completed);
+      })
+      .catch((err) => {
+        console.error('Failed to check initial setup:', err);
+        setIsSetupDone(true);
+      });
+  }, []);
+
+  // Safety fallback: Never lock screen indefinitely if background initialization hangs
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSetupDone((prev) => (prev === null ? true : prev));
+    }, 3500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Set appropriate default page on login/session load

@@ -231,3 +231,28 @@ ipcMain.handle('load-backup-file', async () => {
   }
   return null;
 });
+
+// IPC Handler to load sql-wasm.wasm binary directly from disk (100% offline & file:// protocol safe)
+ipcMain.handle('get-sql-wasm-binary', async () => {
+  try {
+    const candidates = [
+      path.join(app.getAppPath(), 'dist', 'sql-wasm.wasm'),
+      path.join(__dirname, '../dist/sql-wasm.wasm'),
+      path.join(__dirname, 'sql-wasm.wasm'),
+      path.join(process.resourcesPath, 'app.asar/dist/sql-wasm.wasm'),
+      path.join(process.resourcesPath, 'dist', 'sql-wasm.wasm'),
+      path.join(process.resourcesPath, 'sql-wasm.wasm'),
+      path.join(app.getAppPath(), 'public', 'sql-wasm.wasm'),
+      path.join(__dirname, '../public/sql-wasm.wasm'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const buf = fs.readFileSync(p);
+        return new Uint8Array(buf);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to read sql-wasm.wasm binary in main process:', err);
+  }
+  return null;
+});

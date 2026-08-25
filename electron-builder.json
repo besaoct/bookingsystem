@@ -11,6 +11,7 @@
     "dist-electron/**/*",
     "package.json"
   ],
+  "compression": "maximum",
   "asar": true,
   "mac": {
     "category": "public.app-category.business",

@@ -1,4 +1,4 @@
-import initSqlJs, { Database } from 'sql.js';
+import initSqlJs, { Database, SqlJsStatic } from 'sql.js';
 import { SEED_DATA_SQL } from './seed';
 
 const SCHEMA_SQL = `
@@ -285,15 +285,44 @@ class SQLiteService {
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
 
+  private async loadSqlJs(): Promise<SqlJsStatic> {
+    let wasmBinary: ArrayBuffer | undefined = undefined;
+
+    // In packaged Electron (Windows/macOS/Linux), load the wasm binary directly from disk via IPC
+    if (typeof window !== 'undefined' && window.electronAPI?.getSqlWasmBinary) {
+      try {
+        const bin = await window.electronAPI.getSqlWasmBinary();
+        if (bin && bin.length > 0) {
+          wasmBinary = bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength) as ArrayBuffer;
+        }
+      } catch (e) {
+        console.warn('Could not load sql-wasm.wasm via Electron IPC, falling back to relative URL:', e);
+      }
+    }
+
+    return initSqlJs({
+      locateFile: () => {
+        // Resolve relative to current document URL (safe for both file:// and http://)
+        if (typeof window !== 'undefined' && window.location) {
+          try {
+            return new URL('sql-wasm.wasm', window.location.href).href;
+          } catch {
+            // fallback
+          }
+        }
+        return 'sql-wasm.wasm';
+      },
+      wasmBinary,
+    });
+  }
+
   public async init(): Promise<void> {
     if (this.isInitialized) return;
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
       try {
-        const SQL = await initSqlJs({
-          locateFile: () => '/sql-wasm.wasm',
-        });
+        const SQL = await this.loadSqlJs();
 
         if (SQL) {
           const savedData = localStorage.getItem(LOCAL_STORAGE_DB_KEY);
@@ -457,9 +486,7 @@ class SQLiteService {
   }
 
   public async restoreBackup(data: Uint8Array): Promise<void> {
-    const SQL = await initSqlJs({
-      locateFile: (file) => `https://sql.js.org/dist/${file}`,
-    });
+    const SQL = await this.loadSqlJs();
     this.db = new SQL.Database(data);
     this.saveToStorage();
   }
@@ -468,9 +495,7 @@ class SQLiteService {
     // Wipe the stored database entirely and start fresh
     localStorage.removeItem(LOCAL_STORAGE_DB_KEY);
 
-    const SQL = await initSqlJs({
-      locateFile: () => '/sql-wasm.wasm',
-    });
+    const SQL = await this.loadSqlJs();
 
     // Create a completely new blank database
     this.db = new SQL.Database();
