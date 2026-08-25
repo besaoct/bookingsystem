@@ -4,7 +4,7 @@ import { auditService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Database, Download, Upload, RotateCcw, ShieldCheck, RefreshCw, FileText } from 'lucide-react';
+import { Database, Download, Upload, RotateCcw, ShieldCheck, FileText } from 'lucide-react';
 
 export const AuditBackupPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -204,10 +204,7 @@ export const AuditBackupPage: React.FC = () => {
               <FileText className="w-4 h-4 text-primary" />
               <span className="uppercase tracking-wider">SYSTEM AUDIT TRAIL LOGS</span>
             </div>
-            <Button variant="outline" size="xs" onClick={fetchLogs} disabled={isLoading}>
-              <RefreshCw className={`w-3 h-3 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+
           </div>
 
           <div className="flex-1 overflow-auto">

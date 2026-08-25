@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Film, Plus, Trash2, Edit, RefreshCw } from 'lucide-react';
+import { Film, Plus, Trash2, Edit } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const MovieMasterPage: React.FC = () => {
@@ -115,10 +115,6 @@ export const MovieMasterPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
 
           {canCreate && (
             <Button variant="default" size="sm" onClick={handleOpenCreate}>

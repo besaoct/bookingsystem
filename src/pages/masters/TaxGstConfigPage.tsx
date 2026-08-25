@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Percent, CheckCircle, Save, RefreshCw } from 'lucide-react';
+import { Percent, CheckCircle, Save } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const TaxGstConfigPage: React.FC = () => {
@@ -69,10 +69,7 @@ export const TaxGstConfigPage: React.FC = () => {
             </span>
           )}
 
-          <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+
         </div>
       </div>
 

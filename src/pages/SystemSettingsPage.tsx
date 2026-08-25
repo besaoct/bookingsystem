@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Printer, Copy, Save, CheckCircle, Sliders, Database, RotateCcw, RefreshCw } from 'lucide-react';
+import { Printer, Copy, Save, CheckCircle, Sliders, Database, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const SystemSettingsPage: React.FC = () => {
@@ -100,10 +100,7 @@ export const SystemSettingsPage: React.FC = () => {
             </span>
           )}
 
-          <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+
         </div>
       </div>
 

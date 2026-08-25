@@ -15,7 +15,15 @@ declare global {
       getPrinters: () => Promise<Array<{ name: string; isDefault: boolean }>>;
       saveBackupFile: (data: Uint8Array) => Promise<boolean>;
       loadBackupFile: () => Promise<Uint8Array | null>;
+      printCurrentPage: () => void;
       isElectron: boolean;
+      platform: string;
+      windowControls: {
+        minimize: () => void;
+        maximize: () => void;
+        close: () => void;
+        isMaximized: () => Promise<boolean>;
+      };
     };
   }
 }

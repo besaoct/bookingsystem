@@ -283,7 +283,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
       const completeBooking = await bookingService.createBooking({
         showId: selectedShowId,
-        showDate: show?.show_date || new Date().toISOString().slice(0, 10),
+        showDate: get().selectedDate || show?.show_date || new Date().toISOString().slice(0, 10),
         selectedSeats: selectedSeats.map((s) => ({
           id: s.id,
           row_name: s.row_name,

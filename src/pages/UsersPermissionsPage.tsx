@@ -26,7 +26,7 @@ import {
   Pencil,
   KeyRound,
   AlertCircle,
-  RefreshCw,
+
 } from 'lucide-react';
 
 const MODULES = [
@@ -300,10 +300,7 @@ export const UsersPermissionsPage: React.FC = () => {
               <Check className="w-3.5 h-3.5 mr-1" /> Updated Successfully
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+
           <Button variant="default" size="sm" onClick={() => { setAddError(null); setIsAddUserOpen(true); }}>
             <Plus className="w-3.5 h-3.5 mr-1" />
             Add User Account

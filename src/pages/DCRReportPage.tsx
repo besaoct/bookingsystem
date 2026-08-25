@@ -5,7 +5,7 @@ import { reportService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DatePicker } from '@/components/ui/date-picker';
-import { FileSpreadsheet, Printer, Download, RefreshCw } from 'lucide-react';
+import { FileSpreadsheet, Printer, Download } from 'lucide-react';
 
 export const DCRReportPage: React.FC = () => {
   const { cinema, fetchSettings } = useSettingsStore();
@@ -36,7 +36,11 @@ export const DCRReportPage: React.FC = () => {
   const handlePrint = () => {
     const originalTitle = document.title;
     document.title = `${cinema?.name || reportData?.cinema_name || 'Cinema'} - DCR Report ${selectedDate}`;
-    window.print();
+    if (window.electronAPI?.printCurrentPage) {
+      window.electronAPI.printCurrentPage();
+    } else {
+      window.print();
+    }
     setTimeout(() => {
       document.title = originalTitle;
     }, 1000);
@@ -88,10 +92,6 @@ export const DCRReportPage: React.FC = () => {
             />
           </div>
 
-          <Button variant="outline" size="sm" onClick={generateReport} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
 
           <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || !reportData}>
             <Download className="w-3.5 h-3.5 mr-1" />

@@ -105,21 +105,25 @@ export const screenService = {
 
     // Insert new rows & seats
     let totalSeats = 0;
-    for (const row of rows) {
+    for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+      const row = rows[rIdx];
+      const displayOrder = row.row_order || rIdx + 1;
       dbService.run(
         "INSERT INTO seat_rows (screen_id, row_name, display_order) VALUES (?, ?, ?)",
-        [screenId, row.row_name, row.row_order]
+        [screenId, row.row_name, displayOrder]
       );
       const rowIdRes = dbService.queryOne<{ id: number }>("SELECT last_insert_rowid() as id");
       const rowId = rowIdRes?.id;
 
       if (rowId) {
-        for (const seat of row.seats) {
+        for (let sIdx = 0; sIdx < row.seats.length; sIdx++) {
+          const seat = row.seats[sIdx];
+          const isBlocked = seat.is_active === false ? 1 : 0;
           dbService.run(
-            "INSERT INTO seats (row_id, seat_number, seat_class_id, is_active) VALUES (?, ?, ?, ?)",
-            [rowId, seat.seat_number, seat.seat_class_id, seat.is_active ? 1 : 0]
+            "INSERT INTO seats (row_id, seat_number, seat_class_id, is_aisle, is_blocked, is_wheelchair, pos_x, pos_y) VALUES (?, ?, ?, 0, ?, 0, ?, ?)",
+            [rowId, seat.seat_number, seat.seat_class_id, isBlocked, sIdx + 1, displayOrder]
           );
-          if (seat.is_active) totalSeats++;
+          if (!isBlocked) totalSeats++;
         }
       }
     }

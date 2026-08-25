@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Armchair, Plus, Trash2, RefreshCw, ZoomIn, ZoomOut, RotateCcw, Tag } from 'lucide-react';
+import { Armchair, Plus, Trash2, ZoomIn, ZoomOut, RotateCcw, Tag } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { NavPage } from '@/components/layout/Sidebar';
 
@@ -272,10 +272,6 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
             </Button>
           )}
 
-          <Button variant="outline" size="sm" onClick={fetchLayout} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
 
           {canCreate && (
             <Button variant="default" size="sm" onClick={() => setIsAddRowOpen(true)} className="cursor-pointer font-bold">
@@ -329,14 +325,14 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
                       value={String(firstSeatClassId)}
                       onValueChange={(val) => handleUpdateRowClass(row.id, Number(val))}
                     >
-                      <SelectTrigger className="h-7 text-[11px] font-bold w-28 min-w-28 shrink-0 bg-card">
+                      <SelectTrigger className="h-7 text-[11px] font-bold w-fit min-w-28 shrink-0 bg-card">
                         <SelectValue placeholder="Row Class" />
                       </SelectTrigger>
                       <SelectContent>
                         {seatClasses.map((sc) => (
                           <SelectItem key={sc.id} value={String(sc.id)}>
                             <div className="flex items-center space-x-1.5">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: sc.color }} />
+                              <span className="min-w-2.5 w-2.5 h-2.5 rounded-full" style={{ backgroundColor: sc.color }} />
                               <span>{sc.name}</span>
                             </div>
                           </SelectItem>

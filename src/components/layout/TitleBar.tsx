@@ -1,21 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import logoSrc from '@/assets/logo.svg';
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      isElectron: boolean;
-      platform: string;
-      windowControls: {
-        minimize: () => void;
-        maximize: () => void;
-        close: () => void;
-        isMaximized: () => Promise<boolean>;
-      };
-    };
-  }
-}
-
 const isElectron = typeof window !== 'undefined' && !!window.electronAPI?.isElectron;
 const isMac = typeof window !== 'undefined' && window.electronAPI?.platform === 'darwin';
 
@@ -43,7 +28,7 @@ export const TitleBar: React.FC = () => {
 
   return (
     <div
-      className="titlebar"
+      className="titlebar print:hidden"
       style={{
         // webkit-app-region: drag makes the whole bar draggable
         // @ts-expect-error webkit css

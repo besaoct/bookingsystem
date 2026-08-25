@@ -65,14 +65,17 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
 
     const printWindow = new BrowserWindow({
       show: false,
+      width: 800,
+      height: 600,
+      title: 'Ticket Print',
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
+        javascript: true,
       },
     });
 
-    const fullHtml = `
-      <!DOCTYPE html>
+    const fullHtml = `<!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
@@ -118,16 +121,37 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
       <body>
         ${htmlContent}
       </body>
-      </html>
-    `;
+      </html>`;
 
-    await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`);
+    // Use about:blank + executeJavaScript to reliably write HTML
+    // (data: URLs can silently fail in packaged Electron apps)
+    await printWindow.loadURL('about:blank');
+    await printWindow.webContents.executeJavaScript(
+      `document.open(); document.write(${JSON.stringify(fullHtml)}); document.close();`
+    );
+
+    // Give fonts/layout a moment to settle before printing
+    await new Promise((r) => setTimeout(r, 600));
+
+    // Validate the printer name — check if the configured printer is actually installed
+    const availablePrinters = await printWindow.webContents.getPrintersAsync();
+    const printerNames = availablePrinters.map((p) => p.name);
+    const hasValidPrinter =
+      !!options?.printerName && printerNames.includes(options.printerName);
+
+    if (!hasValidPrinter) {
+      // No valid printer configured — show the window so the OS print dialog
+      // is visible (includes Save as PDF / Download on macOS & Windows)
+      printWindow.show();
+      if (mainWindow) mainWindow.blur();
+    }
 
     return new Promise((resolve) => {
       printWindow.webContents.print(
         {
-          silent: options?.silent ?? false,
-          deviceName: options?.printerName || '',
+          // Silent only if a valid named printer was found; otherwise show dialog
+          silent: hasValidPrinter ? (options?.silent ?? false) : false,
+          deviceName: hasValidPrinter ? options!.printerName! : '',
           margins: {
             marginType: 'none',
           },
@@ -162,6 +186,14 @@ ipcMain.on('win:maximize', () => {
 });
 ipcMain.on('win:close', () => mainWindow?.close());
 ipcMain.handle('win:is-maximized', () => mainWindow?.isMaximized() ?? false);
+
+// Print current page (for DCR report etc.) — triggers native print dialog
+ipcMain.on('print-page', () => {
+  if (!mainWindow) return;
+  mainWindow.webContents.print({ silent: false }, (success, errorType) => {
+    if (!success) console.error('Print failed:', errorType);
+  });
+});
 
 // Get available printers
 ipcMain.handle('get-printers', async () => {

@@ -78,19 +78,27 @@ export const POSCounterPage: React.FC = () => {
   const selectedScreen = screens.find((s: Screen) => s.id === selectedScreenId) || screens.find((s: Screen) => s.id === selectedShow?.screen_id);
 
   const currentShows = useMemo(() => {
-    let list = shows.filter((s: Show) => {
+    let dateShows = shows;
+    if (selectedDate) {
+      const matchingDate = shows.filter((s: Show) => s.show_date === selectedDate);
+      if (matchingDate.length > 0) {
+        dateShows = matchingDate;
+      }
+    }
+
+    let list = dateShows.filter((s: Show) => {
       const matchMovie = selectedMovieId ? s.movie_id === selectedMovieId : true;
       const matchScreen = selectedScreenId ? s.screen_id === selectedScreenId : true;
       return matchMovie && matchScreen;
     });
     if (list.length === 0 && selectedMovieId) {
-      list = shows.filter((s: Show) => s.movie_id === selectedMovieId);
+      list = dateShows.filter((s: Show) => s.movie_id === selectedMovieId);
     }
     if (list.length === 0 && selectedScreenId) {
-      list = shows.filter((s: Show) => s.screen_id === selectedScreenId);
+      list = dateShows.filter((s: Show) => s.screen_id === selectedScreenId);
     }
-    return list.length > 0 ? list : shows;
-  }, [shows, selectedMovieId, selectedScreenId]);
+    return list.length > 0 ? list : dateShows;
+  }, [shows, selectedDate, selectedMovieId, selectedScreenId]);
 
   const selectedSeatsList = useMemo(() => {
     return seats.filter((s: EnrichedSeat) => selectedSeatIds.includes(s.id));
@@ -182,7 +190,7 @@ export const POSCounterPage: React.FC = () => {
   }, [seats]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-3 gap-2.5 bg-muted/40 select-none">
+    <div className="flex flex-col absolute inset-0 overflow-hidden p-3 gap-2.5 bg-muted/40 select-none">
       {/* Top Bar: Date, Screen / Audi, Movie, Show Selection Bar */}
       <div className="bg-card border border-border rounded-xs p-2.5 flex flex-wrap items-center gap-2.5 shrink-0 shadow-xs">
         {/* Date Selector with Tooltip */}
@@ -304,18 +312,7 @@ export const POSCounterPage: React.FC = () => {
           </TooltipContent>
         </Tooltip>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => fetchInitialData()}
-          disabled={isLoading}
-          className="h-8.5 cursor-pointer shrink-0"
-          title="Refresh Shows and Seat Availability"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+
       </div>
 
       {/* Main Counter Workspace: Left Seat Map (65%) + Right Billing Panel (35%) */}

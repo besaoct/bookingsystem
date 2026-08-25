@@ -13,6 +13,7 @@ export interface IElectronAPI {
   getPrinters: () => Promise<Array<{ name: string; isDefault: boolean }>>;
   saveBackupFile: (data: Uint8Array) => Promise<boolean>;
   loadBackupFile: () => Promise<Uint8Array | null>;
+  printCurrentPage: () => void;
   isElectron: boolean;
   platform: string;
   windowControls: {
@@ -29,6 +30,7 @@ const electronAPI: IElectronAPI = {
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   saveBackupFile: (data: Uint8Array) => ipcRenderer.invoke('save-backup-file', data),
   loadBackupFile: () => ipcRenderer.invoke('load-backup-file'),
+  printCurrentPage: () => ipcRenderer.send('print-page'),
   isElectron: true,
   platform: process.platform,
   windowControls: {

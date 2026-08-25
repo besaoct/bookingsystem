@@ -18,7 +18,6 @@ import {
   IndianRupee,
   PlusCircle,
   FileSpreadsheet,
-  RefreshCw,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -44,10 +43,7 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
     activeShows: [],
     recentBookings: [],
   });
-  const [isLoading, setIsLoading] = useState(false);
-
   const fetchDashboardData = async () => {
-    setIsLoading(true);
     try {
       const data = await reportService.getDashboardStats();
       setStats({
@@ -62,8 +58,6 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
       });
     } catch (e) {
       console.error('Failed to load dashboard data:', e);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -102,17 +96,6 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button
-            type="button"
-            size="sm"
-            onClick={fetchDashboardData}
-            disabled={isLoading}
-            className="border border-white/40 bg-white/10 hover:bg-white hover:text-primary text-white font-bold transition-all shadow-xs cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-
           {onNavigate && (
             <>
               <Button

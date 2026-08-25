@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
-import { Layers, Plus, Trash2, RefreshCw, Pencil, AlertCircle } from 'lucide-react';
+import { Layers, Plus, Trash2, Pencil, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 type DropdownTab = 'distributors' | 'languages' | 'types' | 'categories' | 'classes' | 'reasons';
@@ -180,10 +180,6 @@ export const CoreDropdownsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
 
           {canCreate && (
             <Button variant="default" size="sm" onClick={() => setIsAddOpen(true)}>

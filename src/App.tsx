@@ -8,7 +8,7 @@ import { LoginView } from '@/components/auth/LoginModal';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { RefreshCw } from 'lucide-react';
+import logoSrc from '@/assets/logo.svg';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Pages
@@ -77,12 +77,12 @@ export const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen bg-shell text-shell-foreground flex flex-col items-center justify-center space-y-3 font-sans">
-        <RefreshCw className="size-8 animate-spin text-shell-active" />
-        <div className="text-sm font-extrabold uppercase tracking-widest text-shell-foreground">
-          Booking System
+      <div className="h-screen w-screen flex flex-col items-center justify-center font-sans" style={{ background: 'hsl(217 88% 46%)' }}>
+        <TitleBar />
+        <div className="flex flex-col items-center gap-3">
+          <img src={logoSrc} alt="Booking System" className="w-14 h-14 rounded-xl shadow-lg" />
+          <span className="text-white text-base font-bold tracking-widest uppercase" style={{ letterSpacing: '0.18em' }}>Booking System</span>
         </div>
-        <div className="text-xs text-shell-muted font-medium">Initialising...</div>
       </div>
     );
   }
@@ -99,22 +99,22 @@ export const App: React.FC = () => {
   return (
     <TooltipProvider delayDuration={150}>
       <TitleBar />
-      {/* ── ReqruitBook layout: sidebar sticky h-screen on left, header+content on right ── */}
-      <div className="flex h-screen w-screen bg-background text-foreground font-sans overflow-hidden">
+      {/* ── Shell layout ── */}
+      <div className="flex w-screen bg-background text-foreground font-sans overflow-hidden print:overflow-visible" style={{ height: 'calc(100vh - var(--titlebar-h))' }}>
 
-        {/* ── Left: Sticky sidebar rail (matches ReqruitBook: sticky top-0 h-screen self-start) ── */}
-        <div className="sticky top-0 z-20 hidden h-screen shrink-0 self-start md:flex">
+        {/* ── Left: Sticky sidebar rail ── */}
+        <div className="sticky top-0 z-20 hidden h-full shrink-0 self-start md:flex print:hidden">
           <Sidebar
             activePage={activePage}
             onSelectPage={setActivePage}
             collapsed={collapsed}
           />
-          {/* ReqruitBook-exact collapse toggle: absolute -right-2.5 top-13 */}
+          {/* collapse toggle */}
           <button
             type="button"
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="absolute -right-2.5 top-13 z-20 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:text-primary hover:border-primary shadow-xs cursor-pointer"
+            className="absolute -right-2.5 top-13 z-20 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:text-primary hover:border-primary shadow-xs cursor-pointer print:hidden"
           >
             <ChevronLeft
               className={cn('size-3 transition-transform', collapsed && 'rotate-180')}
@@ -122,11 +122,11 @@ export const App: React.FC = () => {
           </button>
         </div>
 
-        {/* ── Right: Header + main content (matches ReqruitBook: flex min-w-0 flex-1 flex-col) ── */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {/* ── Right: Header + main content ── */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible print:w-full">
           <Header onNavigate={setActivePage} />
 
-          <main className="flex-1 overflow-hidden bg-muted/40">
+          <main className="flex-1 relative overflow-y-auto bg-muted/40 print:overflow-visible">
             {activePage === 'pos' && (
               <PermissionGuard module="booking" action="can_read" onNavigate={setActivePage}>
                 <POSCounterPage />

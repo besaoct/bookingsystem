@@ -222,25 +222,41 @@ export const bookingService = {
     `;
     const params: any[] = [];
 
-    if (date) {
-      sql += ' AND b.booking_date = ?';
-      params.push(date);
+    // Filter by date if provided
+    if (date && date.trim()) {
+      sql += ' AND (b.booking_date = ? OR date(b.created_at) = ? OR s.show_date = ?)';
+      params.push(date.trim(), date.trim(), date.trim());
     }
 
+    // Search across booking_no, movie name, show name, ticket_no, and seat numbers
     if (searchQuery && searchQuery.trim()) {
-      sql += ' AND (b.booking_no LIKE ? OR m.name LIKE ?)';
       const pattern = `%${searchQuery.trim()}%`;
-      params.push(pattern, pattern);
+      sql += ` AND (
+        b.booking_no LIKE ? 
+        OR m.name LIKE ? 
+        OR s.show_name LIKE ?
+        OR EXISTS (SELECT 1 FROM tickets t WHERE t.booking_id = b.id AND t.ticket_no LIKE ?)
+        OR EXISTS (
+          SELECT 1 FROM booking_seats bs 
+          WHERE bs.booking_id = b.id 
+          AND (bs.row_name LIKE ? OR (bs.row_name || '-' || bs.seat_number) LIKE ? OR (bs.row_name || bs.seat_number) LIKE ?)
+        )
+      )`;
+      params.push(pattern, pattern, pattern, pattern, pattern, pattern, pattern);
     }
 
     sql += ' ORDER BY b.id DESC';
 
     const list = dbService.query<Booking>(sql, params);
 
-    // Fetch seats for each booking
+    // Fetch seats and tickets for each booking
     for (const b of list) {
       b.seats = dbService.query<BookingSeat>(`
         SELECT * FROM booking_seats WHERE booking_id = ? ORDER BY id ASC
+      `, [b.id]);
+
+      b.tickets = dbService.query<Ticket>(`
+        SELECT * FROM tickets WHERE booking_id = ? AND copy_type = 'CUSTOMER' ORDER BY ticket_no ASC
       `, [b.id]);
     }
 

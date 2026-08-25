@@ -3,7 +3,7 @@ import logoSrc from '@/assets/logo.svg';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Film, Lock, User as UserIcon, ShieldCheck, AlertCircle } from 'lucide-react';
+import {  Lock, User as UserIcon, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuthStore();

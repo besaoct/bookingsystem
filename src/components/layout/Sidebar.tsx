@@ -257,7 +257,7 @@ function NavItem({
             className={cn(
               'flex h-9 w-full items-center justify-center rounded-xs transition-colors cursor-pointer',
               active
-                ? 'bg-white text-primary font-bold shadow-xs'
+                ? 'bg-white text-primary font-medium shadow-xs'
                 : 'text-white/80 hover:bg-white/15 hover:text-white'
             )}
           >
@@ -277,7 +277,7 @@ function NavItem({
               className={cn(
                 'flex w-full items-center justify-between gap-2 px-2 py-1 text-xs font-medium rounded-xs transition-colors text-left cursor-pointer',
                 active
-                  ? 'bg-primary text-primary-foreground font-semibold'
+                  ? 'bg-primary text-primary-foreground font-medium'
                   : 'hover:bg-muted text-foreground'
               )}
             >
@@ -307,7 +307,7 @@ function NavItem({
                     className={cn(
                       'flex w-full items-center justify-between gap-2 px-2 py-1 text-[11px] rounded-xs transition-colors text-left cursor-pointer',
                       childIsActive
-                        ? 'bg-primary text-primary-foreground font-semibold'
+                        ? 'bg-primary text-primary-foreground font-medium'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     )}
                   >
@@ -336,7 +336,7 @@ function NavItem({
           className={cn(
             'flex w-full items-center gap-2.5 rounded-xs px-2.5 py-2 text-left text-sm font-medium transition-colors cursor-pointer',
             active
-              ? 'bg-white/20 text-white font-semibold'
+              ? 'bg-white/20 text-white font-medium'
               : 'text-white/85 hover:bg-white/15 hover:text-white'
           )}
           aria-expanded={open}
@@ -361,7 +361,7 @@ function NavItem({
           className={cn(
             'flex w-full items-center gap-2.5 rounded-xs px-2.5 py-2 text-sm font-medium transition-colors text-left cursor-pointer',
             active
-              ? 'bg-white text-primary font-bold shadow-xs'
+              ? 'bg-white text-primary font-medium shadow-xs'
               : 'text-white/85 hover:bg-white/15 hover:text-white'
           )}
         >
@@ -397,7 +397,7 @@ function NavItem({
                   className={cn(
                     'flex w-full items-center justify-between rounded-xs px-2.5 py-1.5 text-[13px] transition-colors text-left cursor-pointer',
                     childIsActive
-                      ? 'bg-white text-primary font-bold shadow-xs'
+                      ? 'bg-white text-primary font-medium shadow-xs'
                       : 'text-white/80 hover:bg-white/15 hover:text-white'
                   )}
                 >

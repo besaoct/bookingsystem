@@ -21,9 +21,9 @@ export const reportService = {
       FROM booking_seats bs
       JOIN bookings b ON bs.booking_id = b.id
       LEFT JOIN tickets t ON t.booking_id = b.id AND t.copy_type = 'CUSTOMER'
-      WHERE b.booking_date = ? AND b.status = 'BOOKED'
+      WHERE (b.booking_date = ? OR date(b.created_at) = ?) AND b.status = 'BOOKED'
       ORDER BY t.ticket_no ASC
-    `, [selectedDate]);
+    `, [selectedDate, selectedDate]);
 
     const showGroups: DCRShowGroup[] = [];
 
@@ -167,19 +167,19 @@ export const reportService = {
         COALESCE(SUM(total_gross), 0) AS total_gross,
         COALESCE(SUM(total_net), 0) AS total_net,
         COALESCE(SUM(total_cgst + total_sgst), 0) AS total_gst,
-        (SELECT COUNT(*) FROM booking_seats bs JOIN bookings b2 ON bs.booking_id = b2.id WHERE b2.booking_date = ? AND b2.status = 'BOOKED') AS total_tickets
+        (SELECT COUNT(*) FROM booking_seats bs JOIN bookings b2 ON bs.booking_id = b2.id WHERE (b2.booking_date = ? OR date(b2.created_at) = ?) AND b2.status = 'BOOKED') AS total_tickets
       FROM bookings
-      WHERE booking_date = ? AND status = 'BOOKED'
-    `, [today, today]);
+      WHERE (booking_date = ? OR date(created_at) = ?) AND status = 'BOOKED'
+    `, [today, today, today, today]);
 
     const cancelledCount = dbService.queryOne<any>(`
       SELECT COUNT(*) AS cancelled_count
       FROM bookings
-      WHERE booking_date = ? AND status = 'CANCELLED'
-    `, [today])?.cancelled_count || 0;
+      WHERE (booking_date = ? OR date(created_at) = ?) AND status = 'CANCELLED'
+    `, [today, today])?.cancelled_count || 0;
 
     const shows = dbService.query<any>(`
-      SELECT s.*, m.name AS movie_name, m.duration_mins, mt.name AS movie_type_name, sc.name AS screen_name, sc.capacity
+      SELECT s.*, m.name AS movie_name, m.duration_min AS movie_duration, mt.name AS movie_type_name, sc.name AS screen_name, sc.capacity
       FROM shows s
       LEFT JOIN movies m ON s.movie_id = m.id
       LEFT JOIN movie_types mt ON m.movie_type_id = mt.id
@@ -196,8 +196,8 @@ export const reportService = {
         SELECT COUNT(*) AS count
         FROM booking_seats bs
         JOIN bookings b ON bs.booking_id = b.id
-        WHERE b.show_id = ? AND b.booking_date = ? AND b.status = 'BOOKED'
-      `, [show.id, today])?.count || 0;
+        WHERE b.show_id = ? AND (b.booking_date = ? OR date(b.created_at) = ?) AND b.status = 'BOOKED'
+      `, [show.id, today, today])?.count || 0;
 
       show.sold_seats = sold;
       totalCapacity += show.capacity || 140;

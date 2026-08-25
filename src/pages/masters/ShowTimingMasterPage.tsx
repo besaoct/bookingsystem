@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CalendarDays, Plus, Trash2, Edit, RefreshCw, Clock } from 'lucide-react';
+import { CalendarDays, Plus, Trash2, Edit, Clock } from 'lucide-react';
 import { formatDateIndian } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -122,10 +122,6 @@ export const ShowTimingMasterPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
 
           {canCreate && (
             <Button variant="default" size="sm" onClick={handleOpenCreate} disabled={isLoading}>

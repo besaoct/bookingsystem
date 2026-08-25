@@ -26,6 +26,7 @@ export const TicketCancellationPage: React.FC = () => {
   const canCancel = user?.role === 'SYSTEM_ADMIN' || hasPermission('cancellation', 'can_create') || hasPermission('cancellation', 'can_delete');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'CANCELLED'>('ALL');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [cancellationReasons, setCancellationReasons] = useState<CancellationReason[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,14 +41,14 @@ export const TicketCancellationPage: React.FC = () => {
     setIsLoading(true);
     try {
       const bList = await bookingService.getBookings({
-        date: selectedDate,
+        date: selectedDate || undefined,
         searchQuery: searchQuery.trim(),
       });
       const reasons = await bookingService.getCancellationReasons();
 
       setBookings(bList);
       setCancellationReasons(reasons);
-      if (reasons.length > 0) {
+      if (reasons.length > 0 && !selectedReasonId) {
         setSelectedReasonId(reasons[0].id);
       }
     } catch (e) {
@@ -59,7 +60,7 @@ export const TicketCancellationPage: React.FC = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [selectedDate]);
+  }, [selectedDate, searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,44 +92,110 @@ export const TicketCancellationPage: React.FC = () => {
     }
   };
 
+  const filteredBookings = bookings.filter((b) => {
+    if (statusFilter === 'ACTIVE') return b.status === 'BOOKED' || b.status === 'CONFIRMED';
+    if (statusFilter === 'CANCELLED') return b.status === 'CANCELLED';
+    return true;
+  });
+
+  const activeCount = bookings.filter((b) => b.status === 'BOOKED' || b.status === 'CONFIRMED').length;
+  const cancelledCount = bookings.filter((b) => b.status === 'CANCELLED').length;
+
   return (
-    <div className="flex flex-col h-full overflow-hidden p-4 gap-4 bg-muted/40 select-none">
+    <div className="flex flex-col h-full overflow-hidden p-4 gap-3 bg-muted/40 select-none">
       {/* Top Search & Filter Bar */}
-      <div className="bg-card border border-border rounded-xs p-3 flex items-center justify-between shrink-0 shadow-xs">
-        <form onSubmit={handleSearch} className="flex items-center space-x-3 flex-1 max-w-2xl">
+      <div className="bg-card border border-border rounded-xs p-3 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-xs">
+        <form onSubmit={handleSearch} className="flex items-center space-x-3 flex-1 min-w-[320px] max-w-2xl">
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="shrink-0">
                 <DatePicker
                   value={selectedDate}
-                  onChange={setSelectedDate}
-                  className="w-36 h-8"
+                  onChange={(d) => setSelectedDate(d)}
+                  placeholder="All Dates"
+                  clearable={true}
+                  className="w-36 h-8 text-xs font-semibold"
                 />
               </div>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <span>Filter Bookings by Date</span>
+              <span>Filter by Date (Clear to view All Dates)</span>
             </TooltipContent>
           </Tooltip>
 
-          <div className="flex-1 flex items-center space-x-2">
+          <Button
+            type="button"
+            variant={selectedDate === new Date().toISOString().slice(0, 10) ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSelectedDate(new Date().toISOString().slice(0, 10))}
+            className="h-8 text-xs font-bold shrink-0 cursor-pointer"
+          >
+            Today
+          </Button>
+
+          {selectedDate && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedDate('')}
+              className="h-8 text-xs font-semibold shrink-0 cursor-pointer"
+            >
+              All Dates
+            </Button>
+          )}
+
+          <div className="flex-1 flex items-center space-x-2 min-w-0">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Ticket No, Phone, Movie..."
+              placeholder="Search Ticket No, Booking Ref, Movie, Seat (e.g. A-1)..."
               className="h-8 text-xs flex-1"
             />
-            <Button type="submit" variant="default" size="sm">
-              <Search className="w-3.5 h-3.5 mr-1" />
-              Search
-            </Button>
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="h-8 px-2 text-xs"
+              >
+                Clear
+              </Button>
+            )}
           </div>
         </form>
 
-        <Button variant="outline" size="sm" onClick={fetchBookings} disabled={isLoading}>
-          <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        {/* Status Filter Badges */}
+        <div className="flex items-center space-x-1.5 shrink-0">
+          <Button
+            type="button"
+            variant={statusFilter === 'ALL' ? 'default' : 'outline'}
+            size="xs"
+            onClick={() => setStatusFilter('ALL')}
+            className="font-bold text-[11px]"
+          >
+            All ({bookings.length})
+          </Button>
+          <Button
+            type="button"
+            variant={statusFilter === 'ACTIVE' ? 'default' : 'outline'}
+            size="xs"
+            onClick={() => setStatusFilter('ACTIVE')}
+            className="font-bold text-[11px] text-success border-success/30 hover:bg-success/10"
+          >
+            Active ({activeCount})
+          </Button>
+          <Button
+            type="button"
+            variant={statusFilter === 'CANCELLED' ? 'default' : 'outline'}
+            size="xs"
+            onClick={() => setStatusFilter('CANCELLED')}
+            className="font-bold text-[11px] text-destructive border-destructive/30 hover:bg-destructive/10"
+          >
+            Cancelled ({cancelledCount})
+          </Button>
+        </div>
       </div>
 
       {/* Success Alert */}
@@ -146,9 +213,12 @@ export const TicketCancellationPage: React.FC = () => {
 
       {/* Bookings List Table */}
       <div className="flex-1 bg-card border border-border rounded-xs overflow-hidden flex flex-col shadow-xs">
-        <div className="px-3 py-2.5 bg-muted/40 border-b border-border text-xs font-semibold uppercase text-muted-foreground flex justify-between">
-          <span>ISSUED TICKETS &amp; BOOKINGS ({bookings.length})</span>
-          <span className="text-[11px] normal-case text-muted-foreground">Click Cancel to invalidate ticket and immediately free up seats</span>
+        <div className="px-3 py-2 bg-muted/40 border-b border-border text-xs font-semibold uppercase text-muted-foreground flex justify-between items-center">
+          <span>
+            ISSUED TICKETS &amp; BOOKINGS ({filteredBookings.length})
+            {selectedDate ? ` • ${selectedDate}` : ' • All Dates'}
+          </span>
+          <span className="text-[11px] normal-case text-muted-foreground">Click Cancel Ticket to void ticket and immediately release seats</span>
         </div>
 
         <div className="flex-1 overflow-auto">
@@ -157,19 +227,30 @@ export const TicketCancellationPage: React.FC = () => {
               <RefreshCw className="w-5 h-5 animate-spin mr-2 text-primary" />
               Loading Bookings...
             </div>
-          ) : bookings.length === 0 ? (
+          ) : filteredBookings.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-xs py-12">
               <Ticket className="w-8 h-8 mb-2 text-muted-foreground/40" />
               <span>No bookings found for the selected date or search filter.</span>
+              {selectedDate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDate('')}
+                  className="mt-3 text-xs font-bold"
+                >
+                  View All Dates
+                </Button>
+              )}
             </div>
           ) : (
             <table className="w-full text-xs text-left">
               <thead className="bg-muted border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 py-2.5">Booking No</th>
+                  <th className="px-3 py-2.5">Ticket / Booking No</th>
                   <th className="px-3 py-2.5">Movie &amp; Show</th>
                   <th className="px-3 py-2.5">Screen</th>
                   <th className="px-3 py-2.5">Seats Booked</th>
+                  <th className="px-3 py-2.5">Show Date</th>
                   <th className="px-3 py-2.5 text-right">Gross Total</th>
                   <th className="px-3 py-2.5">Payment</th>
                   <th className="px-3 py-2.5">Booked By</th>
@@ -178,14 +259,29 @@ export const TicketCancellationPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {bookings.map((b) => {
+                {filteredBookings.map((b) => {
                   const seatsList = b.seats?.map((s: any) => `${s.row_name}-${s.seat_number}`).join(', ') || '--';
                   const isCancelled = b.status === 'CANCELLED';
+
+                  // Calculate ticket number range
+                  const ticketNos = b.tickets?.map((t: any) => t.ticket_no).filter(Boolean) || [];
+                  const ticketDisplay = ticketNos.length > 0
+                    ? ticketNos.length === 1
+                      ? `#${ticketNos[0]}`
+                      : `#${ticketNos[0]} - #${ticketNos[ticketNos.length - 1]}`
+                    : null;
 
                   return (
                     <tr key={b.id} className={isCancelled ? 'bg-destructive/10 text-muted-foreground' : 'hover:bg-muted/30 transition-colors'}>
                       <td className="px-3 py-2.5 font-bold text-foreground">
-                        {b.booking_no}
+                        <div className="flex flex-col">
+                          <span className="text-primary font-bold">{b.booking_no}</span>
+                          {ticketDisplay && (
+                            <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">
+                              Tkt: {ticketDisplay}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2.5 font-semibold">
                         <Tooltip>
@@ -215,6 +311,9 @@ export const TicketCancellationPage: React.FC = () => {
                           </TooltipContent>
                         </Tooltip>
                       </td>
+                      <td className="px-3 py-2.5 text-foreground font-medium whitespace-nowrap">
+                        {b.booking_date}
+                      </td>
                       <td className="px-3 py-2.5 text-right font-bold text-foreground">
                         ₹{b.total_gross.toFixed(2)}
                       </td>
@@ -241,7 +340,7 @@ export const TicketCancellationPage: React.FC = () => {
                             variant="destructive"
                             size="xs"
                             onClick={() => setCancelModalBooking(b)}
-                            className="font-bold"
+                            className="font-bold cursor-pointer"
                           >
                             <Ban className="w-3 h-3 mr-1" />
                             Cancel Ticket
@@ -305,7 +404,7 @@ export const TicketCancellationPage: React.FC = () => {
                 size="sm"
                 onClick={handleConfirmCancel}
                 disabled={isCancelling}
-                className="font-bold"
+                className="font-bold cursor-pointer"
               >
                 {isCancelling ? 'Cancelling...' : 'Confirm Void & Release Seats'}
               </Button>

@@ -549,7 +549,28 @@
   background: #c50e1f;
 }
 
-/* Offset the app content so it starts below the title bar */
-#root {
-  padding-top: 36px;
+/* Offset the app content so it starts below the title bar (Electron only) */
+:root {
+  --titlebar-h: 0px;
+}
+
+body:has(.titlebar) {
+  --titlebar-h: 36px;
+}
+
+body:has(.titlebar) #root {
+  padding-top: var(--titlebar-h);
+}
+
+/* Print: reset all titlebar offsets and let content fill the page */
+@media print {
+  :root {
+    --titlebar-h: 0px !important;
+  }
+  #root {
+    padding-top: 0 !important;
+  }
+  body {
+    overflow: visible !important;
+  }
 }

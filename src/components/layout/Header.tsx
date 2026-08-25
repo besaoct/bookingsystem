@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card/95 backdrop-blur px-3 md:px-5">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card/95 backdrop-blur px-3 md:px-5 print:hidden">
         {/* Search Bar / Command Palette Trigger */}
         <button
           type="button"

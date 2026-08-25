@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { IndianRupee, Plus, Trash2, Edit, RefreshCw } from 'lucide-react';
+import { IndianRupee, Plus, Trash2, Edit } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const PricingMasterPage: React.FC = () => {
@@ -137,10 +137,6 @@ export const PricingMasterPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={fetchPricing} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
 
           {canCreate && (
             <Button variant="default" size="sm" onClick={handleOpenCreate}>
