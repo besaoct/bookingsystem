@@ -63,8 +63,8 @@ export const LoginView: React.FC = () => {
       <div className="w-full max-w-sm bg-card rounded-xs border border-border overflow-hidden shadow-lg animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-primary text-primary-foreground p-5 text-center border-b border-primary/20">
-          <div className="w-11 h-11 bg-primary-foreground text-primary rounded-xs mx-auto flex items-center justify-center mb-2.5 shadow-sm font-bold">
-            <Film className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xs mx-auto flex items-center justify-center mb-2.5 shadow-sm overflow-hidden">
+            <img src="/logo.svg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-base font-bold tracking-wider uppercase">
             Booking System
