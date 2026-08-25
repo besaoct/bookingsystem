@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.besaoct.bookingsystem",
   "productName": "Booking System",
   "copyright": "Copyright © 2026 besaoct. All rights reserved.",
