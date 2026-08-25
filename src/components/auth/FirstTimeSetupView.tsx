@@ -82,8 +82,8 @@ export const FirstTimeSetupView: React.FC<FirstTimeSetupViewProps> = ({ onComple
       <div className="w-full max-w-2xl bg-card rounded-xs border border-border overflow-hidden shadow-lg animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-primary text-primary-foreground p-6 text-center border-b border-primary/20">
-          <div className="w-14 h-14 rounded-xs mx-auto flex items-center justify-center mb-3 shadow-md overflow-hidden bg-white/10 p-1">
-            <img src={logoSrc} alt="Logo" className="w-full h-full object-cover" />
+          <div className="w-14 h-14 mx-auto flex items-center justify-center mb-3">
+            <img src={logoSrc} alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-lg font-bold tracking-wider uppercase">
             Welcome to Booking System
