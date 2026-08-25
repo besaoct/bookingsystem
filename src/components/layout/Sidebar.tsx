@@ -143,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {
           id: 'master_others' as NavPage,
           label: 'System Lookups',
-          allowed: isSystemAdmin || hasPermission('movies', 'can_read'),
+          allowed: isSystemAdmin || hasPermission('master_others', 'can_read'),
         },
       ].filter((c) => c.allowed),
     },
@@ -266,7 +266,7 @@ function NavItem({
         <TooltipContent
           side="right"
           sideOffset={8}
-          className="z-50 shadow-md p-1 min-w-[11rem] pointer-events-auto bg-popover text-popover-foreground border border-border rounded-xs"
+          className="z-50 shadow-md p-1 min-w-44 pointer-events-auto bg-popover text-popover-foreground border border-border rounded-xs"
         >
           {/* Main Item Link / Title */}
           {item.id ? (
@@ -382,13 +382,13 @@ function NavItem({
       )}
 
       {hasChildren && open && item.children && (
-        <div className="relative ml-[19px] mt-0.5 space-y-px">
+        <div className="relative ml-4.75 mt-0.5 space-y-px">
           {/* Vertical rail connecting child links to parent */}
           <span className="absolute bottom-2 left-0 top-0 w-px bg-white/30" />
           {item.children.map((child) => {
             const childIsActive = activePage === child.id;
             return (
-              <div key={child.id} className="relative pl-[14px]">
+              <div key={child.id} className="relative pl-3.5">
                 <span className="absolute left-0 top-1/2 h-px w-3 -translate-y-1/2 bg-white/30" />
                 <button
                   type="button"

@@ -11,6 +11,7 @@ export const ALL_SYSTEM_MODULES: Array<{ id: string; name: string; desc: string 
   { id: 'pricing', name: 'Ticket Pricing', desc: 'Set class rates & show price overrides' },
   { id: 'taxes', name: 'Tax & GST Setup', desc: 'Configure GST percentages & calculation rules' },
   { id: 'settings', name: 'Printer & System Settings', desc: 'Thermal printer name, dimensions, ticket copies' },
+  { id: 'master_others', name: 'System Lookups & Core Values', desc: 'Manage distributors, languages, movie formats, censor categories, and cancel reasons' },
   { id: 'users', name: 'User Management', desc: 'Create operator accounts and grant permissions' },
 ];
 

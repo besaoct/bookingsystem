@@ -341,7 +341,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
                             }
                           >
                             {isSelected ? (
-                              <Check className="w-4 h-4 stroke-[3]" />
+                              <Check className="w-4 h-4 stroke-3" />
                             ) : (
                               seat.seat_number
                             )}
@@ -359,7 +359,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
                     <span className="font-black text-xs text-foreground w-5 text-center">
                       {row.row_name}
                     </span>
-                    <span className="text-[11px] text-muted-foreground uppercase font-semibold truncate max-w-[70px]">
+                    <span className="text-[11px] text-muted-foreground uppercase font-semibold truncate max-w-17.5">
                       {rowClass}
                     </span>
                   </div>

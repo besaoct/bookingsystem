@@ -6,12 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Printer, Copy, Save, CheckCircle, Sliders, Database, RotateCcw } from 'lucide-react';
+import { Printer, Copy, Save, CheckCircle, Sliders, Database, RotateCcw, RefreshCw } from 'lucide-react';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const SystemSettingsPage: React.FC = () => {
+  const { user, hasPermission } = useAuthStore();
+  const isSystemAdmin = user?.role === 'SYSTEM_ADMIN';
+  const canUpdate = isSystemAdmin || hasPermission('settings', 'can_update');
+
   const { ticketCopies, updateTicketCopies, systemSettings, updateSystemSetting, fetchSettings } = useSettingsStore();
   const [copies, setCopies] = useState<TicketCopyConfig[]>([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // System settings local form
   const [ticketWidth, setTicketWidth] = useState('10.2');
@@ -20,8 +26,17 @@ export const SystemSettingsPage: React.FC = () => {
   const [invoiceSeries, setInvoiceSeries] = useState('NC-LKP-26');
   const [financialYear, setFinancialYear] = useState('2026-2027');
 
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      await fetchSettings();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchSettings();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -78,11 +93,18 @@ export const SystemSettingsPage: React.FC = () => {
           </span>
         </div>
 
-        {isSaved && (
-          <span className="text-success text-xs font-bold flex items-center">
-            <CheckCircle className="w-4 h-4 mr-1" /> Settings Saved Successfully
-          </span>
-        )}
+        <div className="flex items-center space-x-2">
+          {isSaved && (
+            <span className="text-success text-xs font-bold flex items-center mr-2">
+              <CheckCircle className="w-4 h-4 mr-1" /> Settings Saved Successfully
+            </span>
+          )}
+
+          <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -219,54 +241,58 @@ export const SystemSettingsPage: React.FC = () => {
         </Card>
 
         {/* Database Management & Re-seed Card */}
-        <Card className="lg:col-span-2 border-amber-500/30 bg-card shadow-xs">
-          <CardHeader className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-1.5">
-              <Database className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>Database Initialization &amp; Factory Re-Seed</span>
-            </CardTitle>
-            <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400 text-[10px]">
-              10 Seats Layout &amp; Default Masters
-            </Badge>
-          </CardHeader>
-          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-            <div className="space-y-1 max-w-xl text-muted-foreground text-2xs leading-relaxed">
-              <p className="font-semibold text-foreground">
-                Reset local SQLite database to original fresh seed state:
-              </p>
-              <p>
-                Includes 10-seat layout (A: 1-3, B: 1-3, C: 1-4), GOENKA ENTERPRISES &amp; distributors, movie catalog, schedule, dynamic pricing, and standard operator/admin accounts.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={async () => {
-                if (
-                  window.confirm(
-                    '⚠️ Re-seed database to default factory state?\n\n' +
-                    'All tables will be restored with the 10-seat layout and initial masters.'
-                  )
-                ) {
-                  await auditService.resetDatabaseToSeed();
-                  window.location.reload();
-                }
-              }}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold shrink-0 cursor-pointer shadow-xs"
-            >
-              <RotateCcw className="w-3.5 h-3.5 mr-1" /> Re-Seed Database
-            </Button>
-          </CardContent>
-        </Card>
+        {isSystemAdmin && (
+          <Card className="lg:col-span-2 border-amber-500/30 bg-card shadow-xs">
+            <CardHeader className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-1.5">
+                <Database className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Database Initialization &amp; Factory Re-Seed</span>
+              </CardTitle>
+              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400 text-[10px]">
+                10 Seats Layout &amp; Default Masters
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="space-y-1 max-w-xl text-muted-foreground text-2xs leading-relaxed">
+                <p className="font-semibold text-foreground">
+                  Reset local SQLite database to original fresh seed state:
+                </p>
+                <p>
+                  Includes 10-seat layout (A: 1-3, B: 1-3, C: 1-4), GOENKA ENTERPRISES &amp; distributors, movie catalog, schedule, dynamic pricing, and standard operator/admin accounts.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={async () => {
+                  if (
+                    window.confirm(
+                      '⚠️ Re-seed database to default factory state?\n\n' +
+                      'All tables will be restored with the 10-seat layout and initial masters.'
+                    )
+                  ) {
+                    await auditService.resetDatabaseToSeed();
+                    window.location.reload();
+                  }
+                }}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold shrink-0 cursor-pointer shadow-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1" /> Re-Seed Database
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Save button */}
-        <div className="lg:col-span-2 flex justify-end">
-          <Button variant="default" size="default" onClick={handleSaveAll} className="font-bold px-6 cursor-pointer">
-            <Save className="w-4 h-4 mr-1.5" />
-            Save Printer &amp; Copy Settings
-          </Button>
-        </div>
+        {canUpdate && (
+          <div className="lg:col-span-2 flex justify-end">
+            <Button variant="default" size="default" onClick={handleSaveAll} className="font-bold px-6 cursor-pointer">
+              <Save className="w-4 h-4 mr-1.5" />
+              Save Printer &amp; Copy Settings
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

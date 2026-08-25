@@ -19,7 +19,6 @@ import { CinemaMasterPage } from '@/pages/masters/CinemaMasterPage';
 import { MovieMasterPage } from '@/pages/masters/MovieMasterPage';
 import { ShowTimingMasterPage } from '@/pages/masters/ShowTimingMasterPage';
 import { ScreenSeatLayoutMasterPage } from '@/pages/masters/ScreenSeatLayoutMasterPage';
-import { SeatClassesMasterPage } from '@/pages/masters/SeatClassesMasterPage';
 import { PricingMasterPage } from '@/pages/masters/PricingMasterPage';
 import { TaxGstConfigPage } from '@/pages/masters/TaxGstConfigPage';
 import { CoreDropdownsPage } from '@/pages/masters/CoreDropdownsPage';
@@ -173,7 +172,7 @@ export const App: React.FC = () => {
               </PermissionGuard>
             )}
             {activePage === 'master_others' && (
-              <PermissionGuard module="movies" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="master_others" action="can_read" onNavigate={setActivePage}>
                 <CoreDropdownsPage />
               </PermissionGuard>
             )}

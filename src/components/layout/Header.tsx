@@ -126,10 +126,10 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                   {userInitials}
                 </span>
                 <span className="hidden text-left leading-tight lg:block">
-                  <span className="block max-w-[120px] truncate text-xs font-medium text-foreground">
+                  <span className="block max-w-30 truncate text-xs font-medium text-foreground">
                     {user.name}
                   </span>
-                  <span className="block max-w-[120px] truncate text-[10px] text-muted-foreground">
+                  <span className="block max-w-30 truncate text-[10px] text-muted-foreground">
                     {roleLabel}
                   </span>
                 </span>

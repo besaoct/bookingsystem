@@ -157,11 +157,20 @@ export const settingsService = {
 
   async softDeleteLookup(tableName: string, id: number): Promise<void> {
     await dbService.init();
-    // Whitelist allowed tables to prevent arbitrary SQL execution
-    const allowed = ['distributors', 'languages', 'movie_types', 'movie_categories', 'seat_classes', 'cancellation_reasons', 'payment_modes'];
-    if (!allowed.includes(tableName)) {
+    const tableMap: Record<string, string> = {
+      distributors: 'distributors',
+      languages: 'languages',
+      movie_types: 'movie_types',
+      categories: 'categories',
+      movie_categories: 'categories',
+      seat_classes: 'seat_classes',
+      cancellation_reasons: 'cancellation_reasons',
+      payment_modes: 'payment_modes',
+    };
+    const targetTable = tableMap[tableName];
+    if (!targetTable) {
       throw new Error(`Invalid table for soft delete: ${tableName}`);
     }
-    dbService.run(`UPDATE ${tableName} SET is_active = 0 WHERE id = ?`, [id]);
+    dbService.run(`UPDATE ${targetTable} SET is_active = 0 WHERE id = ?`, [id]);
   },
 };

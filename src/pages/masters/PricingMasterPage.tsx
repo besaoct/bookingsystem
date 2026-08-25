@@ -90,6 +90,7 @@ export const PricingMasterPage: React.FC = () => {
     }
 
     const pricingPayload = {
+      id: editingPricing.id,
       seat_class_id: editingPricing.seat_class_id,
       base_price: Number(editingPricing.base_price),
       service_charge: Number(editingPricing.service_charge ?? 12),
