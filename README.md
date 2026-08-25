@@ -9,6 +9,7 @@
 [![Vite](https://img.shields.io/badge/Vite-6.1.1-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![SQLite WASM](https://img.shields.io/badge/Database-SQL.js%20(WASM)-003B57?logo=sqlite&logoColor=white)](https://sql.js.org/)
 [![Electron](https://img.shields.io/badge/Desktop-Electron%2034-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github)](https://github.com/sponsors/besaoct)
 
 ---
 
@@ -173,6 +174,43 @@ bookingsystem/
 ├── tsconfig.json
 └── vite.config.ts
 ```
+
+---
+
+## 💖 Sponsoring & Support
+
+If you find this project valuable and would like to support its ongoing development, features, and maintenance, you can sponsor through **GitHub Sponsors**:
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github)](https://github.com/sponsors/besaoct)
+
+* **Sponsor Link:** [https://github.com/sponsors/besaoct](https://github.com/sponsors/besaoct)
+* For corporate sponsorships, dedicated feature requests, custom cinema POS hardware integrations, and commercial licensing, contact **[besaoct](https://github.com/besaoct)** directly.
+
+---
+
+## 🍎 Mac App Store (MAS) Publishing Guide
+
+This application can be packaged and published directly to the **Apple Mac App Store (MAS)**.
+
+### 1. Prerequisites
+* **Apple Developer Program Account** ($99/yr)
+* **Certificates generated in Apple Developer Portal**:
+  * `3rd Party Mac Developer Application: <Name> (<TeamID>)` (for signing the binary)
+  * `3rd Party Mac Developer Installer: <Name> (<TeamID>)` (for signing the `.pkg` package)
+* **Mac App Store Provisioning Profile**:
+  * Create a Mac App Store Provisioning Profile matching `com.vecvel.bookingsystem` and place it at `build/embedded.provisionprofile`.
+
+### 2. Sandbox Entitlements
+Mac App Store requires App Sandbox compliance. The project includes pre-configured entitlement files:
+* [`build/entitlements.mas.plist`](build/entitlements.mas.plist) — Sandbox permissions for file access, printing (`com.apple.security.print`), JIT, and networking.
+* [`build/entitlements.mas.inherit.plist`](build/entitlements.mas.inherit.plist) — Child process inheritance.
+
+### 3. Build Mac App Store Package
+Run the dedicated MAS build command:
+```bash
+npm run electron:build:mas
+```
+The output `.pkg` installer will be generated in the `release/mas/` directory, ready to be uploaded to **App Store Connect** using **Transporter** or the `xcrun altool` CLI.
 
 ---
 

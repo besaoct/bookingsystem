@@ -45,7 +45,7 @@ jobs:
           npm run build
           npm run build:electron
 
-      - name: Package macOS Applications (.dmg & .zip)
+      - name: Package macOS Direct Distribution (.dmg & .zip)
         if: matrix.platform == 'mac'
         run: npx electron-builder --mac --publish never
         env:
@@ -53,7 +53,17 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '63LNPXAB49' }}
+
+      - name: Package Mac App Store Distribution (.pkg)
+        if: matrix.platform == 'mac'
+        run: npx electron-builder --mac mas --publish never
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK_MAS || secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_INSTALLER_LINK: ${{ secrets.CSC_INSTALLER_LINK }}
+          CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.CSC_INSTALLER_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
+        continue-on-error: true
 
       - name: Package Windows Applications (.exe NSIS & Portable)
         if: matrix.platform == 'win'
@@ -65,6 +75,7 @@ jobs:
           name: release-${{ matrix.platform }}
           path: |
             release/*.dmg
+            release/*.pkg
             release/*.exe
             release/*.zip
             release/*.blockmap
@@ -104,6 +115,7 @@ jobs:
           generate_release_notes: true
           files: |
             release-dist/*.dmg
+            release-dist/*.pkg
             release-dist/*.exe
             release-dist/*.zip
             release-dist/*.blockmap

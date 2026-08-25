@@ -1,5 +1,5 @@
 {
-  "appId": "com.besaoct.bookingsystem",
+  "appId": "com.vecvel.bookingsystem",
   "productName": "Booking System",
   "copyright": "Copyright © 2026 besaoct. All rights reserved.",
   "directories": {
@@ -16,10 +16,10 @@
   "mac": {
     "category": "public.app-category.business",
     "icon": "build/icon.icns",
-    "identity": "1FCA8ECA1FFFEF54183D7602CC034A7CD9FC81C6",
     "hardenedRuntime": true,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+    "provisioningProfile": "build/embedded.provisionprofile",
     "gatekeeperAssess": false,
     "notarize": {
       "teamId": "63LNPXAB49"
@@ -31,6 +31,22 @@
       },
       {
         "target": "zip",
+        "arch": ["arm64", "x64"]
+      }
+    ]
+  },
+  "mas": {
+    "type": "distribution",
+    "category": "public.app-category.business",
+    "icon": "build/icon.icns",
+    "identity": "Apple Distribution: Masud Shafin Ahmed (63LNPXAB49)",
+    "entitlements": "build/entitlements.mas.plist",
+    "entitlementsInherit": "build/entitlements.mas.inherit.plist",
+    "provisioningProfile": "build/embedded.provisionprofile",
+    "hardenedRuntime": false,
+    "target": [
+      {
+        "target": "mas",
         "arch": ["arm64", "x64"]
       }
     ]
