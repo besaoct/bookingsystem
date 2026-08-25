@@ -119,7 +119,7 @@ export const PricingMasterPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Delete this pricing rule?')) {
-      await pricingService.deleteShowPriceOverride(id);
+      await pricingService.deletePricing(id);
       await fetchPricing();
     }
   };
@@ -200,7 +200,7 @@ export const PricingMasterPage: React.FC = () => {
                           <Edit className="w-3 h-3 mr-0.5" /> Edit
                         </Button>
                       )}
-                      {canDelete && p.show_id && (
+                      {canDelete && (
                         <Button
                           variant="ghost"
                           size="xs"

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Modal } from '@/components/ui/modal';
-import { Building2, Save, Plus, Edit, Armchair, MapPin, FileText, CheckCircle } from 'lucide-react';
+import { Building2, Save, Plus, Edit, Trash2, Armchair, MapPin, FileText, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const CinemaMasterPage: React.FC = () => {
@@ -17,6 +17,7 @@ export const CinemaMasterPage: React.FC = () => {
   const canUpdate = isSystemAdmin || hasPermission('settings', 'can_update');
   const canCreateScreen = isSystemAdmin || hasPermission('seat_layout', 'can_create');
   const canUpdateScreen = isSystemAdmin || hasPermission('seat_layout', 'can_update');
+  const canDeleteScreen = isSystemAdmin || hasPermission('seat_layout', 'can_delete');
 
   const { cinema, fetchSettings, updateCinema } = useSettingsStore();
   const [formData, setFormData] = useState<Partial<Cinema>>({});
@@ -73,14 +74,21 @@ export const CinemaMasterPage: React.FC = () => {
     await fetchScreens();
   };
 
+  const handleDeleteScreen = async (id: number) => {
+    if (window.confirm('Are you sure you want to deactivate/delete this Screen?')) {
+      await screenService.deleteScreen(id);
+      await fetchScreens();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 bg-muted/40 select-none">
-      {/* Top Header Card */}
+      {/* Header */}
       <div className="bg-card border border-border rounded-xs p-3 flex items-center justify-between shrink-0 shadow-xs">
         <div className="flex items-center space-x-2">
           <Building2 className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
-            Cinema &amp; Hall Profile
+            Cinema / Theatre Profile Master
           </span>
         </div>
 
@@ -91,156 +99,151 @@ export const CinemaMasterPage: React.FC = () => {
         )}
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Card 1: Core Cinema & Location Details */}
-        <Card className="bg-card border-border shadow-xs">
-          <CardHeader className="p-3 bg-muted/40 border-b border-border">
-            <CardTitle className="flex items-center space-x-1.5 text-xs text-foreground">
-              <MapPin className="w-3.5 h-3.5 text-primary" />
-              <span>Cinema Hall &amp; Location Details</span>
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              Primary identification printed on tickets and statutory collection reports
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3.5 text-xs">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">Cinema / Theatre Name *</label>
-              <Input
-                value={formData.name || ''}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Grand Multiplex"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">Location &amp; Full Address *</label>
-              <Input
-                value={formData.address || ''}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="e.g. 123 Cinema Boulevard, City, State - Pin Code"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">GSTIN (Mandatory) *</label>
-                <Input
-                  value={formData.gstin || ''}
-                  onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-                  placeholder="e.g. 18ABCDE1234F1Z5"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">CIN / Registration No</label>
-                <Input
-                  value={formData.cin || ''}
-                  onChange={(e) => setFormData({ ...formData, cin: e.target.value })}
-                  placeholder="e.g. U92100AS2018PTC018500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">Contact Numbers / Helpdesk</label>
-              <Input
-                value={formData.contact_numbers || ''}
-                onChange={(e) => setFormData({ ...formData, contact_numbers: e.target.value })}
-                placeholder="e.g. 03752-245678 / +91 9876543210"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 2: Thermal Ticket Slip Headers & Footers */}
-        <Card className="bg-card border-border shadow-xs">
-          <CardHeader className="p-3 bg-muted/40 border-b border-border">
-            <CardTitle className="flex items-center space-x-1.5 text-xs text-foreground">
-              <FileText className="w-3.5 h-3.5 text-primary" />
-              <span>Thermal Receipt Slip Customization</span>
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              Configure top title and bottom terms for thermal printing
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3.5 text-xs">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">
-                Receipt Header Text (Top of Ticket)
-              </label>
-              <Input
-                value={formData.header_text || ''}
-                onChange={(e) => setFormData({ ...formData, header_text: e.target.value })}
-                placeholder="e.g. Welcome to Grand Multiplex"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">
-                Receipt Footer Greeting &amp; Disclaimer
-              </label>
-              <textarea
-                rows={4}
-                value={formData.footer_text || ''}
-                onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
-                className="w-full p-2 text-xs border border-input rounded-xs bg-background focus:outline-none font-medium"
-                placeholder="e.g. Thank you for your visit! Please retain this ticket till the end of the show."
-              />
-            </div>
-
-            <div className="p-2.5 bg-muted/30 rounded-xs border border-border text-xs space-y-1">
-              <span className="font-semibold text-foreground">Thermal Output Preview:</span>
-              <div className="bg-card p-2 border border-border rounded-xs text-xs">
-                <div className="font-bold text-foreground truncate">
-                  {formData.header_text || formData.name || 'CINEMA HEADER'}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Cinema Settings Form */}
+        <div className="lg:col-span-2">
+          <Card className="bg-card border-border shadow-xs">
+            <CardHeader className="p-3 bg-muted/40 border-b border-border">
+              <CardTitle className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center">
+                <FileText className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                Legal &amp; Business Information
+              </CardTitle>
+              <CardDescription className="text-2xs text-muted-foreground">
+                Required for tax invoices, GST returns, and thermal ticket printing headers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              <form onSubmit={handleSave} className="space-y-3.5 text-xs">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Cinema / Theatre Name *</label>
+                  <Input
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Grand Multiplex Cinemas"
+                    required
+                  />
                 </div>
-                <div className="text-[11px] text-muted-foreground truncate">
-                  {formData.address || 'Location Address'} | GSTIN: {formData.gstin || '18AJVPD0031E3Z1'}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Complete Address *</label>
+                  <Input
+                    value={formData.address || ''}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Street, City, State - PIN"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">GSTIN (15 Digits) *</label>
+                    <Input
+                      value={formData.gstin || ''}
+                      onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+                      placeholder="18AJVPD0031E3Z1"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">CIN (Corporate ID)</label>
+                    <Input
+                      value={formData.cin || ''}
+                      onChange={(e) => setFormData({ ...formData, cin: e.target.value })}
+                      placeholder="U92100AS2018PTC018500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Contact Numbers</label>
+                  <Input
+                    value={formData.contact_numbers || ''}
+                    onChange={(e) => setFormData({ ...formData, contact_numbers: e.target.value })}
+                    placeholder="03752-245678 / +91 9876543210"
+                  />
+                </div>
+
+                <div className="pt-2 border-t border-border space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Thermal Ticket Header Text</label>
+                    <Input
+                      value={formData.header_text || ''}
+                      onChange={(e) => setFormData({ ...formData, header_text: e.target.value })}
+                      placeholder="Printed at top of thermal ticket"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Thermal Ticket Footer Notice</label>
+                    <Input
+                      value={formData.footer_text || ''}
+                      onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
+                      placeholder="e.g. Retain ticket till show ends."
+                    />
+                  </div>
+                </div>
+
+                {canUpdate && (
+                  <div className="pt-2 flex justify-end">
+                    <Button type="submit" variant="default" size="sm" className="font-bold">
+                      <Save className="w-3.5 h-3.5 mr-1" />
+                      Save Cinema Profile
+                    </Button>
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Info Column */}
+        <div className="space-y-4">
+          <Card className="bg-card border-border shadow-xs">
+            <CardHeader className="p-3 bg-muted/40 border-b border-border">
+              <CardTitle className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center">
+                <MapPin className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                Live Ticket Header Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 text-xs space-y-2">
+              <div className="border border-dashed border-border p-3 rounded-xs bg-muted/10 text-center font-mono space-y-1 select-text">
+                <div className="font-black text-xs uppercase">{formData.header_text || formData.name || 'CINEMA NAME'}</div>
+                <div className="text-2xs text-muted-foreground">{formData.address || 'Cinema Address, City'}</div>
+                <div className="text-2xs font-semibold">GSTIN: {formData.gstin || '18AJVPD0031E3Z1'}</div>
+                <div className="border-t border-border pt-1 text-2xs text-muted-foreground">
+                  {formData.footer_text || 'Thank you for visiting!'}
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-        {/* Save Button for Cinema Profile */}
-        {canUpdate && (
-          <div className="lg:col-span-2 flex justify-end">
-            <Button type="submit" variant="default" size="default" className="font-bold px-6">
-              <Save className="w-4 h-4 mr-1.5" />
-              Save Cinema Profile
-            </Button>
-          </div>
-        )}
-      </form>
-
-      {/* Screen / Auditoriums Configuration Section */}
+      {/* Screens / Auditoriums Management */}
       <Card className="bg-card border-border shadow-xs">
         <CardHeader className="p-3 bg-muted/40 border-b border-border flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="flex items-center space-x-1.5 text-xs text-foreground">
-              <Armchair className="w-3.5 h-3.5 text-primary" />
-              <span>Cinema Screens &amp; Auditoriums</span>
+            <CardTitle className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center">
+              <Armchair className="w-3.5 h-3.5 mr-1.5 text-primary" />
+              Auditoriums &amp; Screens ({screens.length})
             </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              Manage cinema hall screens, seating capacities, and active status
+            <CardDescription className="text-2xs text-muted-foreground">
+              Define the physical auditoriums and seating capacities for your cinema.
             </CardDescription>
           </div>
 
           {canCreateScreen && (
             <Button
-              type="button"
-              variant="outline"
-              size="xs"
+              variant="default"
+              size="sm"
               onClick={() => {
                 setEditingScreen({ name: `Screen ${screens.length + 1}`, capacity: 140, is_active: true });
                 setIsScreenModalOpen(true);
               }}
+              className="font-bold cursor-pointer"
             >
-              <Plus className="w-3 h-3 mr-1" /> Add Screen
+              <Plus className="w-3.5 h-3.5 mr-1" /> Add Screen
             </Button>
           )}
         </CardHeader>
@@ -251,7 +254,7 @@ export const CinemaMasterPage: React.FC = () => {
                 <TableHead className="pl-3 text-[11px] font-semibold uppercase text-muted-foreground">Screen / Hall Name</TableHead>
                 <TableHead className="text-center text-[11px] font-semibold uppercase text-muted-foreground">Total Capacity</TableHead>
                 <TableHead className="text-center text-[11px] font-semibold uppercase text-muted-foreground">Status</TableHead>
-                {canUpdateScreen && <TableHead className="text-right pr-3 text-[11px] font-semibold uppercase text-muted-foreground">Actions</TableHead>}
+                {(canUpdateScreen || canDeleteScreen) && <TableHead className="text-right pr-3 text-[11px] font-semibold uppercase text-muted-foreground">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -270,18 +273,30 @@ export const CinemaMasterPage: React.FC = () => {
                       <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
                     )}
                   </TableCell>
-                  {canUpdateScreen && (
-                    <TableCell className="text-right pr-3">
-                      <Button
-                        variant="outline"
-                        size="xs"
-                        onClick={() => {
-                          setEditingScreen(screen);
-                          setIsScreenModalOpen(true);
-                        }}
-                      >
-                        <Edit className="w-3 h-3 mr-0.5" /> Edit Screen
-                      </Button>
+                  {(canUpdateScreen || canDeleteScreen) && (
+                    <TableCell className="text-right pr-3 space-x-1">
+                      {canUpdateScreen && (
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          onClick={() => {
+                            setEditingScreen(screen);
+                            setIsScreenModalOpen(true);
+                          }}
+                        >
+                          <Edit className="w-3 h-3 mr-0.5" /> Edit
+                        </Button>
+                      )}
+                      {canDeleteScreen && (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => handleDeleteScreen(screen.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>

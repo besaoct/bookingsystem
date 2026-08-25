@@ -281,9 +281,15 @@ export const bookingService = {
     return dbService.query<CancellationReason>("SELECT * FROM cancellation_reasons WHERE is_active = 1");
   },
 
-  async saveCancellationReason(reason: string): Promise<void> {
+  async saveCancellationReason(reasonData: { id?: number; reason: string; is_active?: boolean } | string): Promise<void> {
     await dbService.init();
-    dbService.run("INSERT INTO cancellation_reasons (reason, is_active) VALUES (?, 1)", [reason]);
+    if (typeof reasonData === 'string') {
+      dbService.run("INSERT INTO cancellation_reasons (reason, is_active) VALUES (?, 1)", [reasonData]);
+    } else if (reasonData.id) {
+      dbService.run("UPDATE cancellation_reasons SET reason = ?, is_active = ? WHERE id = ?", [reasonData.reason, reasonData.is_active !== false ? 1 : 0, reasonData.id]);
+    } else {
+      dbService.run("INSERT INTO cancellation_reasons (reason, is_active) VALUES (?, 1)", [reasonData.reason]);
+    }
   },
 
   async deleteCancellationReason(id: number): Promise<void> {

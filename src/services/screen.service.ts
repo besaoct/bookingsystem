@@ -31,6 +31,11 @@ export const screenService = {
     }
   },
 
+  async deleteScreen(id: number): Promise<void> {
+    await dbService.init();
+    dbService.run("UPDATE screens SET is_active = 0 WHERE id = ?", [id]);
+  },
+
   async getSeatClasses(activeOnly = false): Promise<SeatClass[]> {
     await dbService.init();
     const sql = `SELECT * FROM seat_classes ${activeOnly ? 'WHERE is_active = 1' : ''} ORDER BY display_order ASC`;

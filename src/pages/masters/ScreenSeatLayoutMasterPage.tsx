@@ -24,7 +24,11 @@ interface SeatDialogState {
 
 export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage) => void }> = ({ onNavigate }) => {
   const { hasPermission, user } = useAuthStore();
-  const canUpdate = user?.role === 'SYSTEM_ADMIN' || hasPermission('seat_layout', 'can_update') || hasPermission('seat_layout', 'can_create');
+  const isSystemAdmin = user?.role === 'SYSTEM_ADMIN';
+  const canRead = isSystemAdmin || hasPermission('seat_layout', 'can_read');
+  const canCreate = isSystemAdmin || hasPermission('seat_layout', 'can_create');
+  const canUpdate = isSystemAdmin || hasPermission('seat_layout', 'can_update');
+  const canDelete = isSystemAdmin || hasPermission('seat_layout', 'can_delete');
 
   const [screens, setScreens] = useState<Screen[]>([]);
   const [selectedScreenId, setSelectedScreenId] = useState<number>(1);
@@ -273,7 +277,7 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
             Refresh
           </Button>
 
-          {canUpdate && (
+          {canCreate && (
             <Button variant="default" size="sm" onClick={() => setIsAddRowOpen(true)} className="cursor-pointer font-bold">
               <Plus className="w-3.5 h-3.5 mr-1" />
               Add Row to Screen
@@ -371,7 +375,7 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
 
                 {/* Actions */}
                 <div className="shrink-0 flex items-center space-x-1">
-                  {canUpdate && (
+                  {canDelete && (
                     <Button
                       variant="ghost"
                       size="xs"

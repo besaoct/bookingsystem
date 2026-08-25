@@ -81,6 +81,11 @@ export const pricingService = {
     }
   },
 
+  async deletePricing(id: number): Promise<void> {
+    await dbService.init();
+    dbService.run("DELETE FROM pricing WHERE id = ?", [id]);
+  },
+
   async deleteShowPriceOverride(id: number): Promise<void> {
     await dbService.init();
     dbService.run("DELETE FROM pricing WHERE id = ?", [id]);
