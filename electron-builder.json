@@ -13,6 +13,7 @@
   ],
   "compression": "maximum",
   "asar": true,
+  "npmRebuild": false,
   "mac": {
     "category": "public.app-category.business",
     "icon": "build/icon.icns",
