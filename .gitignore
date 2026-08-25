@@ -38,3 +38,5 @@ release-dist/
 *.db
 *.wasm
 !public/*.wasm
+*.p12
+build/*.p12
