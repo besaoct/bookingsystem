@@ -20,8 +20,11 @@ function createWindow() {
     backgroundColor: '#f8fafc',
   });
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+
+  if (isDev) {
+    mainWindow.loadURL(devUrl);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
