@@ -30,7 +30,6 @@ export interface Cinema {
   cin?: string;
   logo_path?: string;
   header_text?: string;
-  footer_text?: string;
   contact_numbers?: string;
 }
 

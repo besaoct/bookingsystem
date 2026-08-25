@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS cinemas (
   cin TEXT,
   logo_path TEXT,
   header_text TEXT,
-  footer_text TEXT,
   contact_numbers TEXT
 );
 

@@ -13,7 +13,7 @@ export const settingsService = {
     if (existing) {
       dbService.run(
         `UPDATE cinemas 
-         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ?, footer_text = ? 
+         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ? 
          WHERE id = ?`,
         [
           cinema.name ?? '',
@@ -22,14 +22,13 @@ export const settingsService = {
           cinema.cin ?? '',
           cinema.contact_numbers ?? '',
           cinema.header_text ?? '',
-          cinema.footer_text ?? '',
           existing.id,
         ]
       );
     } else {
       dbService.run(
-        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text, footer_text)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           cinema.name ?? '',
           cinema.address ?? '',
@@ -37,7 +36,6 @@ export const settingsService = {
           cinema.cin ?? '',
           cinema.contact_numbers ?? '',
           cinema.header_text ?? '',
-          cinema.footer_text ?? '',
         ]
       );
     }

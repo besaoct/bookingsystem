@@ -31,8 +31,8 @@ INSERT OR IGNORE INTO role_permissions (id, role, module, can_create, can_read, 
 (20, 'OPERATOR', 'users', 0, 0, 0, 0);
 
 -- 3. Cinema Details
-INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, footer_text, contact_numbers) VALUES
-(1, 'BOOKING SYSTEM CINEMAS', 'Main Road, City Center - 787001', '18AJVPD0031E3Z1', 'U92100AS2018PTC018500', 'BOOKING SYSTEM CINEMAS', 'Thank you for visiting! Retain ticket till show ends.', '03752-245678 / +91 9876543210');
+INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers) VALUES
+(1, 'BOOKING SYSTEM CINEMAS', 'Main Road, City Center - 787001', '18AJVPD0031E3Z1', 'U92100AS2018PTC018500', 'BOOKING SYSTEM CINEMAS', '03752-245678 / +91 9876543210');
 
 -- 4. Core Masters & Catalogs
 INSERT OR IGNORE INTO languages (id, name, is_active) VALUES

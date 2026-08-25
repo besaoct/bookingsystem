@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Modal } from '@/components/ui/modal';
-import { Building2, Save, Plus, Edit, Trash2, Armchair, MapPin, FileText, CheckCircle } from 'lucide-react';
+import { Building2, Save, Plus, Edit, Trash2, Armchair, FileText, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const CinemaMasterPage: React.FC = () => {
@@ -183,15 +183,6 @@ export const CinemaMasterPage: React.FC = () => {
                       value={formData.header_text || ''}
                       onChange={(e) => setFormData({ ...formData, header_text: e.target.value })}
                       placeholder="Printed at top of thermal ticket"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Thermal Ticket Footer Notice</label>
-                    <Input
-                      value={formData.footer_text || ''}
-                      onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
-                      placeholder="e.g. Retain ticket till show ends."
                     />
                   </div>
                 </div>
