@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoSrc from '@/assets/logo.svg';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +65,7 @@ export const LoginView: React.FC = () => {
         {/* Header */}
         <div className="bg-primary text-primary-foreground p-5 text-center border-b border-primary/20">
           <div className="w-12 h-12 rounded-xs mx-auto flex items-center justify-center mb-2.5 shadow-sm overflow-hidden">
-            <img src="/logo.svg" alt="Logo" className="w-full h-full object-cover" />
+            <img src={logoSrc} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-base font-bold tracking-wider uppercase">
             Booking System

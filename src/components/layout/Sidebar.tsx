@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoSrc from '@/assets/logo.svg';
 import {
   LayoutDashboard,
   Ticket,
@@ -185,7 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-shell-border px-3">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-xs overflow-hidden shadow-xs">
-            <img src="/logo.svg" alt="Logo" className="w-full h-full object-cover" />
+            <img src={logoSrc} alt="Logo" className="w-full h-full object-cover" />
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
