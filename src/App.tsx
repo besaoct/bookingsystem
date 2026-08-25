@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Header } from '@/components/layout/Header';
 import { Sidebar, NavPage } from '@/components/layout/Sidebar';
+import { TitleBar } from '@/components/layout/TitleBar';
 import { LoginView } from '@/components/auth/LoginModal';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ChevronLeft } from 'lucide-react';
@@ -87,11 +88,17 @@ export const App: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <LoginView />;
+    return (
+      <>
+        <TitleBar />
+        <LoginView />
+      </>
+    );
   }
 
   return (
     <TooltipProvider delayDuration={150}>
+      <TitleBar />
       {/* ── ReqruitBook layout: sidebar sticky h-screen on left, header+content on right ── */}
       <div className="flex h-screen w-screen bg-background text-foreground font-sans overflow-hidden">
 

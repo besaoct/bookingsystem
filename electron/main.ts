@@ -1,23 +1,29 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, nativeTheme } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
+  const isMac = process.platform === 'darwin';
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1100,
     minHeight: 700,
-    title: 'Booking System - Offline Cinema Ticketing & Management',
+    title: 'Booking System',
+    // Hide native title bar; we render our own themed one
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    ...(isMac && { trafficLightPosition: { x: 14, y: 14 } }),
+    frame: isMac, // frameless on Windows/Linux, inset on macOS
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
     },
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#1a56db', // matches --primary hsl(217 88% 46%)
   });
 
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -146,6 +152,16 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
     return false;
   }
 });
+
+// Window control IPC handlers
+ipcMain.on('win:minimize', () => mainWindow?.minimize());
+ipcMain.on('win:maximize', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMaximized()) mainWindow.unmaximize();
+  else mainWindow.maximize();
+});
+ipcMain.on('win:close', () => mainWindow?.close());
+ipcMain.handle('win:is-maximized', () => mainWindow?.isMaximized() ?? false);
 
 // Get available printers
 ipcMain.handle('get-printers', async () => {

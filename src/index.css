@@ -456,3 +456,100 @@
 [data-sonner-toast] * {
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
 }
+
+/* ── Custom Electron Title Bar ────────────────────────────────────────────── */
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 12px;
+  background: hsl(217 88% 40%);
+  color: #fff;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  border-bottom: 1px solid hsl(217 88% 34% / 0.6);
+}
+
+.titlebar-mac {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* leave ~70px on the left for traffic lights */
+  padding-left: 60px;
+}
+
+.titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titlebar-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.titlebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+/* Windows / Linux window control buttons */
+.titlebar-controls {
+  display: flex;
+  align-items: stretch;
+  height: 36px;
+  margin-left: auto;
+}
+
+.titlebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  outline: none;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-btn:hover {
+  background: hsl(217 88% 52%);
+  color: #fff;
+}
+
+.titlebar-btn:active {
+  background: hsl(217 88% 30%);
+}
+
+.titlebar-btn-close:hover {
+  background: #e81123;
+  color: #fff;
+}
+
+.titlebar-btn-close:active {
+  background: #c50e1f;
+}
+
+/* Offset the app content so it starts below the title bar */
+#root {
+  padding-top: 36px;
+}

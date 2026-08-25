@@ -14,6 +14,13 @@ export interface IElectronAPI {
   saveBackupFile: (data: Uint8Array) => Promise<boolean>;
   loadBackupFile: () => Promise<Uint8Array | null>;
   isElectron: boolean;
+  platform: string;
+  windowControls: {
+    minimize: () => void;
+    maximize: () => void;
+    close: () => void;
+    isMaximized: () => Promise<boolean>;
+  };
 }
 
 const electronAPI: IElectronAPI = {
@@ -23,6 +30,14 @@ const electronAPI: IElectronAPI = {
   saveBackupFile: (data: Uint8Array) => ipcRenderer.invoke('save-backup-file', data),
   loadBackupFile: () => ipcRenderer.invoke('load-backup-file'),
   isElectron: true,
+  platform: process.platform,
+  windowControls: {
+    minimize: () => ipcRenderer.send('win:minimize'),
+    maximize: () => ipcRenderer.send('win:maximize'),
+    close: () => ipcRenderer.send('win:close'),
+    isMaximized: () => ipcRenderer.invoke('win:is-maximized'),
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+
