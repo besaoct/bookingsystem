@@ -5,13 +5,15 @@ import { reportService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DatePicker } from '@/components/ui/date-picker';
-import { FileSpreadsheet, Printer, Download } from 'lucide-react';
+import { generateDCRHtml } from '@/lib/dcr-html';
+import { FileSpreadsheet, Printer, Download, Loader2 } from 'lucide-react';
 
 export const DCRReportPage: React.FC = () => {
   const { cinema, fetchSettings } = useSettingsStore();
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [reportData, setReportData] = useState<DCRReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -33,17 +35,43 @@ export const DCRReportPage: React.FC = () => {
     generateReport();
   }, [selectedDate, cinema]);
 
-  const handlePrint = () => {
-    const originalTitle = document.title;
-    document.title = `${cinema?.name || reportData?.cinema_name || 'Cinema'} - DCR Report ${selectedDate}`;
-    if (window.electronAPI?.printCurrentPage) {
-      window.electronAPI.printCurrentPage();
-    } else {
-      window.print();
+  const handlePrint = async () => {
+    if (!reportData) return;
+    setIsPrinting(true);
+    try {
+      const htmlContent = generateDCRHtml({
+        reportData,
+        cinema,
+        orientation: 'landscape',
+        pageSize: 'A4',
+      });
+
+      if (window.electronAPI?.printDCRDocument) {
+        await window.electronAPI.printDCRDocument({
+          htmlContent,
+          orientation: 'landscape',
+          pageSize: 'A4',
+          silent: false,
+        });
+      } else {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 350);
+        } else {
+          window.print();
+        }
+      }
+    } catch (e) {
+      console.error('Print failed:', e);
+    } finally {
+      setIsPrinting(false);
     }
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
   };
 
   const handleExportCSV = () => {
@@ -98,9 +126,24 @@ export const DCRReportPage: React.FC = () => {
             CSV Export
           </Button>
 
-          <Button variant="default" size="sm" onClick={handlePrint} disabled={isLoading || !reportData} className="font-bold">
-            <Printer className="w-3.5 h-3.5 mr-1" />
-            Print Report
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handlePrint}
+            disabled={isLoading || isPrinting || !reportData}
+            className="font-bold"
+          >
+            {isPrinting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Printing...
+              </>
+            ) : (
+              <>
+                <Printer className="w-3.5 h-3.5 mr-1" />
+                Print Report
+              </>
+            )}
           </Button>
         </div>
       </div>

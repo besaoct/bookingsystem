@@ -16,6 +16,19 @@ declare global {
       saveBackupFile: (data: Uint8Array) => Promise<boolean>;
       loadBackupFile: () => Promise<Uint8Array | null>;
       getSqlWasmBinary?: () => Promise<Uint8Array | null>;
+      printDCRDocument?: (options: {
+        htmlContent: string;
+        orientation?: 'portrait' | 'landscape';
+        pageSize?: string;
+        printerName?: string;
+        silent?: boolean;
+      }) => Promise<boolean>;
+      saveDCRPDF?: (options: {
+        htmlContent: string;
+        orientation?: 'portrait' | 'landscape';
+        pageSize?: string;
+        defaultFileName?: string;
+      }) => Promise<boolean>;
       printCurrentPage: () => void;
       isElectron: boolean;
       platform: string;

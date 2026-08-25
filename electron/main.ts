@@ -190,10 +190,150 @@ ipcMain.handle('win:is-maximized', () => mainWindow?.isMaximized() ?? false);
 // Print current page (for DCR report etc.) — triggers native print dialog
 ipcMain.on('print-page', () => {
   if (!mainWindow) return;
-  mainWindow.webContents.print({ silent: false }, (success, errorType) => {
-    if (!success) console.error('Print failed:', errorType);
-  });
+  mainWindow.webContents.print(
+    {
+      silent: false,
+      landscape: true,
+      pageSize: 'A4',
+      margins: { marginType: 'printableArea' },
+    },
+    (success, errorType) => {
+      if (!success) console.error('Print failed:', errorType);
+    }
+  );
 });
+
+// Print dedicated DCR document with custom layout, orientation, and target printer
+ipcMain.handle(
+  'print-dcr-document',
+  async (
+    _event,
+    options: {
+      htmlContent: string;
+      orientation?: 'portrait' | 'landscape';
+      pageSize?: string;
+      printerName?: string;
+      silent?: boolean;
+    }
+  ) => {
+    try {
+      const printWindow = new BrowserWindow({
+        show: false,
+        width: 1024,
+        height: 768,
+        title: 'Print DCR Report',
+        parent: mainWindow || undefined,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          javascript: true,
+        },
+      });
+
+      await printWindow.loadURL('about:blank');
+      await printWindow.webContents.executeJavaScript(
+        `document.open(); document.write(${JSON.stringify(options.htmlContent)}); document.close();`
+      );
+      await new Promise((r) => setTimeout(r, 400));
+
+      const availablePrinters = await printWindow.webContents.getPrintersAsync();
+      const printerNames = availablePrinters.map((p) => p.name);
+      const hasValidPrinter =
+        !!options?.printerName && printerNames.includes(options.printerName);
+
+      return new Promise((resolve) => {
+        printWindow.webContents.print(
+          {
+            silent: hasValidPrinter ? (options?.silent ?? false) : false,
+            deviceName: hasValidPrinter ? options.printerName! : '',
+            landscape: options?.orientation !== 'portrait',
+            pageSize: (options?.pageSize as any) || 'A4',
+            margins: { marginType: 'printableArea' },
+          },
+          (success, failureReason) => {
+            try {
+              if (!printWindow.isDestroyed()) printWindow.close();
+            } catch (_) {}
+            if (!success) {
+              console.error('DCR print failed or cancelled:', failureReason);
+              resolve(false);
+            } else {
+              resolve(true);
+            }
+          }
+        );
+      });
+    } catch (err) {
+      console.error('Error in print-dcr-document handler:', err);
+      return false;
+    }
+  }
+);
+
+// Save DCR Report as high-resolution PDF
+ipcMain.handle(
+  'save-dcr-pdf',
+  async (
+    _event,
+    options: {
+      htmlContent: string;
+      orientation?: 'portrait' | 'landscape';
+      pageSize?: string;
+      defaultFileName?: string;
+    }
+  ) => {
+    try {
+      if (!mainWindow) return false;
+      const printWindow = new BrowserWindow({
+        show: false,
+        width: 1024,
+        height: 768,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          javascript: true,
+        },
+      });
+
+      await printWindow.loadURL('about:blank');
+      await printWindow.webContents.executeJavaScript(
+        `document.open(); document.write(${JSON.stringify(options.htmlContent)}); document.close();`
+      );
+      await new Promise((r) => setTimeout(r, 400));
+
+      const pdfBuffer = await printWindow.webContents.printToPDF({
+        landscape: options?.orientation === 'landscape',
+        pageSize: (options?.pageSize as any) || 'A4',
+        printBackground: true,
+        margins: {
+          top: 0.35,
+          bottom: 0.35,
+          left: 0.35,
+          right: 0.35,
+        },
+      });
+
+      printWindow.close();
+
+      const { filePath } = await dialog.showSaveDialog(mainWindow, {
+        title: 'Save DCR Report as PDF',
+        defaultPath:
+          options?.defaultFileName ||
+          `DCR_Report_${new Date().toISOString().slice(0, 10)}.pdf`,
+        filters: [{ name: 'PDF Document', extensions: ['pdf'] }],
+      });
+
+      if (filePath) {
+        fs.writeFileSync(filePath, pdfBuffer);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error in save-dcr-pdf handler:', err);
+      return false;
+    }
+  }
+);
 
 // Get available printers
 ipcMain.handle('get-printers', async () => {

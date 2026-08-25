@@ -14,6 +14,19 @@ export interface IElectronAPI {
   saveBackupFile: (data: Uint8Array) => Promise<boolean>;
   loadBackupFile: () => Promise<Uint8Array | null>;
   getSqlWasmBinary: () => Promise<Uint8Array | null>;
+  printDCRDocument: (options: {
+    htmlContent: string;
+    orientation?: 'portrait' | 'landscape';
+    pageSize?: string;
+    printerName?: string;
+    silent?: boolean;
+  }) => Promise<boolean>;
+  saveDCRPDF: (options: {
+    htmlContent: string;
+    orientation?: 'portrait' | 'landscape';
+    pageSize?: string;
+    defaultFileName?: string;
+  }) => Promise<boolean>;
   printCurrentPage: () => void;
   isElectron: boolean;
   platform: string;
@@ -32,6 +45,8 @@ const electronAPI: IElectronAPI = {
   saveBackupFile: (data: Uint8Array) => ipcRenderer.invoke('save-backup-file', data),
   loadBackupFile: () => ipcRenderer.invoke('load-backup-file'),
   getSqlWasmBinary: () => ipcRenderer.invoke('get-sql-wasm-binary'),
+  printDCRDocument: (options) => ipcRenderer.invoke('print-dcr-document', options),
+  saveDCRPDF: (options) => ipcRenderer.invoke('save-dcr-pdf', options),
   printCurrentPage: () => ipcRenderer.send('print-page'),
   isElectron: true,
   platform: process.platform,
