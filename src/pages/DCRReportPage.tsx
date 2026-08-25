@@ -253,20 +253,11 @@ export const DCRReportPage: React.FC = () => {
           </div>
         )}
 
-        {/* Footer Signature Block for Accounting */}
-        <div className="mt-8 pt-4 border-t border-border grid grid-cols-3 text-center text-xs text-muted-foreground">
-          <div>
-            <div className="h-8 border-b border-dashed border-border w-40 mx-auto" />
-            <span className="mt-1 block font-semibold text-foreground">Prepared By (Box Office Operator)</span>
-          </div>
-          <div>
-            <div className="h-8 border-b border-dashed border-border w-40 mx-auto" />
-            <span className="mt-1 block font-semibold text-foreground">Verified By (Duty Manager)</span>
-          </div>
-          <div>
-            <div className="h-8 border-b border-dashed border-border w-40 mx-auto" />
-            <span className="mt-1 block font-semibold text-foreground">Authorized Signature (Proprietor)</span>
-          </div>
+        {/* System-Generated Report Notice */}
+        <div className="mt-8 pt-4 border-t border-dashed border-border text-center">
+          <p className="italic text-muted-foreground text-[11px]">
+            * This is a system generated report and does not require a physical signature.
+          </p>
         </div>
       </div>
     </div>
