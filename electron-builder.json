@@ -15,7 +15,7 @@
   "mac": {
     "category": "public.app-category.business",
     "icon": "build/icon.icns",
-    "identity": "Developer ID Application: Masud Shafin Ahmed (63LNPXAB49)",
+    "identity": "Masud Shafin Ahmed (63LNPXAB49)",
     "hardenedRuntime": true,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.inherit.plist",
