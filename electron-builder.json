@@ -15,6 +15,7 @@
   "asar": true,
   "mac": {
     "category": "public.app-category.business",
+    "icon": "build/icon.icns",
     "target": [
       {
         "target": "dmg",
@@ -29,6 +30,7 @@
     "gatekeeperAssess": false
   },
   "win": {
+    "icon": "build/icon.png",
     "target": [
       {
         "target": "nsis",
