@@ -27,14 +27,14 @@
 - **Per-Show Overrides & Class Fallbacks**: Real-time pricing lookup prioritizing custom show-rate rules with global seat class fallbacks.
 
 ### 🖨️ 2. ESC/POS & Thermal Ticket Printing Engine
-- **Configurable Simultaneous Copies**: Print Distributor (`[D]`), Auditorium (`[A]`), and Customer (`[C]`) tickets in single-run queued sequences.
+- **Configurable Simultaneous Copies**: Print Office (`[O]`), Security (`[S]`), and Customer (`[C]`) tickets in single-run queued sequences.
 - **Standard 10.2 cm × 3.5 cm Receipt Dimension**: Pre-formatted layout featuring dynamic header titles, SAC codes (997321), cinema GSTIN/CIN, ticket serials, transaction hash, and timestamp.
 - **Thermal Hardware Support**: Direct integration with standard 80mm POS thermal printers (Citizen, Epson, TVS-E, POS-80).
 
 ### 🪑 3. Dynamic Screen & Seat Layout Designer
 - **Visual Auditorium Builder**: Add and arrange custom rows (A, B, C...) with variable seat counts, aisle gaps, blocked seats, and wheelchair accessibility.
 - **Seat Class & Palette Master**: Assign individual classes (`Gold Plus`, `Gold`, `Platinum`, `Silver`, `Recliner`, `Balcony`) with custom hex color identifiers and display orders.
-- **Zoom & Pan Controls**: Multi-level zoom controls with scale reset for large auditorium configurations.
+- **Zoom & Pan Controls**: Multi-level zoom controls with scale reset for auditorium configurations.
 
 ### 💰 4. Dynamic Pricing & Tax (GST) Masters
 - **Multi-Tier Pricing Engine**: Base pricing rules per seat class + custom rate overrides per movie showtime.
@@ -42,7 +42,7 @@
 - **Rounding Rules**: Configurable Normal (`Math.round`), Floor, or Ceiling rounding logic.
 
 ### 📊 5. Daily Collection Report (DCR) & Audit Trail
-- **Class-wise & Show-wise DCR**: Auto-aggregates opening/closing ticket sequences, gross intake, GST breakup, and distributor share.
+- **Class-wise & Show-wise DCR**: Auto-aggregates opening/closing ticket sequences, gross intake, GST breakup, and statutory summary with computer-generated report certification.
 - **Export & Print**: Instant print view and CSV export for daily box-office reconciliation.
 - **Complete Audit Trail**: Immutable logging of all user activities (logins, bookings, cancellations, role modifications).
 
@@ -127,6 +127,7 @@ The system comes pre-seeded with factory demo accounts:
 | **`F9`** | Instant Confirm & Print Ticket Copies | Box Office POS Counter |
 | **`Esc`** | Clear Active Seat Selection | Box Office POS Counter |
 | **`Cmd / Ctrl + K`** | Global Command Menu & Page Search | Application Wide |
+| **`Cmd / Ctrl + F + P`** | Developer Credentials Quick Access | Login Screen |
 
 ---
 
