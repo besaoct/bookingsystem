@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, nativeTheme, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -123,8 +123,6 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
       </body>
       </html>`;
 
-    // Use about:blank + executeJavaScript to reliably write HTML
-    // (data: URLs can silently fail in packaged Electron apps)
     await printWindow.loadURL('about:blank');
     await printWindow.webContents.executeJavaScript(
       `document.open(); document.write(${JSON.stringify(fullHtml)}); document.close();`
@@ -133,44 +131,49 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
     // Give fonts/layout a moment to settle before printing
     await new Promise((r) => setTimeout(r, 600));
 
-    // Validate the printer name — check if the configured printer is actually installed
+    // Validate the printer name
     const availablePrinters = await printWindow.webContents.getPrintersAsync();
     const printerNames = availablePrinters.map((p) => p.name);
     const hasValidPrinter =
       !!options?.printerName && printerNames.includes(options.printerName);
 
-    if (!hasValidPrinter) {
-      // No valid printer configured — show the window so the OS print dialog
-      // is visible (includes Save as PDF / Download on macOS & Windows)
-      printWindow.show();
-      if (mainWindow) mainWindow.blur();
+    // Any platform with a named thermal printer: direct silent print
+    // (webContents.print with silent:true + deviceName works on both macOS and Windows)
+    if (hasValidPrinter) {
+      return new Promise((resolve) => {
+        printWindow.webContents.print(
+          {
+            silent: options?.silent ?? true,
+            deviceName: options!.printerName!,
+            margins: { marginType: 'none' },
+            pageSize: { width: widthMicrons, height: heightMicrons },
+          },
+          (success, failureReason) => {
+            try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
+            if (!success) console.error('Ticket print failed:', failureReason);
+            resolve(success);
+          }
+        );
+      });
     }
 
-    return new Promise((resolve) => {
-      printWindow.webContents.print(
-        {
-          // Silent only if a valid named printer was found; otherwise show dialog
-          silent: hasValidPrinter ? (options?.silent ?? false) : false,
-          deviceName: hasValidPrinter ? options!.printerName! : '',
-          margins: {
-            marginType: 'none',
-          },
-          pageSize: {
-            width: widthMicrons,
-            height: heightMicrons,
-          },
-        },
-        (success, failureReason) => {
-          printWindow.close();
-          if (!success) {
-            console.error('Print failed:', failureReason);
-            resolve(false);
-          } else {
-            resolve(true);
-          }
-        }
-      );
+    // macOS or no named printer: printToPDF → temp file → open in system viewer
+    // Use A4 so content renders correctly; user selects custom paper in the print dialog
+    const pdfBuffer = await printWindow.webContents.printToPDF({
+      landscape: false,
+      pageSize: 'A4',
+      printBackground: true,
+      margins: { marginType: 'none' },
     });
+
+    try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
+
+    const tmpDir = app.getPath('temp');
+    const tmpFile = path.join(tmpDir, `Ticket_${Date.now()}.pdf`);
+    fs.writeFileSync(tmpFile, pdfBuffer);
+
+    await shell.openPath(tmpFile);
+    return true;
   } catch (err) {
     console.error('Error in print-thermal-tickets handler:', err);
     return false;
@@ -203,7 +206,9 @@ ipcMain.on('print-page', () => {
   );
 });
 
-// Print dedicated DCR document with custom layout, orientation, and target printer
+// Print DCR document: renders to PDF via printToPDF, writes to a temp file,
+// then opens it in the OS default PDF viewer (Preview on macOS, Edge/Adobe on Windows).
+// This is the only approach that reliably triggers the native OS print dialog on all platforms.
 ipcMain.handle(
   'print-dcr-document',
   async (
@@ -219,10 +224,8 @@ ipcMain.handle(
     try {
       const printWindow = new BrowserWindow({
         show: false,
-        width: 1024,
-        height: 768,
-        title: 'Print DCR Report',
-        parent: mainWindow || undefined,
+        width: 1200,
+        height: 850,
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
@@ -234,35 +237,28 @@ ipcMain.handle(
       await printWindow.webContents.executeJavaScript(
         `document.open(); document.write(${JSON.stringify(options.htmlContent)}); document.close();`
       );
-      await new Promise((r) => setTimeout(r, 400));
 
-      const availablePrinters = await printWindow.webContents.getPrintersAsync();
-      const printerNames = availablePrinters.map((p) => p.name);
-      const hasValidPrinter =
-        !!options?.printerName && printerNames.includes(options.printerName);
+      // Wait for fonts and layout to render fully
+      await new Promise((r) => setTimeout(r, 800));
 
-      return new Promise((resolve) => {
-        printWindow.webContents.print(
-          {
-            silent: hasValidPrinter ? (options?.silent ?? false) : false,
-            deviceName: hasValidPrinter ? options.printerName! : '',
-            landscape: options?.orientation !== 'portrait',
-            pageSize: (options?.pageSize as any) || 'A4',
-            margins: { marginType: 'printableArea' },
-          },
-          (success, failureReason) => {
-            try {
-              if (!printWindow.isDestroyed()) printWindow.close();
-            } catch (_) {}
-            if (!success) {
-              console.error('DCR print failed or cancelled:', failureReason);
-              resolve(false);
-            } else {
-              resolve(true);
-            }
-          }
-        );
+      const pdfBuffer = await printWindow.webContents.printToPDF({
+        landscape: options?.orientation !== 'portrait',
+        pageSize: (options?.pageSize as any) || 'A4',
+        printBackground: true,
+        margins: { marginType: 'printableArea' },
       });
+
+      try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
+
+      // Write to a temp file and open in the OS default PDF viewer
+      // macOS: opens in Preview (Cmd+P for print panel)
+      // Windows: opens in Edge / Adobe Reader (Ctrl+P for print dialog)
+      const tmpDir = app.getPath('temp');
+      const tmpFile = path.join(tmpDir, `DCR_Report_${Date.now()}.pdf`);
+      fs.writeFileSync(tmpFile, pdfBuffer);
+
+      await shell.openPath(tmpFile);
+      return true;
     } catch (err) {
       console.error('Error in print-dcr-document handler:', err);
       return false;

@@ -1,4 +1,5 @@
 import { dbService } from '@/db/sqlite-service';
+import { SEED_DATA_SQL } from '@/db/seed';
 import { User, RolePermission, UserRole } from '@/types';
 
 export const ALL_SYSTEM_MODULES: Array<{ id: string; name: string; desc: string }> = [
@@ -134,24 +135,11 @@ export const userService = {
 
   async isInitialSetupCompleted(): Promise<boolean> {
     await dbService.init();
+    if (localStorage.getItem('initial_setup_completed') === 'true') return true;
     const row = dbService.queryOne<{ setting_value: string }>(
       "SELECT setting_value FROM system_settings WHERE setting_key = 'initial_setup_completed'"
     );
     if (row && row.setting_value === 'true') return true;
-    if (localStorage.getItem('initial_setup_completed') === 'true') return true;
-
-    // If the system already has active SYSTEM_ADMIN and OPERATOR accounts, skip first-time setup
-    const hasAdmin = dbService.queryOne<{ count: number }>(
-      "SELECT count(*) as count FROM users WHERE role = 'SYSTEM_ADMIN' AND is_active = 1"
-    )?.count || 0;
-    const hasOperator = dbService.queryOne<{ count: number }>(
-      "SELECT count(*) as count FROM users WHERE role = 'OPERATOR' AND is_active = 1"
-    )?.count || 0;
-
-    if (hasAdmin > 0 && hasOperator > 0) {
-      return true;
-    }
-
     return false;
   },
 
@@ -185,7 +173,10 @@ export const userService = {
   ): Promise<void> {
     await dbService.init();
 
-    // 1. Update/Insert Admin Account
+    // 1. Seed default master data, screen layout, movies, shows, pricing, etc.
+    dbService.exec(SEED_DATA_SQL);
+
+    // 2. Update/Insert Admin Account
     const adminExists = dbService.queryOne<{ id: number }>(
       "SELECT id FROM users WHERE id = 1 OR role = 'SYSTEM_ADMIN' LIMIT 1"
     );
@@ -208,7 +199,7 @@ export const userService = {
       );
     }
 
-    // 2. Update/Insert Operator Account
+    // 3. Update/Insert Operator Account
     const opExists = dbService.queryOne<{ id: number }>(
       "SELECT id FROM users WHERE id = 2 OR role = 'OPERATOR' LIMIT 1"
     );
@@ -231,7 +222,7 @@ export const userService = {
       );
     }
 
-    // 3. Set initial_setup_completed = 'true'
+    // 4. Set initial_setup_completed = 'true'
     const existingSetting = dbService.queryOne<{ id: number }>(
       "SELECT id FROM system_settings WHERE setting_key = 'initial_setup_completed'"
     );

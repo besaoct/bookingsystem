@@ -127,7 +127,7 @@ The system comes pre-seeded with factory demo accounts:
 | **`F9`** | Instant Confirm & Print Ticket Copies | Box Office POS Counter |
 | **`Esc`** | Clear Active Seat Selection | Box Office POS Counter |
 | **`Cmd / Ctrl + K`** | Global Command Menu & Page Search | Application Wide |
-| **`Cmd / Ctrl + F + P`** | Developer Credentials Quick Access | Login Screen |
+| **`Cmd / Ctrl + Shift + F + P`** | Developer Credentials Quick Access | Login Screen |
 
 ---
 

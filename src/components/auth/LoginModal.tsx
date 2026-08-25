@@ -32,7 +32,7 @@ export const LoginView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Secret credentials modal state (Cmd+F+P)
+  // Secret credentials modal state (Cmd+Shift+F+P / Ctrl+Shift+F+P)
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [credentials, setCredentials] = useState<UserCredential[]>([]);
   const [revealedPasswords, setRevealedPasswords] = useState<Record<number, boolean>>({});
@@ -47,32 +47,44 @@ export const LoginView: React.FC = () => {
   };
 
   useEffect(() => {
-    const keysDown = new Set<string>();
+    const activeKeys = new Set<string>();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysDown.add(e.key.toLowerCase());
+      const key = e.key.toLowerCase();
+      activeKeys.add(key);
 
-      const isCmdOrCtrl = e.metaKey || e.ctrlKey || keysDown.has('meta') || keysDown.has('control');
-      const hasF = keysDown.has('f');
-      const hasP = keysDown.has('p');
+      const hasCmdOrCtrl = e.metaKey || e.ctrlKey;
+      const hasShift = e.shiftKey;
+      const hasF = activeKeys.has('f');
+      const hasP = activeKeys.has('p');
 
-      // Trigger on Cmd + F + P or Ctrl + F + P
-      if (isCmdOrCtrl && hasF && hasP) {
+      // Trigger ONLY when Cmd/Ctrl + Shift + F + P are all actively held together
+      if (hasCmdOrCtrl && hasShift && hasF && hasP) {
         e.preventDefault();
+        activeKeys.clear();
         loadCredentials();
         setShowSecretModal(true);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      keysDown.delete(e.key.toLowerCase());
+      activeKeys.delete(e.key.toLowerCase());
+      if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Shift') {
+        activeKeys.clear();
+      }
+    };
+
+    const handleBlur = () => {
+      activeKeys.clear();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
     };
   }, []);
 
@@ -174,7 +186,7 @@ export const LoginView: React.FC = () => {
         </form>
       </div>
 
-      {/* Secret Credentials Modal (Cmd+F+P / Ctrl+F+P) */}
+      {/* Secret Credentials Modal (Cmd+Shift+F+P / Ctrl+Shift+F+P) */}
       <Modal
         isOpen={showSecretModal}
         onClose={() => setShowSecretModal(false)}

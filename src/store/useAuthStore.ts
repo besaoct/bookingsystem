@@ -26,6 +26,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (savedUserId) {
         const user = await userService.getUserById(Number(savedUserId));
         if (user) {
+          await userService.ensureModulePermissions();
           const permissions = await userService.getRolePermissions(user.role);
           set({ user, permissions, isAuthenticated: true, isLoading: false });
           return;

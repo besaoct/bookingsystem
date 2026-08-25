@@ -325,6 +325,7 @@ class SQLiteService {
         const SQL = await this.loadSqlJs();
 
         if (SQL) {
+          let isFreshDb = false;
           const savedData = localStorage.getItem(LOCAL_STORAGE_DB_KEY);
           if (savedData) {
             try {
@@ -333,9 +334,11 @@ class SQLiteService {
             } catch (e) {
               console.error('Failed to load saved database, initializing fresh', e);
               this.db = new SQL.Database();
+              isFreshDb = true;
             }
           } else {
             this.db = new SQL.Database();
+            isFreshDb = true;
           }
 
           // Run schema creation (no-op for existing tables)
@@ -408,9 +411,6 @@ class SQLiteService {
               console.warn('shows migration error:', e);
             }
           }
-
-          // Run declarative seed data (INSERT OR REPLACE — always up to date)
-          this.db!.run(SEED_DATA_SQL);
 
           // Ensure standard role consistency
           try {
@@ -515,6 +515,10 @@ class SQLiteService {
 
     // Insert fresh seed data
     this.db.run(SEED_DATA_SQL);
+    this.db.run(
+      "INSERT OR REPLACE INTO system_settings (setting_key, setting_value, group_name) VALUES ('initial_setup_completed', 'true', 'general')"
+    );
+    localStorage.setItem('initial_setup_completed', 'true');
 
     this.saveToStorage();
     this.isInitialized = true;
