@@ -1,0 +1,458 @@
+/* ==========================================================================
+   Booking System — index.css
+   Single source of truth for colour, radius, typography and surface tokens.
+   Design pattern ported from ReqruitBook, adapted to a blue / navy theme.
+   Rules enforced here:
+     - Brand palette is navy / azure / sky / ice
+     - No gradients
+     - Radius vocabulary is only `rounded-xs` and `rounded-full`
+     - Typography strictly uses Montserrat (--font-sans)
+   ========================================================================== */
+
+@import "tailwindcss";
+
+/* --------------------------------------------------------------------------
+   1. BRAND PALETTE
+   #1a2744  navy        hsl(222 47% 18%)
+   #2b7fff  azure       hsl(213 100% 59%)
+   #7ec8e3  sky         hsl(199 68% 69%)
+   #deeeff  ice         hsl(210 100% 93%)
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Raw brand values */
+  --navy: 222 47% 16%;
+  --navy-soft: 222 38% 24%;
+  --navy-muted: 222 18% 44%;
+  --azure: 217 88% 46%;
+  --azure-deep: 217 85% 36%;
+  --sky: 202 75% 62%;
+  --sky-deep: 202 70% 42%;
+  --ice: 212 75% 94%;
+  --ice-soft: 212 60% 97%;
+
+  /* Semantic surfaces */
+  --background: 210 30% 98%;
+  --foreground: 222 47% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 12%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 12%;
+
+  --primary: 217 88% 46%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 30% 94%;
+  --secondary-foreground: 222 47% 12%;
+
+  --muted: 210 22% 95%;
+  --muted-foreground: 222 14% 46%;
+
+  --accent: 217 88% 46%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 4 62% 48%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 152 46% 38%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 90% 50%;
+  --warning-foreground: 0 0% 100%;
+
+  --info: 202 75% 42%;
+  --info-foreground: 0 0% 100%;
+
+  --border: 213 22% 87%;
+  --input: 213 22% 87%;
+  --ring: 217 88% 46%;
+
+  /* Navigation shell — Deep Primary Brand Blue */
+  --shell: 217 88% 42%;
+  --shell-foreground: 0 0% 100%;
+  --shell-muted: 213 100% 93%;
+  --shell-border: 217 80% 34%;
+  --shell-active: 0 0% 100%;
+  --shell-active-foreground: 217 88% 32%;
+
+  /* Charts — blue-derived, categorical */
+  --chart-1: 213 90% 55%;
+  --chart-2: 199 60% 46%;
+  --chart-3: 222 47% 18%;
+  --chart-4: 213 60% 72%;
+  --chart-5: 199 40% 60%;
+  --chart-6: 222 18% 52%;
+
+  /* The only two radii in the system */
+  --radius-xs: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   2. TAILWIND THEME MAPPING
+   -------------------------------------------------------------------------- */
+
+@theme inline {
+  --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Montserrat', system-ui, -apple-system, sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Brand aliases */
+  --color-navy: hsl(var(--navy));
+  --color-navy-soft: hsl(var(--navy-soft));
+  --color-navy-muted: hsl(var(--navy-muted));
+  --color-azure: hsl(var(--azure));
+  --color-azure-deep: hsl(var(--azure-deep));
+  --color-sky: hsl(var(--sky));
+  --color-sky-deep: hsl(var(--sky-deep));
+  --color-ice: hsl(var(--ice));
+  --color-ice-soft: hsl(var(--ice-soft));
+
+  /* Application shell */
+  --color-shell: hsl(var(--shell));
+  --color-shell-foreground: hsl(var(--shell-foreground));
+  --color-shell-muted: hsl(var(--shell-muted));
+  --color-shell-border: hsl(var(--shell-border));
+  --color-shell-active: hsl(var(--shell-active));
+  --color-shell-active-foreground: hsl(var(--shell-active-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-6: hsl(var(--chart-6));
+
+  /* Radius: only xs and full. sm/md/lg/xl all collapse to xs. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+
+  /* Legacy blue scale kept for any existing component references */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  /* Smooth, airy dropdown shadow */
+  --shadow-dropdown: 0 4px 16px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* --------------------------------------------------------------------------
+   3. BASE
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scrollbar-gutter: stable;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "tnum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button, input, select, textarea, kbd, code, pre, table {
+    font-family: inherit;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Clean focus outlines — none */
+  :focus-visible, :focus {
+    @apply outline-none ring-0 ring-offset-0;
+    outline: none !important;
+  }
+
+  input:focus, input:focus-visible,
+  button:focus, button:focus-visible,
+  textarea:focus, textarea:focus-visible,
+  select:focus, select:focus-visible,
+  [role="combobox"]:focus, [role="combobox"]:focus-visible {
+    outline: none !important;
+  }
+
+  /* Radix scroll-lock must not shift the layout */
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Hide scrollbars while keeping scroll functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Numeric alignment */
+  table, .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. SHARED UTILITIES
+   Centralised so pages never re-invent spacing / surface treatments.
+   -------------------------------------------------------------------------- */
+
+@layer utilities {
+  /* Standard content surface: flat, bordered, no shadow, no gradient */
+  .surface {
+    @apply bg-card text-card-foreground border border-border rounded-xs;
+  }
+
+  .surface-muted {
+    @apply bg-muted/60 border border-border rounded-xs;
+  }
+
+  /* Page rhythm */
+  .page {
+    @apply flex flex-col gap-5;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+
+  /* Definition rows used across detail views */
+  .field-label {
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+  }
+
+  .field-value {
+    @apply text-sm text-foreground;
+  }
+
+  /* Dense UI label size — used throughout POS billing panel */
+  .text-2xs {
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
+  /* Thin, unobtrusive scrollbars */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--navy-muted) / 0.35) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar,
+  .scrollbar-thin *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track,
+  .scrollbar-thin *::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 0;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb,
+  .scrollbar-thin *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--navy-muted) / 0.3);
+    border-radius: 0;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover,
+  .scrollbar-thin *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--navy-muted) / 0.55);
+  }
+
+  /* Global flat scrollbar (no rounding) */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--navy-muted) / 0.4);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--navy-muted) / 0.65);
+  }
+
+  /* Print utilities */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+    body {
+      background: #fff;
+    }
+  }
+
+  .print-only {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. PRINTING CSS FOR REPORTS & THERMAL SLIPS
+   -------------------------------------------------------------------------- */
+
+.dcr-report-sheet {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 5mm;
+  }
+
+  /* Hide app navigation chrome, sidebars, headers, dialog triggers */
+  aside,
+  header,
+  nav,
+  button,
+  .print\:hidden,
+  .no-print,
+  [data-radix-popper-content-wrapper],
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  /* Reset layout constraints for natural multi-page report printing */
+  html, body, #root, main, .h-screen, .h-full, .overflow-hidden, .overflow-y-auto {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .dcr-report-sheet {
+    container-type: inline-size;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Full table dynamic scaling according to context width without wrapping */
+  .dcr-report-sheet table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  .dcr-report-sheet thead {
+    display: table-header-group;
+  }
+
+  .dcr-report-sheet tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Dynamically scale table headers and cells proportionally based on container width */
+  .dcr-report-sheet th,
+  .dcr-report-sheet td {
+    white-space: nowrap !important;
+    font-size: calc(0.62cqw + 2.8px) !important;
+    padding: 0.25cqw 0.35cqw !important;
+    line-height: 1.2 !important;
+    border-color: #94a3b8 !important;
+  }
+
+  /* Ensure all report content, tables, headers, numbers are fully visible and sharp */
+  body * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Screen thermal preview container */
+.thermal-preview-container {
+  width: 10.2cm;
+  min-height: 3.5cm;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 8pt;
+  line-height: 1.15;
+}
+
+/* Strict Montserrat enforcement for Sonner Toasts */
+[data-sonner-toaster],
+[data-sonner-toaster] *,
+[data-sonner-toast],
+[data-sonner-toast] * {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+}

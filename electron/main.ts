@@ -1,0 +1,182 @@
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import path from 'path';
+import fs from 'fs';
+
+let mainWindow: BrowserWindow | null = null;
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1100,
+    minHeight: 700,
+    title: 'Booking System - Offline Cinema Ticketing & Management',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+    },
+    backgroundColor: '#f8fafc',
+  });
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// IPC Handler for Thermal Ticket Printing (10.2 cm x 3.5 cm)
+ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, options?: { silent?: boolean; printerName?: string; widthCm?: number | string; heightCm?: number | string }) => {
+  try {
+    const widthCm = Number(options?.widthCm) || 10.2;
+    const heightCm = Number(options?.heightCm) || 3.5;
+    const widthMicrons = Math.round(widthCm * 10000);
+    const heightMicrons = Math.round(heightCm * 10000);
+
+    const printWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+    });
+
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
+          * {
+            box-sizing: border-box;
+            font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+          }
+          @page {
+            size: ${widthCm}cm ${heightCm}cm;
+            margin: 0;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+            font-size: 8pt;
+            line-height: 1.15;
+            background: #fff;
+            color: #000;
+          }
+          .ticket-slip {
+            width: ${widthCm}cm;
+            height: ${heightCm}cm;
+            max-height: ${heightCm}cm;
+            page-break-after: always;
+            box-sizing: border-box;
+            padding: 2mm 3mm;
+            overflow: hidden;
+            font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+          }
+          .ticket-slip:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+      </html>
+    `;
+
+    await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`);
+
+    return new Promise((resolve) => {
+      printWindow.webContents.print(
+        {
+          silent: options?.silent ?? false,
+          deviceName: options?.printerName || '',
+          margins: {
+            marginType: 'none',
+          },
+          pageSize: {
+            width: widthMicrons,
+            height: heightMicrons,
+          },
+        },
+        (success, failureReason) => {
+          printWindow.close();
+          if (!success) {
+            console.error('Print failed:', failureReason);
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        }
+      );
+    });
+  } catch (err) {
+    console.error('Error in print-thermal-tickets handler:', err);
+    return false;
+  }
+});
+
+// Get available printers
+ipcMain.handle('get-printers', async () => {
+  if (!mainWindow) return [];
+  return mainWindow.webContents.getPrintersAsync();
+});
+
+// Backup & Restore IPC handlers
+ipcMain.handle('save-backup-file', async (_event, data: Uint8Array) => {
+  if (!mainWindow) return false;
+  const { filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Cinema Database Backup',
+    defaultPath: `Booking_System_Backup_${new Date().toISOString().slice(0, 10)}.sqlite`,
+    filters: [{ name: 'SQLite Database', extensions: ['sqlite', 'db'] }],
+  });
+
+  if (filePath) {
+    fs.writeFileSync(filePath, Buffer.from(data));
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('load-backup-file', async () => {
+  if (!mainWindow) return null;
+  const { filePaths } = await dialog.showOpenDialog(mainWindow, {
+    title: 'Restore Cinema Database Backup',
+    filters: [{ name: 'SQLite Database', extensions: ['sqlite', 'db'] }],
+    properties: ['openFile'],
+  });
+
+  if (filePaths && filePaths.length > 0) {
+    const buffer = fs.readFileSync(filePaths[0]);
+    return new Uint8Array(buffer);
+  }
+  return null;
+});
