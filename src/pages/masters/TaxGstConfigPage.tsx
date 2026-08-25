@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Percent, CheckCircle, Save } from 'lucide-react';
+import { Percent, CheckCircle, Save, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const TaxGstConfigPage: React.FC = () => {
@@ -21,9 +21,19 @@ export const TaxGstConfigPage: React.FC = () => {
   const { taxConfig, updateTaxConfig, fetchSettings } = useSettingsStore();
   const [formData, setFormData] = useState<Partial<TaxConfig>>({});
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      await fetchSettings();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchSettings();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -52,11 +62,18 @@ export const TaxGstConfigPage: React.FC = () => {
           </span>
         </div>
 
-        {isSaved && (
-          <span className="text-success text-xs font-bold flex items-center">
-            <CheckCircle className="w-4 h-4 mr-1" /> Settings Saved Successfully
-          </span>
-        )}
+        <div className="flex items-center space-x-2">
+          {isSaved && (
+            <span className="text-success text-xs font-bold flex items-center mr-2">
+              <CheckCircle className="w-4 h-4 mr-1" /> Settings Saved Successfully
+            </span>
+          )}
+
+          <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">

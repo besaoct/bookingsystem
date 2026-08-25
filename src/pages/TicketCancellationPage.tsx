@@ -190,7 +190,7 @@ export const TicketCancellationPage: React.FC = () => {
                       <td className="px-3 py-2.5 font-semibold">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="text-foreground truncate max-w-[200px] cursor-help">
+                            <div className="text-foreground truncate max-w-50 cursor-help">
                               {b.movie_name} {b.movie_type_name && `(${b.movie_type_name})`}
                             </div>
                           </TooltipTrigger>
@@ -206,7 +206,7 @@ export const TicketCancellationPage: React.FC = () => {
                       <td className="px-3 py-2.5 font-bold text-primary">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="truncate max-w-[150px] cursor-help">
+                            <div className="truncate max-w-37.5 cursor-help">
                               {seatsList}
                             </div>
                           </TooltipTrigger>

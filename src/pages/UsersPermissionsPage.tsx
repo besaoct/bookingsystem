@@ -26,6 +26,7 @@ import {
   Pencil,
   KeyRound,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 const MODULES = [
@@ -47,6 +48,7 @@ export const UsersPermissionsPage: React.FC = () => {
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
   const [selectedRole, setSelectedRole] = useState<'OPERATOR' | 'SYSTEM_ADMIN'>('OPERATOR');
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Add User Modal
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -66,6 +68,7 @@ export const UsersPermissionsPage: React.FC = () => {
   const [editError, setEditError] = useState<string | null>(null);
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       await userService.ensureModulePermissions();
       const uList = await userService.getUsers();
@@ -75,6 +78,8 @@ export const UsersPermissionsPage: React.FC = () => {
       await refreshPermissions();
     } catch (e) {
       console.error('Failed to fetch users and permissions:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -294,6 +299,10 @@ export const UsersPermissionsPage: React.FC = () => {
               <Check className="w-3.5 h-3.5 mr-1" /> Updated Successfully
             </span>
           )}
+          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Button variant="default" size="sm" onClick={() => { setAddError(null); setIsAddUserOpen(true); }}>
             <Plus className="w-3.5 h-3.5 mr-1" />
             Add User Account

@@ -3,7 +3,7 @@ import { Booking, Cinema, TicketCopyConfig, TaxConfig } from '@/types';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Printer, CheckCircle, RefreshCw, Copy, FileText } from 'lucide-react';
+import { Printer, CheckCircle, Copy, FileText } from 'lucide-react';
 import { printTickets } from '@/lib/thermal-printer';
 
 interface TicketPreviewModalProps {

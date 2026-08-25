@@ -88,6 +88,11 @@ export const DCRReportPage: React.FC = () => {
             />
           </div>
 
+          <Button variant="outline" size="sm" onClick={generateReport} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+
           <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || !reportData}>
             <Download className="w-3.5 h-3.5 mr-1" />
             CSV Export

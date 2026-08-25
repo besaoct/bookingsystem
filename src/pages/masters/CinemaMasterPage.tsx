@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Modal } from '@/components/ui/modal';
-import { Building2, Save, Plus, Edit, Trash2, Armchair, MapPin, FileText, CheckCircle } from 'lucide-react';
+import { Building2, Save, Plus, Edit, Trash2, Armchair, MapPin, FileText, CheckCircle, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const CinemaMasterPage: React.FC = () => {
@@ -23,6 +23,7 @@ export const CinemaMasterPage: React.FC = () => {
   const [formData, setFormData] = useState<Partial<Cinema>>({});
   const [screens, setScreens] = useState<Screen[]>([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Screen Sub-Master state
   const [isScreenModalOpen, setIsScreenModalOpen] = useState(false);
@@ -33,15 +34,23 @@ export const CinemaMasterPage: React.FC = () => {
     setScreens(scList);
   };
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
       await fetchSettings();
       const directCinema = await settingsService.getCinema();
       if (directCinema) {
         setFormData(directCinema);
       }
       await fetchScreens();
-    };
+    } catch (e) {
+      console.error('Failed to load cinema data:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -59,7 +68,6 @@ export const CinemaMasterPage: React.FC = () => {
     }
 
     await updateCinema(formData);
-
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -92,11 +100,18 @@ export const CinemaMasterPage: React.FC = () => {
           </span>
         </div>
 
-        {isSaved && (
-          <span className="text-success text-xs font-bold flex items-center">
-            <CheckCircle className="w-4 h-4 mr-1" /> Profile Saved Successfully
-          </span>
-        )}
+        <div className="flex items-center space-x-2">
+          {isSaved && (
+            <span className="text-success text-xs font-bold flex items-center mr-2">
+              <CheckCircle className="w-4 h-4 mr-1" /> Profile Saved Successfully
+            </span>
+          )}
+
+          <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

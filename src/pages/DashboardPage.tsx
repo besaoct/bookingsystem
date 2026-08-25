@@ -18,6 +18,7 @@ import {
   IndianRupee,
   PlusCircle,
   FileSpreadsheet,
+  RefreshCw,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -101,6 +102,17 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
         </div>
 
         <div className="flex items-center space-x-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={fetchDashboardData}
+            disabled={isLoading}
+            className="border border-white/40 bg-white/10 hover:bg-white hover:text-primary text-white font-bold transition-all shadow-xs cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+
           {onNavigate && (
             <>
               <Button
@@ -224,7 +236,7 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
                   <div className="flex justify-between items-start">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="text-xs font-bold text-foreground truncate max-w-[180px] cursor-help">
+                        <span className="text-xs font-bold text-foreground truncate max-w-45 cursor-help">
                           {show.movie_name}
                         </span>
                       </TooltipTrigger>
@@ -272,7 +284,7 @@ export const DashboardPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ 
                     <div className="font-semibold text-foreground text-xs">{b.booking_no}</div>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="text-[11px] text-muted-foreground truncate max-w-[140px] cursor-help">
+                        <div className="text-[11px] text-muted-foreground truncate max-w-35 cursor-help">
                           {b.movie_name} ({b.show_name})
                         </div>
                       </TooltipTrigger>

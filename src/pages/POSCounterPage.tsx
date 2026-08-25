@@ -5,9 +5,6 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { SeatMap } from '@/components/seatmap/SeatMap';
 import { TicketPreviewModal } from '@/components/ticket/TicketPreviewModal';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
@@ -207,7 +204,7 @@ export const POSCounterPage: React.FC = () => {
         {/* Screen / Auditorium Select Dropdown */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex-1 min-w-[170px] max-w-[210px]">
+            <div className="flex-1 min-w-42.5 max-w-52.5">
               <Select
                 value={String(selectedScreenId || '')}
                 onValueChange={(val) => setScreenId(Number(val))}
@@ -223,7 +220,7 @@ export const POSCounterPage: React.FC = () => {
                     <SelectItem key={sc.id} value={String(sc.id)}>
                       <div className="flex items-center justify-between w-full space-x-2 min-w-0 truncate">
                         <span className="font-normal truncate">{sc.name}</span>
-                        <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-[highlighted]:text-inherit shrink-0">
+                        <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
                           ({sc.capacity} seats)
                         </span>
                       </div>
@@ -241,7 +238,7 @@ export const POSCounterPage: React.FC = () => {
         {/* Movie Select Dropdown with Internal Icon and Tooltip */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex-1 min-w-[220px] max-w-sm">
+            <div className="flex-1 min-w-55 max-w-sm">
               <Select
                 value={String(selectedMovieId || '')}
                 onValueChange={(val) => setMovieId(Number(val))}
@@ -257,7 +254,7 @@ export const POSCounterPage: React.FC = () => {
                     <SelectItem key={m.id} value={String(m.id)}>
                       <div className="flex items-center justify-between w-full space-x-2 min-w-0 truncate">
                         <span className="font-normal truncate">{m.name}</span>
-                        <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-[highlighted]:text-inherit shrink-0">
+                        <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
                           ({m.language_name || 'Hindi'} • {m.movie_type_name || '2D'})
                         </span>
                       </div>
@@ -275,7 +272,7 @@ export const POSCounterPage: React.FC = () => {
         {/* Show Timing Select Dropdown with Internal Icon and Tooltip */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex-1 min-w-[190px] max-w-xs">
+            <div className="flex-1 min-w-47.5 max-w-xs">
               <Select
                 value={String(selectedShowId || '')}
                 onValueChange={(val) => setShowId(Number(val))}
@@ -292,7 +289,7 @@ export const POSCounterPage: React.FC = () => {
                     <SelectItem key={s.id} value={String(s.id)}>
                       <div className="flex items-center space-x-1.5 min-w-0 truncate">
                         <span className="font-normal truncate">{s.show_name}</span>
-                        <span className="text-xs text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-[highlighted]:text-inherit shrink-0">
+                        <span className="text-xs text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
                           ({s.start_time})
                         </span>
                       </div>
@@ -306,6 +303,19 @@ export const POSCounterPage: React.FC = () => {
             <span>Select Show Timing</span>
           </TooltipContent>
         </Tooltip>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => fetchInitialData()}
+          disabled={isLoading}
+          className="h-8.5 cursor-pointer shrink-0"
+          title="Refresh Shows and Seat Availability"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Main Counter Workspace: Left Seat Map (65%) + Right Billing Panel (35%) */}
@@ -347,7 +357,7 @@ export const POSCounterPage: React.FC = () => {
               <div className="flex justify-between font-bold text-foreground items-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="truncate max-w-[160px] cursor-help">
+                    <span className="truncate max-w-40 cursor-help">
                       {selectedMovie?.name || 'No movie selected'}
                     </span>
                   </TooltipTrigger>
@@ -360,13 +370,13 @@ export const POSCounterPage: React.FC = () => {
                 <span className="shrink-0 font-semibold">{selectedShow?.show_name || 'Show'}</span>
               </div>
               <div className="flex justify-between text-muted-foreground font-semibold items-center text-[11px]">
-                <span className="truncate max-w-[140px]">{selectedScreen?.name || 'Audi 1'}</span>
+                <span className="truncate max-w-35">{selectedScreen?.name || 'Audi 1'}</span>
                 <span className="shrink-0">{selectedShow?.start_time || '--:--'}</span>
               </div>
             </div>
 
             {/* Selected Seats Itemized List */}
-            <div className="flex-1 min-h-[100px] border border-border rounded-xs bg-muted/20 p-2.5 overflow-y-auto">
+            <div className="flex-1 min-h-25 border border-border rounded-xs bg-muted/20 p-2.5 overflow-y-auto">
               <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex justify-between items-center">
                 <span className="flex items-center gap-1.5">
                   <span>SEATS ALLOCATED</span>

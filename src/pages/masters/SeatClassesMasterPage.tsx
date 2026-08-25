@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Armchair, Plus, Edit, Trash2, Tag, CheckCircle, Palette, ArrowRight } from 'lucide-react';
+import { Armchair, Plus, Edit, Trash2, Tag, CheckCircle, Palette, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface SeatClassesMasterPageProps {
@@ -110,6 +110,11 @@ export const SeatClassesMasterPage: React.FC<SeatClassesMasterPageProps> = ({ on
               <CheckCircle className="w-4 h-4 mr-1" /> Saved Successfully
             </span>
           )}
+
+          <Button variant="outline" size="sm" onClick={fetchClasses} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
 
           {canCreate && (
             <Button variant="default" size="sm" onClick={handleOpenCreate} className="font-bold cursor-pointer">
