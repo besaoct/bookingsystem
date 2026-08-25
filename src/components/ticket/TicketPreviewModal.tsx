@@ -150,7 +150,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 cursor-pointer shadow-xs"
             >
               <Printer className="w-3.5 h-3.5 mr-1.5" />
-              {isPrinting ? 'Printing...' : 'PRINT TICKETS (F9)'}
+              {isPrinting ? 'Printing...' : 'PRINT TICKETS'}
             </Button>
           </div>
         </div>
