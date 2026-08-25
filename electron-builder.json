@@ -16,6 +16,11 @@
   "mac": {
     "category": "public.app-category.business",
     "icon": "build/icon.icns",
+    "identity": "besaoct@icloud.com (K8KDXCMX46)",
+    "hardenedRuntime": true,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+    "gatekeeperAssess": false,
     "target": [
       {
         "target": "dmg",
@@ -25,9 +30,7 @@
         "target": "zip",
         "arch": ["arm64", "x64"]
       }
-    ],
-    "hardenedRuntime": false,
-    "gatekeeperAssess": false
+    ]
   },
   "win": {
     "icon": "build/icon.png",
