@@ -15,11 +15,14 @@
   "mac": {
     "category": "public.app-category.business",
     "icon": "build/icon.icns",
-    "identity": "besaoct@icloud.com (K8KDXCMX46)",
+    "identity": "Developer ID Application: Masud Shafin Ahmed (63LNPXAB49)",
     "hardenedRuntime": true,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.inherit.plist",
     "gatekeeperAssess": false,
+    "notarize": {
+      "teamId": "63LNPXAB49"
+    },
     "target": [
       {
         "target": "dmg",
