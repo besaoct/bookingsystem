@@ -1,8 +1,8 @@
 {
-  "name": "cinema-ticketing-system",
+  "name": "bookingsystem",
   "version": "1.0.0",
   "type": "module",
-  "description": "Offline Cinema Ticketing & Management Desktop Application",
+  "description": "Offline Cinema & Venue Ticketing & Management Desktop Application",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",

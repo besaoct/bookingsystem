@@ -1,6 +1,6 @@
-# 🎬 Nakshatra Cinema — Box Office & Ticketing Management System
+# 🎬 Booking System — Box Office & Ticketing Management Suite
 
-> High-performance, offline-capable Cinema & Multiplex Box Office Point-of-Sale (POS), Dynamic Screen & Seat Layout Designer, Thermal Ticket Printing Engine, and GST/Tax Compliance Management Suite.
+> High-performance, offline-capable Box Office Point-of-Sale (POS), Dynamic Screen & Seat Layout Designer, Thermal Ticket Printing Engine, and GST/Tax Compliance Management Suite.
 
 [![Author](https://img.shields.io/badge/Author-besaoct-blue.svg)](https://github.com/besaoct)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
@@ -14,7 +14,7 @@
 
 ## 🌟 Overview
 
-**Nakshatra Cinema Booking System** is an enterprise-grade ticketing and management platform tailored for single-screen cinemas, multiplex auditoriums, and entertainment venues. Built with **React 18**, **TypeScript**, and an embedded **WASM-powered SQLite database (`sql.js`)**, it delivers sub-millisecond offline response times, complete ACID transactional integrity, and seamless hardware integration with thermal receipt printers.
+**Booking System** is an enterprise-grade ticketing and management platform tailored for single-screen cinemas, multiplex auditoriums, and entertainment venues. Built with **React 18**, **TypeScript**, and an embedded **WASM-powered SQLite database (`sql.js`)**, it delivers sub-millisecond offline response times, complete ACID transactional integrity, and seamless hardware integration with thermal receipt printers.
 
 ---
 
