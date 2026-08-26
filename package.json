@@ -1,6 +1,6 @@
 {
   "name": "bookingsystem",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "type": "module",
   "description": "Offline Cinema & Venue Ticketing & Management Desktop Application",
   "author": "besaoct",
@@ -15,7 +15,7 @@
     "electron:dev": "npm run build:electron && concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:build": "npm run build && npm run build:electron && electron-builder",
     "electron:build:mac": "npm run build && npm run build:electron && electron-builder --mac",
-    "electron:build:mas": "npm run build && npm run build:electron && CSC_INSTALLER_LINK=build/installer.p12 CSC_INSTALLER_KEY_PASSWORD=\"Mac@Dev?1:0\" electron-builder --mac mas",
+    "electron:build:mas": "npm run build && npm run build:electron && electron-builder --mac mas",
     "electron:build:win": "npm run build && npm run build:electron && electron-builder --win",
     "electron:build:all": "npm run build && npm run build:electron && electron-builder -mw",
     "preview": "vite preview"
