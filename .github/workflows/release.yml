@@ -60,7 +60,7 @@ jobs:
         run: npx electron-builder --mac mas --publish never
         env:
           CSC_LINK: ${{ secrets.CSC_LINK_MAS || secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD_MAS || secrets.CSC_INSTALLER_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
           CSC_INSTALLER_LINK: ${{ secrets.CSC_INSTALLER_LINK }}
           CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.CSC_INSTALLER_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
         continue-on-error: true
