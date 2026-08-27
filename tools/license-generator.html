@@ -6,25 +6,24 @@
   <title>Booking System — Software License Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
   <style>
     :root {
       --background: hsl(210 30% 98%);
       --foreground: hsl(222 47% 12%);
       --card: #ffffff;
-      --card-header: hsl(210 22% 96%);
       --card-border: hsl(210 20% 88%);
-      --primary: hsl(217 88% 46%);
-      --primary-hover: hsl(217 85% 36%);
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
       --primary-foreground: #ffffff;
       --muted: hsl(210 22% 95%);
       --muted-foreground: hsl(222 14% 46%);
       --input-bg: #ffffff;
       --input-border: hsl(210 18% 82%);
-      --success: hsl(152 46% 38%);
+      --success: #16a34a;
+      --success-hover: #15803d;
       --radius: 6px;
       --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * {
@@ -60,71 +59,36 @@
     }
 
     .card-header {
-      padding: 16px 20px;
-      background: var(--card-header);
-      border-bottom: 1px solid var(--card-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-badge {
-      width: 32px;
-      height: 32px;
+      padding: 24px 20px;
       background: var(--primary);
-      color: #fff;
+      color: #ffffff;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .logo-container {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px auto;
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    .card-header h1 {
+      font-size: 18px;
       font-weight: 700;
-      font-size: 14px;
-    }
-
-    .header-titles h1 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--foreground);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .header-titles p {
-      font-size: 11px;
-      color: var(--muted-foreground);
-      font-weight: 400;
-      margin-top: 2px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      font-weight: 600;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 3px 8px;
-      border-radius: 4px;
+      color: #ffffff;
     }
 
-    .badge-primary {
-      background: rgba(14, 98, 217, 0.1);
-      color: var(--primary);
-      border: 1px solid rgba(14, 98, 217, 0.2);
-    }
-
-    .badge-success {
-      background: rgba(22, 163, 74, 0.1);
-      color: var(--success);
-      border: 1px solid rgba(22, 163, 74, 0.2);
+    .card-header p {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 400;
+      margin-top: 4px;
     }
 
     .card-body {
@@ -156,18 +120,27 @@
       border-radius: var(--radius);
       font-size: 12px;
       font-weight: 400;
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      outline: none !important;
+      box-shadow: none !important;
+      transition: border-color 0.15s ease;
     }
 
     input:focus, select:focus, textarea:focus {
+      outline: none !important;
+      box-shadow: none !important;
       border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(14, 98, 217, 0.15);
     }
 
-    .mono {
-      font-family: var(--font-mono);
-      font-size: 11px;
+    textarea {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 100% !important;
+      min-height: 72px;
+      max-height: 280px;
+      resize: vertical;
+      overflow-x: hidden !important;
+      overflow-y: auto;
+      line-height: 1.4;
     }
 
     .grid-2 {
@@ -184,13 +157,15 @@
       padding: 9px 16px;
       border-radius: var(--radius);
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       transition: all 0.15s ease;
+      outline: none !important;
+      box-shadow: none !important;
     }
 
     button:hover {
@@ -218,23 +193,24 @@
     }
 
     .btn-success:hover {
-      background: hsl(152 46% 32%);
+      background: var(--success-hover);
     }
 
     .result-box {
-      background: rgba(22, 163, 74, 0.05);
-      border: 1px solid rgba(22, 163, 74, 0.25);
+      background: #16a34a;
+      border: 1px solid #15803d;
       border-radius: var(--radius);
       padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      color: #ffffff;
     }
 
     .result-title {
       font-size: 12px;
       font-weight: 600;
-      color: var(--success);
+      color: #ffffff;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -242,13 +218,19 @@
 
     .result-summary {
       font-size: 11px;
-      color: var(--muted-foreground);
+      color: rgba(255, 255, 255, 0.95);
       line-height: 1.5;
     }
 
     .result-summary strong {
-      color: var(--foreground);
+      color: #ffffff;
       font-weight: 600;
+    }
+
+    .result-box textarea {
+      background: #ffffff;
+      color: var(--foreground);
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .action-row {
@@ -259,13 +241,11 @@
 
     .card-footer {
       padding: 12px 20px;
-      background: var(--card-header);
+      background: var(--muted);
       border-top: 1px solid var(--card-border);
       font-size: 10px;
       color: var(--muted-foreground);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      text-align: center;
     }
   </style>
 </head>
@@ -273,16 +253,20 @@
 
   <div class="container">
     <div class="card">
-      <!-- Header -->
+      <!-- Header with Logo and Brand Styling -->
       <div class="card-header">
-        <div class="header-left">
-          <div class="logo-badge">BS</div>
-          <div class="header-titles">
-            <h1>Booking System <span class="badge badge-primary">License Generator</span></h1>
-            <p>Offline Cryptographic Software Activation Suite</p>
-          </div>
+        <div class="logo-container">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+            <rect width="512" height="512" rx="112" fill="#f8fafc" />
+            <path d="M 120 180 C 120 162.3 134.3 148 152 148 L 360 148 C 377.7 148 392 162.3 392 180 L 392 226 C 374.3 226 360 240.3 360 258 C 360 275.7 374.3 290 392 290 L 392 332 C 392 349.7 377.7 364 360 364 L 152 364 C 134.3 364 120 349.7 120 332 L 120 290 C 137.7 290 152 275.7 152 258 C 152 240.3 137.7 226 120 226 Z" fill="#2563eb" />
+            <line x1="220" y1="172" x2="220" y2="340" stroke="#f8fafc" stroke-width="8" stroke-dasharray="14 10" stroke-linecap="round" />
+            <circle cx="304" cy="256" r="44" fill="#f59e0b" />
+            <circle cx="304" cy="256" r="22" fill="#f8fafc" />
+            <path d="M 172 238 L 180 256 L 172 274 L 164 256 Z" fill="#f8fafc" />
+          </svg>
         </div>
-        <span class="badge badge-success">100% Offline</span>
+        <h1>Booking System</h1>
+        <p>Software License Generator • ECDSA P-256 Offline Cryptographic Suite</p>
       </div>
 
       <!-- Body Form -->
@@ -293,13 +277,13 @@
             <label>Developer Private Key (PKCS#8 PEM)</label>
             <span id="keyStatus" style="font-size: 10px; color: var(--muted-foreground); font-weight: 500;">Saved Locally</span>
           </div>
-          <textarea id="privateKeyInput" rows="2" class="mono" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+          <textarea cols="6" rows="4" id="privateKeyInput" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
         </div>
 
         <!-- Machine ID -->
         <div class="form-group">
           <label>Customer Machine ID (from lock screen)</label>
-          <input type="text" id="machineIdInput" class="mono" placeholder="e.g. BS-8F2A-99B1-4CD0-E7A3 or *" required>
+          <input type="text" id="machineIdInput" placeholder="e.g. BS-8F2A-99B1-4CD0-E7A3 or *" required>
         </div>
 
         <!-- Client & Licensee -->
@@ -343,13 +327,13 @@
             License Signed &amp; Generated Successfully
           </div>
           <div class="result-summary" id="resultSummary"></div>
-          <textarea id="outputKey" rows="2" readonly class="mono" style="background: #ffffff;"></textarea>
+          <textarea id="outputKey" readonly placeholder="Base64 Encoded Signed License String"></textarea>
           <div class="action-row">
-            <button type="button" class="btn-success" onclick="downloadLicFile()">
+            <button type="button" class="btn-success" onclick="downloadLicFile()" style="background: #ffffff; color: #16a34a;">
               <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
               Download .lic File
             </button>
-            <button type="button" class="btn-outline" onclick="copyKeyString()">
+            <button type="button" class="btn-outline" onclick="copyKeyString()" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #ffffff;">
               <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
               Copy Key String
             </button>
@@ -359,8 +343,7 @@
 
       <!-- Footer -->
       <div class="card-footer">
-        <span>Zero Internet Required &bull; Runs 100% in Browser</span>
-        <span>ECDSA P-256 (SHA-256)</span>
+        Booking System Software License Generator &bull; Client License Authority
       </div>
     </div>
   </div>
@@ -522,7 +505,7 @@
           <strong>Client:</strong> ${payload.clientName} &nbsp;&bull;&nbsp; 
           <strong>Tier:</strong> ${payload.licenseType.toUpperCase()} &nbsp;&bull;&nbsp; 
           <strong>Expires:</strong> ${payload.expiresAt ? payload.expiresAt.slice(0, 10) : 'LIFETIME'}<br>
-          <strong>Machine ID:</strong> <code style="font-family: var(--font-mono); font-weight:600; color: var(--primary);">${payload.machineId}</code>
+          <strong>Machine ID:</strong> ${payload.machineId}
         `;
         document.getElementById('resultBox').style.display = 'flex';
       } catch (err) {

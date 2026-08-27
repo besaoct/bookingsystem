@@ -297,7 +297,7 @@ export const LicenseActivationView: React.FC<LicenseActivationViewProps> = ({
                       value={rawKeyInput}
                       onChange={(e) => setRawKeyInput(e.target.value)}
                       placeholder="Paste your base64 activation key or JSON license string here..."
-                      className="text-xs mt-2 placeholder:font-normal max-h-64"
+                      className="text-xs mt-2 placeholder:font-normal max-h-64 resize-none w-full max-w-full"
                       disabled={isLoading}
                     />
                   </div>
