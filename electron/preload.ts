@@ -28,6 +28,9 @@ export interface IElectronAPI {
     defaultFileName?: string;
   }) => Promise<boolean>;
   printCurrentPage: () => void;
+  getMachineId: () => Promise<string>;
+  loadLicenseFile: () => Promise<string | null>;
+  saveLicenseFile: (defaultName: string, content: string) => Promise<boolean>;
   isElectron: boolean;
   platform: string;
   windowControls: {
@@ -48,6 +51,9 @@ const electronAPI: IElectronAPI = {
   printDCRDocument: (options) => ipcRenderer.invoke('print-dcr-document', options),
   saveDCRPDF: (options) => ipcRenderer.invoke('save-dcr-pdf', options),
   printCurrentPage: () => ipcRenderer.send('print-page'),
+  getMachineId: () => ipcRenderer.invoke('get-machine-id'),
+  loadLicenseFile: () => ipcRenderer.invoke('load-license-file'),
+  saveLicenseFile: (defaultName, content) => ipcRenderer.invoke('save-license-file', defaultName, content),
   isElectron: true,
   platform: process.platform,
   windowControls: {
@@ -59,4 +65,5 @@ const electronAPI: IElectronAPI = {
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+
 

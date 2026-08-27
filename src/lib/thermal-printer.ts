@@ -30,6 +30,9 @@ declare global {
         defaultFileName?: string;
       }) => Promise<boolean>;
       printCurrentPage: () => void;
+      getMachineId?: () => Promise<string>;
+      loadLicenseFile?: () => Promise<string | null>;
+      saveLicenseFile?: (defaultName: string, content: string) => Promise<boolean>;
       isElectron: boolean;
       platform: string;
       windowControls: {

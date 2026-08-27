@@ -1,6 +1,6 @@
 {
   "name": "bookingsystem",
-  "version": "1.0.28",
+  "version": "1.0.29",
   "type": "module",
   "description": "Offline Cinema & Venue Ticketing & Management Desktop Application",
   "author": "besaoct",
@@ -11,13 +11,20 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:nolicense": "tsc && vite build --mode appstore",
     "build:electron": "tsc -p tsconfig.electron.json && node -e \"fs.writeFileSync('dist-electron/package.json', JSON.stringify({type: 'commonjs'}))\"",
     "electron:dev": "npm run build:electron && concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:build": "npm run build && npm run build:electron && electron-builder",
+    "electron:build:nolicense": "npm run build:nolicense && npm run build:electron && electron-builder",
     "electron:build:mac": "npm run build && npm run build:electron && electron-builder --mac --universal",
-    "electron:build:mas": "npm run build && npm run build:electron && electron-builder --mac mas --universal",
+    "electron:build:mac:nolicense": "npm run build:nolicense && npm run build:electron && electron-builder --mac --universal",
+    "electron:build:mas": "npm run build:nolicense && npm run build:electron && electron-builder --mac mas --universal",
+    "electron:build:mas:licensed": "npm run build && npm run build:electron && electron-builder --mac mas --universal",
     "electron:build:win": "npm run build && npm run build:electron && electron-builder --win",
+    "electron:build:win:nolicense": "npm run build:nolicense && npm run build:electron && electron-builder --win",
     "electron:build:all": "npm run build && npm run build:electron && electron-builder -mw",
+    "license:generate": "node scripts/generate-license.js",
+    "license:keys": "node scripts/generate-keys.js",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking System — Software License Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: hsl(210 30% 98%);
+      --foreground: hsl(222 47% 12%);
+      --card: #ffffff;
+      --card-header: hsl(210 22% 96%);
+      --card-border: hsl(210 20% 88%);
+      --primary: hsl(217 88% 46%);
+      --primary-hover: hsl(217 85% 36%);
+      --primary-foreground: #ffffff;
+      --muted: hsl(210 22% 95%);
+      --muted-foreground: hsl(222 14% 46%);
+      --input-bg: #ffffff;
+      --input-border: hsl(210 18% 82%);
+      --success: hsl(152 46% 38%);
+      --radius: 6px;
+      --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      background: var(--card-header);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-badge {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .header-titles h1 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--foreground);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-titles p {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-primary {
+      background: rgba(14, 98, 217, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(14, 98, 217, 0.2);
+    }
+
+    .badge-success {
+      background: rgba(22, 163, 74, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(22, 163, 74, 0.2);
+    }
+
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted-foreground);
+    }
+
+    input, select, textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--foreground);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(14, 98, 217, 0.15);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      font-family: var(--font-sans);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: 1px solid transparent;
+      padding: 9px 16px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-outline {
+      background: #ffffff;
+      border: 1px solid var(--input-border);
+      color: var(--foreground);
+    }
+
+    .btn-outline:hover {
+      background: var(--muted);
+      border-color: var(--card-border);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    .btn-success:hover {
+      background: hsl(152 46% 32%);
+    }
+
+    .result-box {
+      background: rgba(22, 163, 74, 0.05);
+      border: 1px solid rgba(22, 163, 74, 0.25);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .result-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .result-summary {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      line-height: 1.5;
+    }
+
+    .result-summary strong {
+      color: var(--foreground);
+      font-weight: 600;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .card-footer {
+      padding: 12px 20px;
+      background: var(--card-header);
+      border-top: 1px solid var(--card-border);
+      font-size: 10px;
+      color: var(--muted-foreground);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="card">
+      <!-- Header -->
+      <div class="card-header">
+        <div class="header-left">
+          <div class="logo-badge">BS</div>
+          <div class="header-titles">
+            <h1>Booking System <span class="badge badge-primary">License Generator</span></h1>
+            <p>Offline Cryptographic Software Activation Suite</p>
+          </div>
+        </div>
+        <span class="badge badge-success">100% Offline</span>
+      </div>
+
+      <!-- Body Form -->
+      <div class="card-body">
+        <!-- Private Key Input -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label>Developer Private Key (PKCS#8 PEM)</label>
+            <span id="keyStatus" style="font-size: 10px; color: var(--muted-foreground); font-weight: 500;">Saved Locally</span>
+          </div>
+          <textarea id="privateKeyInput" rows="2" class="mono" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+        </div>
+
+        <!-- Machine ID -->
+        <div class="form-group">
+          <label>Customer Machine ID (from lock screen)</label>
+          <input type="text" id="machineIdInput" class="mono" placeholder="e.g. BS-8F2A-99B1-4CD0-E7A3 or *" required>
+        </div>
+
+        <!-- Client & Licensee -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Client / Cinema Name</label>
+            <input type="text" id="clientNameInput" placeholder="e.g. Grand Multiplex" required>
+          </div>
+          <div class="form-group">
+            <label>Contact Person (Optional)</label>
+            <input type="text" id="licenseeInput" placeholder="e.g. Rajesh Kumar">
+          </div>
+        </div>
+
+        <!-- Type & Days -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label>License Type</label>
+            <select id="licenseTypeSelect" onchange="handleTypeChange()">
+              <option value="subscription">Subscription (Annual / Fixed)</option>
+              <option value="lifetime">Lifetime (Never Expires)</option>
+              <option value="trial">Trial License</option>
+            </select>
+          </div>
+          <div class="form-group" id="daysGroup">
+            <label id="daysLabel">Validity Period (Days)</label>
+            <input type="number" id="daysInput" value="365" min="1">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="button" onclick="generateLicense()" style="width: 100%; margin-top: 4px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          Generate Signed Software License
+        </button>
+
+        <!-- Result Box -->
+        <div id="resultBox" class="result-box" style="display: none;">
+          <div class="result-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            License Signed &amp; Generated Successfully
+          </div>
+          <div class="result-summary" id="resultSummary"></div>
+          <textarea id="outputKey" rows="2" readonly class="mono" style="background: #ffffff;"></textarea>
+          <div class="action-row">
+            <button type="button" class="btn-success" onclick="downloadLicFile()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Download .lic File
+            </button>
+            <button type="button" class="btn-outline" onclick="copyKeyString()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              Copy Key String
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+        <span>Zero Internet Required &bull; Runs 100% in Browser</span>
+        <span>ECDSA P-256 (SHA-256)</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_KEY_STORAGE = 'bookingsystem_dev_private_key';
+    let generatedLicenseDoc = null;
+    let generatedBase64 = '';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem(DEFAULT_KEY_STORAGE);
+      if (saved) {
+        document.getElementById('privateKeyInput').value = saved;
+        document.getElementById('keyStatus').textContent = 'Key Loaded';
+        document.getElementById('keyStatus').style.color = 'var(--success)';
+      } else {
+        document.getElementById('keyStatus').textContent = 'Key Required';
+        document.getElementById('keyStatus').style.color = 'hsl(38 92% 50%)';
+      }
+    });
+
+    document.getElementById('privateKeyInput').addEventListener('input', (e) => {
+      if (e.target.value.trim()) {
+        localStorage.setItem(DEFAULT_KEY_STORAGE, e.target.value.trim());
+        document.getElementById('keyStatus').textContent = 'Saved in Browser Storage';
+        document.getElementById('keyStatus').style.color = 'var(--success)';
+      }
+    });
+
+    function handleTypeChange() {
+      const type = document.getElementById('licenseTypeSelect').value;
+      const daysGroup = document.getElementById('daysGroup');
+      const daysLabel = document.getElementById('daysLabel');
+      const daysInput = document.getElementById('daysInput');
+
+      if (type === 'lifetime') {
+        daysGroup.style.display = 'none';
+      } else if (type === 'trial') {
+        daysGroup.style.display = 'flex';
+        daysLabel.textContent = 'Trial Duration (Days)';
+        daysInput.value = '14';
+      } else {
+        daysGroup.style.display = 'flex';
+        daysLabel.textContent = 'Validity Period (Days)';
+        daysInput.value = '365';
+      }
+    }
+
+    function pemToBinary(pem) {
+      const lines = pem.trim().split(/\r?\n/);
+      const clean = lines.filter(l => !l.startsWith('-----')).join('');
+      const binary = atob(clean);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    function p1363ToDer(p1363Bytes) {
+      const r = p1363Bytes.subarray(0, 32);
+      const s = p1363Bytes.subarray(32, 64);
+      function encodeInt(bytes) {
+        let start = 0;
+        while (start < bytes.length && bytes[start] === 0) start++;
+        const val = bytes.subarray(start);
+        if (val.length === 0) return new Uint8Array([0x02, 0x01, 0x00]);
+        if (val[0] & 0x80) {
+          const out = new Uint8Array(val.length + 3);
+          out[0] = 0x02;
+          out[1] = val.length + 1;
+          out[2] = 0x00;
+          out.set(val, 3);
+          return out;
+        }
+        const out = new Uint8Array(val.length + 2);
+        out[0] = 0x02;
+        out[1] = val.length;
+        out.set(val, 2);
+        return out;
+      }
+      const rEnc = encodeInt(r);
+      const sEnc = encodeInt(s);
+      const totalLen = rEnc.length + sEnc.length;
+      const der = new Uint8Array(2 + totalLen);
+      der[0] = 0x30;
+      der[1] = totalLen;
+      der.set(rEnc, 2);
+      der.set(sEnc, 2 + rEnc.length);
+      return der;
+    }
+
+    async function generateLicense() {
+      const pem = document.getElementById('privateKeyInput').value.trim();
+      const machineId = document.getElementById('machineIdInput').value.trim().toUpperCase();
+      const clientName = document.getElementById('clientNameInput').value.trim();
+      const licensee = document.getElementById('licenseeInput').value.trim();
+      const licenseType = document.getElementById('licenseTypeSelect').value;
+      const days = parseInt(document.getElementById('daysInput').value, 10) || 365;
+
+      if (!pem) {
+        alert('Please paste your Developer Private Key (PKCS#8 PEM).');
+        return;
+      }
+      if (!machineId || !clientName) {
+        alert('Please fill in Customer Machine ID and Client Name.');
+        return;
+      }
+
+      try {
+        const keyBuffer = pemToBinary(pem);
+        const privateKey = await crypto.subtle.importKey(
+          'pkcs8',
+          keyBuffer,
+          { name: 'ECDSA', namedCurve: 'P-256' },
+          false,
+          ['sign']
+        );
+
+        const now = new Date();
+        let expiresAt = null;
+        if (licenseType !== 'lifetime') {
+          const exp = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+          exp.setHours(23, 59, 59, 999);
+          expiresAt = exp.toISOString();
+        }
+
+        const payload = {
+          version: 1,
+          product: 'Booking System Desktop Suite',
+          licenseType,
+          machineId,
+          clientName,
+          licensee,
+          issuedAt: now.toISOString(),
+          expiresAt,
+        };
+
+        const canonicalString = JSON.stringify(payload, Object.keys(payload).sort());
+        const dataBytes = new TextEncoder().encode(canonicalString);
+
+        const p1363Sig = await crypto.subtle.sign(
+          { name: 'ECDSA', hash: { name: 'SHA-256' } },
+          privateKey,
+          dataBytes
+        );
+
+        const derSig = p1363ToDer(new Uint8Array(p1363Sig));
+        let binaryStr = '';
+        for (let i = 0; i < derSig.length; i++) binaryStr += String.fromCharCode(derSig[i]);
+        const signatureBase64 = btoa(binaryStr);
+
+        generatedLicenseDoc = { payload, signature: signatureBase64 };
+        const jsonDoc = JSON.stringify(generatedLicenseDoc, null, 2);
+        generatedBase64 = btoa(jsonDoc);
+
+        document.getElementById('outputKey').value = generatedBase64;
+        document.getElementById('resultSummary').innerHTML = `
+          <strong>Client:</strong> ${payload.clientName} &nbsp;&bull;&nbsp; 
+          <strong>Tier:</strong> ${payload.licenseType.toUpperCase()} &nbsp;&bull;&nbsp; 
+          <strong>Expires:</strong> ${payload.expiresAt ? payload.expiresAt.slice(0, 10) : 'LIFETIME'}<br>
+          <strong>Machine ID:</strong> <code style="font-family: var(--font-mono); font-weight:600; color: var(--primary);">${payload.machineId}</code>
+        `;
+        document.getElementById('resultBox').style.display = 'flex';
+      } catch (err) {
+        console.error(err);
+        alert(`Failed to sign license: ${err.message}`);
+      }
+    }
+
+    function downloadLicFile() {
+      if (!generatedLicenseDoc) return;
+      const json = JSON.stringify(generatedLicenseDoc, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safe = generatedLicenseDoc.payload.clientName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.href = url;
+      a.download = `${safe}_Software_License.lic`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyKeyString() {
+      if (!generatedBase64) return;
+      navigator.clipboard.writeText(generatedBase64);
+      alert('Activation Key copied to clipboard!');
+    }
+  </script>
+</body>
+</html>

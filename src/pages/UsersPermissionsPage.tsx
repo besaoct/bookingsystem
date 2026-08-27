@@ -71,8 +71,8 @@ const MODULES = [
   },
   {
     id: "settings",
-    name: "Printer & System Settings",
-    desc: "Thermal printer name, dimensions, ticket copies",
+    name: "Printer & Ticket Copies",
+    desc: "Thermal printer device, dimensions, invoice series, ticket copies",
   },
   {
     id: "master_others",
@@ -83,6 +83,16 @@ const MODULES = [
     id: "users",
     name: "User Management",
     desc: "Create operator accounts and grant permissions",
+  },
+  {
+    id: "audit_backup",
+    name: "Audit Trail & DB Backup",
+    desc: "View audit logs, export and restore database backups",
+  },
+  {
+    id: "system_settings",
+    name: "System Settings & License",
+    desc: "Software license activation, database re-seed, and full system reset",
   },
 ];
 

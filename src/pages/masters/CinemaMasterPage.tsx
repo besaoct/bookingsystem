@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Modal } from '@/components/ui/modal';
-import { Building2, Save, Plus, Edit, Trash2, Armchair, FileText, CheckCircle } from 'lucide-react';
+import { Building2, Save, Plus, Pencil, Trash2, Armchair, FileText, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const CinemaMasterPage: React.FC = () => {
@@ -369,7 +369,7 @@ export const CinemaMasterPage: React.FC = () => {
                             setIsScreenModalOpen(true);
                           }}
                         >
-                          <Edit className="w-3 h-3 mr-0.5" /> Edit
+                          <Pencil className="w-3 h-3 mr-0.5" /> Edit
                         </Button>
                       )}
                       {canDeleteScreen && (

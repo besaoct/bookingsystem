@@ -1,12 +1,12 @@
 # 🎬 Booking System — Box Office & Ticketing Management Suite
 
-> High-performance, offline-capable Box Office Point-of-Sale (POS), Dynamic Screen & Seat Layout Designer, Thermal Ticket Printing Engine, and GST/Tax Compliance Management Suite.
+> High-performance, offline-capable Box Office Point-of-Sale (POS), Dynamic Screen & Seat Layout Designer, Thermal Ticket Printing Engine, GST/Tax Compliance Management Suite, and Offline Cryptographic Hardware-Bound Licensing.
 
 [![Author](https://img.shields.io/badge/Author-besaoct-blue.svg)](https://github.com/besaoct)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.1.1-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.4.3-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![SQLite WASM](https://img.shields.io/badge/Database-SQL.js%20(WASM)-003B57?logo=sqlite&logoColor=white)](https://sql.js.org/)
 [![Electron](https://img.shields.io/badge/Desktop-Electron%2034-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github)](https://github.com/sponsors/besaoct)
@@ -15,7 +15,7 @@
 
 ## 🌟 Overview
 
-**Booking System** is an enterprise-grade ticketing and management platform tailored for single-screen cinemas, multiplex auditoriums, and entertainment venues. Built with **React 18**, **TypeScript**, and an embedded **WASM-powered SQLite database (`sql.js`)**, it delivers sub-millisecond offline response times, complete ACID transactional integrity, and seamless hardware integration with thermal receipt printers.
+**Booking System** is an enterprise-grade ticketing and management platform tailored for single-screen cinemas, multiplex auditoriums, and entertainment venues. Built with **React 18**, **TypeScript**, and an embedded **WASM-powered SQLite database (`sql.js`)**, it delivers sub-millisecond offline response times, complete ACID transactional integrity, seamless hardware integration with thermal receipt printers, and an unforgeable offline cryptographic licensing engine.
 
 ---
 
@@ -52,6 +52,12 @@
 - **Built-in Security Roles**: `SYSTEM_ADMIN` (full control) and `OPERATOR` (box office counter operations).
 - **Hardened SQLite Engine**: Strictly parameterized SQL statements to eliminate injection vulnerabilities.
 
+### 🛡️ 7. Offline Cryptographic Machine Licensing
+- **Asymmetric ECDSA (P-256 / SHA-256)**: Public key embedded in client binary; private key kept strictly offline by developer.
+- **Hardware Machine ID Binding**: Cryptographically tied to non-volatile host PC hardware (macOS `IOPlatformUUID`, Windows `MachineGuid`/`wmic`, Linux `machine-id`).
+- **Pre-Boot Gatekeeper**: Completely locks application views until an authentic `.lic` file matching the computer's Machine ID is verified.
+- **Full-Software Licensing**: Single license activates the entire host installation without artificial screen or auditorium limits.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -62,15 +68,16 @@
 | **Build Tool** | [Vite 6](https://vitejs.dev/) |
 | **Styling & Design System** | [Tailwind CSS v4](https://tailwindcss.com/) + Radix UI Primitives + Lucide Icons |
 | **State Management** | [Zustand](https://github.com/pmndrs/zustand) |
-| **Embedded Database** | [sql.js (SQLite WebAssembly)](https://sql.js.org/) with `localStorage` snapshotting |
+| **Embedded Database** | [sql.js (SQLite WebAssembly)](https://sql.js.org/) with native IPC disk loading & `localStorage` snapshotting |
 | **Desktop Shell** | [Electron 34](https://www.electronjs.org/) + [electron-builder](https://www.electron.build/) |
+| **Cryptography Engine** | WebCrypto (SubtleCrypto) ECDSA P-256 + SHA-256 Digital Signatures |
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **Node.js**: `v18.0.0` or higher
+- **Node.js**: `v20.0.0` or higher
 - **npm**: `v9.0.0` or higher
 
 ### Installation
@@ -96,15 +103,78 @@
 
 ## 🖥️ Running as Desktop Application (Electron)
 
-To launch the system as a native desktop application with full hardware printer access:
-
 ```bash
 # Run Electron in development mode
 npm run electron:dev
 
-# Build distributable installer for your OS (macOS, Windows, Linux)
-npm run electron:build
+# Build distributable installer for offline clients (requires .lic activation)
+npm run electron:build:mac      # macOS DMG (Universal: Apple Silicon + Intel)
+npm run electron:build:win      # Windows Installer (x64)
+
+# Build for Mac App Store (MAS) (No license file required, purchased via Apple)
+npm run electron:build:mas
 ```
+
+---
+
+## 🔐 Offline Software License Generation (Developer Guide)
+
+The system includes a built-in CLI tool for issuing cryptographically signed software licenses.
+
+### 1. Generating Customer Licenses
+
+Run the `license:generate` CLI script from your terminal:
+
+```bash
+# A. 1-Year Subscription License (365 Days)
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Grand Multiplex" --days 365
+
+# B. Lifetime License (Never Expires)
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Star Cinemas" --lifetime
+
+# C. Custom Trial License (e.g., 7 Days or 30 Days)
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Theaters" --trial 7
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Theaters" --trial --days 30
+
+# D. Developer Master License (Runs on Any PC)
+npm run license:generate -- --machine "*" --client "Master Demo" --lifetime
+```
+
+### 2. Available CLI Flags
+
+| Flag | Description | Default |
+|---|---|---|
+| `--machine`, `-m` | Customer's Host PC Machine ID (e.g. `BS-XXXX-XXXX-XXXX-XXXX` or `*` for all PCs) | **Required** |
+| `--client`, `-c` | Business / Cinema / Client Name (e.g. `"Grand Multiplex"`) | **Required** |
+| `--licensee`, `-u` | Contact Person / Authorized Manager Name | Optional |
+| `--days`, `-d` | Number of days license remains valid | `365` |
+| `--lifetime`, `-l` | Issues a permanent Lifetime License (`expiresAt: null`) | `false` |
+| `--trial [days]` | Issues a Trial License (default: 14 days, or pass custom days) | `false` |
+| `--out`, `-o` | Custom output destination path for `.lic` file | `./[Client]_Software_License.lic` |
+
+### 3. Customer Activation Workflow
+
+```
+Customer PC                          You (Developer)
+────────                         ──────────────
+1. Installs app
+2. Sees Machine ID  ──────────►  3. You run: npm run license:generate
+                                 4. Generates signed [Client].lic file
+5. Receives .lic    ◄──────────  5. You send .lic file (or activation key)
+6. Loads .lic file
+7. Suite Unlocked! (100% Offline)
+```
+
+---
+
+## 📦 Dual Build Targets: Licensed vs. App Store
+
+| Target | Build Command | License Requirement | Use Case |
+|---|---|---|---|
+| **Mac App Store (MAS)** | `npm run electron:build:mas` | **No License Required** | Distributed via Apple App Store with upfront app purchase. |
+| **Standalone (No License)**| `npm run electron:build:nolicense`| **No License Required** | Internal demos / direct purchase without machine keys. |
+| **macOS (Direct Client)** | `npm run electron:build:mac` | **Hardware `.lic` Required** | Direct client sales, SaaS annual renewals, and offline venues. |
+| **Windows (Direct Client)**| `npm run electron:build:win` | **Hardware `.lic` Required** | Direct client sales, SaaS annual renewals, and offline venues. |
 
 ---
 
@@ -117,7 +187,7 @@ The system comes pre-seeded with factory demo accounts:
 | `sysadmin` | `admin123` | **SYSTEM_ADMIN** | Full System & Configuration Access |
 | `operator` | `operator123` | **OPERATOR** | Box Office POS & Ticket Cancellation |
 
-> 💡 **Tip**: You can trigger a factory re-seed at any time via **Audit & Backup → Run Database Re-Seed**.
+> 💡 **Tip**: You can trigger a factory re-seed at any time via **System Settings → Database Initialization & Factory Re-Seed**.
 
 ---
 
@@ -125,6 +195,9 @@ The system comes pre-seeded with factory demo accounts:
 
 | Shortcut | Action | Scope |
 |---|---|---|
+| **`F2`** | Switch to Box Office POS Counter | Application Wide |
+| **`F3`** | Switch to Daily Collection Report (DCR) | Application Wide |
+| **`F4`** | Switch to Ticket Cancellation Screen | Application Wide |
 | **`F9`** | Instant Confirm & Print Ticket Copies | Box Office POS Counter |
 | **`Esc`** | Clear Active Seat Selection | Box Office POS Counter |
 | **`Cmd / Ctrl + K`** | Global Command Menu & Page Search | Application Wide |
@@ -136,36 +209,42 @@ The system comes pre-seeded with factory demo accounts:
 
 ```
 bookingsystem/
+├── .env.appstore             # Build config for Mac App Store (No-License mode)
 ├── electron/                 # Electron main and preload processes
-│   ├── main.ts
-│   └── preload.ts
+│   ├── main.ts               # Window lifecycle, hardware Machine ID query, IPC handlers
+│   └── preload.ts            # Safe contextBridge APIs
+├── scripts/                  # Developer CLI tools
+│   ├── generate-keys.js      # ECDSA P-256 keypair generator (npm run license:keys)
+│   ├── generate-license.js   # Customer license generator (npm run license:generate)
+│   └── test-license.js       # Automated cryptographic test suite
 ├── public/                   # Static assets & WASM binaries
 │   └── sql-wasm.wasm         # SQLite WebAssembly engine
 ├── src/
 │   ├── components/           # Reusable UI & Business Components
-│   │   ├── auth/             # Login and user modals
-│   │   ├── layout/           # Header, Sidebar, CommandMenu
+│   │   ├── auth/             # Login, first-time setup, and permission guards
+│   │   ├── layout/           # TitleBar, Header, Sidebar, CommandMenu
+│   │   ├── license/          # LicenseActivationView (Pre-boot gatekeeper)
 │   │   ├── seatmap/          # Interactive visual seat grid
 │   │   ├── ticket/           # Thermal ticket preview & printing
-│   │   └── ui/               # Radix UI design system primitives
+│   │   └── ui/               # Radix UI design system primitives & TimePicker
 │   ├── db/                   # Database Layer
-│   │   ├── schema.sql        # Full DDL SQLite schema
 │   │   ├── seed.ts           # Factory seed data
 │   │   └── sqlite-service.ts # SQL.js WASM service & auto-migrations
-│   ├── lib/                  # Business Utilities & Tax Engines
+│   ├── lib/                  # Business Utilities & Cryptography
+│   │   ├── license-crypto.ts # WebCrypto ECDSA P-256 verification engine
 │   │   ├── tax-calculator.ts # GST & Service Charge calculation algorithms
 │   │   ├── thermal-printer.ts# ESC/POS Thermal formatting
 │   │   └── utils.ts          # Formatting & styling utilities
 │   ├── pages/                # Application Views
-│   │   ├── masters/          # Movie, Screen, Timing, Pricing, Tax & Lookup Masters
+│   │   ├── masters/          # Movie, Cinema, ShowTiming, Pricing, Tax & Lookup Masters
 │   │   ├── AuditBackupPage.tsx
 │   │   ├── DashboardPage.tsx
 │   │   ├── DCRReportPage.tsx
 │   │   ├── POSCounterPage.tsx
-│   │   ├── SystemSettingsPage.tsx
+│   │   ├── SystemSettingsPage.tsx # System preferences & software license card
 │   │   ├── TicketCancellationPage.tsx
 │   │   └── UsersPermissionsPage.tsx
-│   ├── services/             # Domain Services (Booking, Movie, Screen, Pricing, etc.)
+│   ├── services/             # Domain Services (License, Booking, Movie, Screen, Pricing, etc.)
 │   ├── store/                # Zustand State Stores (Auth, Booking, Settings)
 │   ├── types/                # Strict TypeScript Type Definitions
 │   ├── App.tsx               # Root component & security route guards
@@ -185,32 +264,6 @@ If you find this project valuable and would like to support its ongoing developm
 
 * **Sponsor Link:** [https://github.com/sponsors/besaoct](https://github.com/sponsors/besaoct)
 * For corporate sponsorships, dedicated feature requests, custom cinema POS hardware integrations, and commercial licensing, contact **[besaoct](https://github.com/besaoct)** directly.
-
----
-
-## 🍎 Mac App Store (MAS) Publishing Guide
-
-This application can be packaged and published directly to the **Apple Mac App Store (MAS)**.
-
-### 1. Prerequisites
-* **Apple Developer Program Account** ($99/yr)
-* **Certificates generated in Apple Developer Portal**:
-  * `3rd Party Mac Developer Application: <Name> (<TeamID>)` (for signing the binary)
-  * `3rd Party Mac Developer Installer: <Name> (<TeamID>)` (for signing the `.pkg` package)
-* **Mac App Store Provisioning Profile**:
-  * Create a Mac App Store Provisioning Profile matching `com.vecvel.bookingsystem` and place it at `build/embedded.provisionprofile`.
-
-### 2. Sandbox Entitlements
-Mac App Store requires App Sandbox compliance. The project includes pre-configured entitlement files:
-* [`build/entitlements.mas.plist`](build/entitlements.mas.plist) — Sandbox permissions for file access, printing (`com.apple.security.print`), JIT, and networking.
-* [`build/entitlements.mas.inherit.plist`](build/entitlements.mas.inherit.plist) — Child process inheritance.
-
-### 3. Build Mac App Store Package
-Run the dedicated MAS build command:
-```bash
-npm run electron:build:mas
-```
-The output `.pkg` installer will be generated in the `release/mas/` directory, ready to be uploaded to **App Store Connect** using **Transporter** or the `xcrun altool` CLI.
 
 ---
 

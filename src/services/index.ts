@@ -7,3 +7,4 @@ export * from './report.service';
 export * from './user.service';
 export * from './settings.service';
 export * from './audit.service';
+export * from './license.service';

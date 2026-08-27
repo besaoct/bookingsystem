@@ -1,5 +1,5 @@
 import initSqlJs, { Database, SqlJsStatic } from 'sql.js';
-import { SEED_DATA_SQL } from './seed';
+import { SEED_DATA_SQL, CLEAN_SYSTEM_BASELINE_SQL } from './seed';
 
 const SCHEMA_SQL = `
 -- Users & Permissions
@@ -275,6 +275,20 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   details TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS software_license (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  license_key TEXT NOT NULL,
+  machine_id TEXT NOT NULL,
+  client_name TEXT NOT NULL,
+  licensee TEXT,
+  license_type TEXT NOT NULL,
+  issued_at TEXT NOT NULL,
+  expires_at TEXT,
+  signature TEXT NOT NULL,
+  last_verified_at TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
 `;
 
 const LOCAL_STORAGE_DB_KEY = 'booking_system_db';
@@ -518,6 +532,80 @@ class SQLiteService {
       "INSERT OR REPLACE INTO system_settings (setting_key, setting_value, group_name) VALUES ('initial_setup_completed', 'true', 'general')"
     );
     localStorage.setItem('initial_setup_completed', 'true');
+
+    this.saveToStorage();
+    this.isInitialized = true;
+    this.initPromise = Promise.resolve();
+  }
+
+  public async fullSystemReset(): Promise<void> {
+    // 1. Preserve existing software license if present
+    let existingLicense: any = null;
+    try {
+      if (this.db) {
+        const rows = this.query<any>('SELECT * FROM software_license ORDER BY id DESC LIMIT 1');
+        if (rows && rows.length > 0) {
+          existingLicense = rows[0];
+        }
+      }
+    } catch (_) {}
+
+    // 2. Wipe stored database and all authentication/setup states
+    localStorage.removeItem(LOCAL_STORAGE_DB_KEY);
+    localStorage.removeItem('initial_setup_completed');
+    localStorage.removeItem('booking_system_user_id');
+    localStorage.removeItem('bookingsystem_session');
+    localStorage.removeItem('auth_user');
+    sessionStorage.clear();
+
+    const SQL = await this.loadSqlJs();
+
+    // 3. Create fresh blank database
+    this.db = new SQL.Database();
+
+    // 4. Run full schema
+    this.db.run(SCHEMA_SQL);
+
+    // 5. Apply column migrations
+    const colMigrations = [
+      "ALTER TABLE languages ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+      "ALTER TABLE movie_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+      "ALTER TABLE categories ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+    ];
+    for (const m of colMigrations) {
+      try { this.db.run(m); } catch (_) {}
+    }
+
+    // 6. Insert clean baseline ONLY (NO demo movies, NO shows, NO distributors, NO screens, NO seats, NO bookings)
+    this.db.run(CLEAN_SYSTEM_BASELINE_SQL);
+
+    // 7. Ensure initial_setup_completed is NOT marked in system_settings
+    try {
+      this.db.run("DELETE FROM system_settings WHERE setting_key = 'initial_setup_completed'");
+    } catch (_) {}
+
+    // 8. Restore the existing software license if it existed
+    if (existingLicense) {
+      try {
+        this.run(
+          `INSERT INTO software_license (license_key, machine_id, client_name, licensee, license_type, issued_at, expires_at, signature, last_verified_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            existingLicense.license_key,
+            existingLicense.machine_id,
+            existingLicense.client_name,
+            existingLicense.licensee || '',
+            existingLicense.license_type,
+            existingLicense.issued_at,
+            existingLicense.expires_at || null,
+            existingLicense.signature,
+            existingLicense.last_verified_at || new Date().toISOString(),
+          ]
+        );
+      } catch (err) {
+        console.warn('Could not restore software license after full reset:', err);
+      }
+    }
 
     this.saveToStorage();
     this.isInitialized = true;

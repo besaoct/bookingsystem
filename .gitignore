@@ -40,3 +40,9 @@ release-dist/
 !public/*.wasm
 *.p12
 build/*.p12
+
+# License Cryptography & Keys
+.license-keys/
+*.private.key
+*.lic
+

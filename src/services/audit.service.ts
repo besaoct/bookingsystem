@@ -38,4 +38,8 @@ export const auditService = {
   async resetDatabaseToSeed(): Promise<void> {
     await dbService.resetToDefaultSeed();
   },
+
+  async fullSystemReset(): Promise<void> {
+    await dbService.fullSystemReset();
+  },
 };

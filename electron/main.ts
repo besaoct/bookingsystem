@@ -1,6 +1,50 @@
 import { app, BrowserWindow, ipcMain, dialog, nativeTheme, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
+import os from 'os';
+import { execSync } from 'child_process';
+
+function getRawMachineId(): string {
+  try {
+    if (process.platform === 'darwin') {
+      const output = execSync('ioreg -rd1 -c IOPlatformExpertDevice', { timeout: 3000 }).toString();
+      const match = output.match(/"IOPlatformUUID"\s*=\s*"([^"]+)"/i);
+      if (match && match[1]) return match[1];
+    } else if (process.platform === 'win32') {
+      try {
+        const output = execSync('reg query "HKLM\\SOFTWARE\\Microsoft\\Cryptography" /v MachineGuid', { timeout: 3000 }).toString();
+        const match = output.match(/MachineGuid\s+REG_SZ\s+([a-zA-Z0-9-]+)/i);
+        if (match && match[1]) return match[1];
+      } catch {
+        const output = execSync('wmic csproduct get uuid', { timeout: 3000 }).toString();
+        const lines = output.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length > 1) return lines[1];
+      }
+    } else if (process.platform === 'linux') {
+      if (fs.existsSync('/etc/machine-id')) {
+        return fs.readFileSync('/etc/machine-id', 'utf8').trim();
+      }
+      if (fs.existsSync('/var/lib/dbus/machine-id')) {
+        return fs.readFileSync('/var/lib/dbus/machine-id', 'utf8').trim();
+      }
+    }
+  } catch (err) {
+    console.warn('Native machine ID query failed, falling back to CPU/network signature:', err);
+  }
+
+  // Fallback to stable system properties
+  const cpuInfo = os.cpus().map(c => c.model).join(',');
+  const hostname = os.hostname();
+  const arch = os.arch();
+  return `${hostname}-${arch}-${cpuInfo}`;
+}
+
+function getFormattedMachineId(): string {
+  const raw = getRawMachineId();
+  const hash = crypto.createHash('sha256').update(raw).digest('hex').toUpperCase();
+  return `BS-${hash.slice(0, 4)}-${hash.slice(4, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}`;
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -392,3 +436,48 @@ ipcMain.handle('get-sql-wasm-binary', async () => {
   }
   return null;
 });
+
+// IPC Handler to retrieve Hardware Machine ID
+ipcMain.handle('get-machine-id', async () => {
+  return getFormattedMachineId();
+});
+
+// IPC Handler to load a .lic license file via native OS open dialog
+ipcMain.handle('load-license-file', async () => {
+  if (!mainWindow) return null;
+  const { filePaths } = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select Software License File (.lic)',
+    filters: [
+      { name: 'Booking System License (*.lic, *.json)', extensions: ['lic', 'json', 'txt'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+    properties: ['openFile'],
+  });
+
+  if (filePaths && filePaths.length > 0) {
+    try {
+      const content = fs.readFileSync(filePaths[0], 'utf8');
+      return content;
+    } catch (err) {
+      console.error('Failed to read selected license file:', err);
+    }
+  }
+  return null;
+});
+
+// IPC Handler to save a .lic license file via native OS save dialog
+ipcMain.handle('save-license-file', async (_event, defaultName: string, content: string) => {
+  if (!mainWindow) return false;
+  const { filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save License File',
+    defaultPath: defaultName || 'Booking_System_Software_License.lic',
+    filters: [{ name: 'License File (*.lic)', extensions: ['lic'] }],
+  });
+
+  if (filePath) {
+    fs.writeFileSync(filePath, content, 'utf8');
+    return true;
+  }
+  return false;
+});
+

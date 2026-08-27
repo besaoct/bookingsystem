@@ -4,7 +4,7 @@ import { auditService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Database, Download, Upload, RotateCcw, ShieldCheck, FileText } from 'lucide-react';
+import { Database, Download, Upload, ShieldCheck, FileText } from 'lucide-react';
 
 export const AuditBackupPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -14,7 +14,7 @@ export const AuditBackupPage: React.FC = () => {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const lList = await auditService.getLogs(50);
+      const lList = await auditService.getLogs(100);
       setLogs(lList);
     } catch (e) {
       console.error('Failed to fetch audit logs:', e);
@@ -68,41 +68,8 @@ export const AuditBackupPage: React.FC = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  const [isResetting, setIsResetting] = useState(false);
-
-  const handleResetSeed = async () => {
-    if (
-      !window.confirm(
-        '⚠️ ARE YOU SURE YOU WANT TO RE-SEED THE DATABASE?\n\n' +
-        'This will reset SQLite data to defaults:\n' +
-        '• Screen 1 with exact 10 Seats (Row A: 1-3, Row B: 1-3, Row C: 1-4)\n' +
-        '• Distributors (GOENKA ENTERPRISES, Sony, YRF, etc.)\n' +
-        '• Movies (Spider-Man 3D, Kalki 3D, Stree 2)\n' +
-        '• Show Timings & Dynamic Pricing\n' +
-        '• Clean Ticket Copies (D, A, C)\n' +
-        '• Default System Admin & Operator accounts\n\n' +
-        'Click OK to proceed.'
-      )
-    ) {
-      return;
-    }
-
-    setIsResetting(true);
-    try {
-      await auditService.resetDatabaseToSeed();
-      setStatusMessage('Database reseeded successfully with 10-seat layout and default masters!');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1200);
-    } catch (e) {
-      console.error('Failed to reseed database:', e);
-      setStatusMessage('Error: Failed to reseed database.');
-      setIsResetting(false);
-    }
-  };
-
   return (
-    <div className="flex flex-col h-full overflow-hidden p-4 gap-4 bg-muted/40 select-none">
+    <div className="flex flex-col h-full overflow-hidden p-4 gap-4 bg-muted/40 select-none font-sans">
       {/* Top Header */}
       <div className="bg-card border border-border rounded-xs p-3 flex items-center justify-between shrink-0 shadow-xs">
         <div className="flex items-center space-x-2">
@@ -120,40 +87,9 @@ export const AuditBackupPage: React.FC = () => {
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
-        {/* Left Column: Backup / Restore / Reset Controls */}
+        {/* Left Column: Backup / Restore Controls */}
         <div className="space-y-4 overflow-y-auto">
-          {/* Card 1: Factory Re-Seed (Prominent) */}
-          <Card className="border-amber-500/40 bg-card shadow-xs">
-            <CardHeader className="p-3 bg-amber-500/10 border-b border-amber-500/20">
-              <CardTitle className="text-xs uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-1.5">
-                <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span>Re-Seed Database</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3 text-xs">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Resets the SQLite database to fresh factory seed data:
-              </p>
-              <ul className="text-2xs text-muted-foreground list-disc list-inside space-y-1 bg-muted/40 p-2 rounded-xs border border-border">
-                <li>Exact 10 Seats: A (1-3), B (1-3), C (1-4)</li>
-                <li>Distributors: GOENKA ENTERPRISES, Sony, etc.</li>
-                <li>Movies, Shows, Pricing &amp; GST Rules</li>
-                <li>Default Admin &amp; Operator Accounts</li>
-              </ul>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleResetSeed}
-                disabled={isResetting}
-                className="w-full font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer shadow-xs"
-              >
-                <RotateCcw className={`w-3.5 h-3.5 mr-1.5 ${isResetting ? 'animate-spin' : ''}`} />
-                {isResetting ? 'Reseeding Database...' : 'Run Database Re-Seed'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Card 2: Export Backup */}
+          {/* Card 1: Export Backup */}
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-3 bg-muted/40 border-b border-border">
               <CardTitle className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center space-x-1.5">
@@ -162,16 +98,16 @@ export const AuditBackupPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3 text-xs">
-              <p className="text-xs text-muted-foreground">
-                Downloads the complete `.sqlite` database file with all bookings and settings.
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Creates a complete offline <code>.sqlite</code> snapshot containing all movies, seat layouts, ticket sales, revenue records, and masters.
               </p>
-              <Button variant="outline" size="sm" onClick={handleExportBackup} className="w-full font-bold cursor-pointer">
-                <Download className="w-3.5 h-3.5 mr-1" /> Export Backup File
+              <Button variant="default" size="sm" onClick={handleExportBackup} className="w-full font-bold cursor-pointer shadow-xs">
+                <Download className="w-3.5 h-3.5 mr-1.5" /> Export Database (.sqlite)
               </Button>
             </CardContent>
           </Card>
 
-          {/* Card 3: Restore Backup */}
+          {/* Card 2: Restore Backup */}
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-3 bg-muted/40 border-b border-border">
               <CardTitle className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center space-x-1.5">
@@ -180,10 +116,10 @@ export const AuditBackupPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3 text-xs">
-              <p className="text-xs text-muted-foreground">
-                Restore an existing `.sqlite` or `.db` backup file.
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Restore an existing <code>.sqlite</code> or <code>.db</code> backup file previously exported from this system.
               </p>
-              <label className="inline-flex w-full items-center justify-center font-semibold transition-colors border border-input bg-card text-foreground hover:bg-muted rounded-xs h-9 px-3 text-xs cursor-pointer">
+              <label className="inline-flex w-full items-center justify-center font-semibold transition-colors border border-input bg-card text-foreground hover:bg-muted rounded-xs h-9 px-3 text-xs cursor-pointer shadow-xs">
                 <Upload className="w-3.5 h-3.5 mr-1.5 text-success" />
                 <span>Select Backup File...</span>
                 <input
@@ -204,7 +140,9 @@ export const AuditBackupPage: React.FC = () => {
               <FileText className="w-4 h-4 text-primary" />
               <span className="uppercase tracking-wider">SYSTEM AUDIT TRAIL LOGS</span>
             </div>
-
+            <span className="text-3xs text-muted-foreground font-medium">
+              Showing last {logs.length} events
+            </span>
           </div>
 
           <div className="flex-1 overflow-auto">
@@ -226,7 +164,7 @@ export const AuditBackupPage: React.FC = () => {
                     <td className="px-3 py-2.5">
                       <Badge
                         variant={
-                          l.action.includes('CANCEL') || l.action.includes('DELETE')
+                          l.action.includes('CANCEL') || l.action.includes('DELETE') || l.action.includes('RESET')
                             ? 'destructive'
                             : l.action.includes('CREATE') || l.action.includes('UPDATE')
                             ? 'blue'

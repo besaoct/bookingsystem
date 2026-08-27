@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Film, Plus, Trash2, Edit } from 'lucide-react';
+import { Film, Plus, Trash2, Pencil } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const MovieMasterPage: React.FC = () => {
@@ -33,6 +33,14 @@ export const MovieMasterPage: React.FC = () => {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState<Partial<Movie> | null>(null);
+
+  // Quick-Add Sub-Modal State
+  const [quickAddType, setQuickAddType] = useState<'distributor' | 'language' | 'movie_type' | 'category' | null>(null);
+  const [quickAddName, setQuickAddName] = useState('');
+  const [quickAddContact, setQuickAddContact] = useState('');
+  const [quickAddPhone, setQuickAddPhone] = useState('');
+  const [quickAddError, setQuickAddError] = useState('');
+  const [isSubmittingQuickAdd, setIsSubmittingQuickAdd] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -103,6 +111,89 @@ export const MovieMasterPage: React.FC = () => {
     }
   };
 
+  // Quick-Add Handlers
+  const handleOpenQuickAdd = (type: 'distributor' | 'language' | 'movie_type' | 'category') => {
+    setQuickAddType(type);
+    setQuickAddName('');
+    setQuickAddContact('');
+    setQuickAddPhone('');
+    setQuickAddError('');
+  };
+
+  const handleCloseQuickAdd = () => {
+    setQuickAddType(null);
+    setQuickAddName('');
+    setQuickAddContact('');
+    setQuickAddPhone('');
+    setQuickAddError('');
+  };
+
+  const handleSaveQuickAdd = async () => {
+    const cleanName = quickAddName.trim();
+    if (!cleanName) {
+      setQuickAddError('Name is required.');
+      return;
+    }
+
+    setIsSubmittingQuickAdd(true);
+    setQuickAddError('');
+    try {
+      if (quickAddType === 'distributor') {
+        await movieService.saveDistributor({
+          name: cleanName,
+          contact_person: quickAddContact.trim() || undefined,
+          phone: quickAddPhone.trim() || undefined,
+          is_active: true,
+        });
+        const dList = await movieService.getDistributors();
+        setDistributors(dList);
+        const created = dList.find((d) => d.name.toLowerCase() === cleanName.toLowerCase());
+        if (created) {
+          setEditingMovie((prev) => (prev ? { ...prev, distributor_id: created.id } : prev));
+        }
+      } else if (quickAddType === 'language') {
+        await movieService.saveLanguage({
+          name: cleanName,
+          is_active: true,
+        });
+        const lList = await movieService.getLanguages();
+        setLanguages(lList);
+        const created = lList.find((l) => l.name.toLowerCase() === cleanName.toLowerCase());
+        if (created) {
+          setEditingMovie((prev) => (prev ? { ...prev, language_id: created.id } : prev));
+        }
+      } else if (quickAddType === 'movie_type') {
+        await movieService.saveMovieType({
+          name: cleanName,
+          is_active: true,
+        });
+        const mtList = await movieService.getMovieTypes();
+        setMovieTypes(mtList);
+        const created = mtList.find((mt) => mt.name.toLowerCase() === cleanName.toLowerCase());
+        if (created) {
+          setEditingMovie((prev) => (prev ? { ...prev, movie_type_id: created.id } : prev));
+        }
+      } else if (quickAddType === 'category') {
+        await movieService.saveCategory({
+          name: cleanName,
+          is_active: true,
+        });
+        const cList = await movieService.getCategories();
+        setCategories(cList as any);
+        const created = cList.find((c) => c.name.toLowerCase() === cleanName.toLowerCase());
+        if (created) {
+          setEditingMovie((prev) => (prev ? { ...prev, category_id: created.id } : prev));
+        }
+      }
+      handleCloseQuickAdd();
+    } catch (err: any) {
+      console.error('Failed to quick add lookup item:', err);
+      setQuickAddError(err?.message || 'Failed to save item. Please try again.');
+    } finally {
+      setIsSubmittingQuickAdd(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden p-4 gap-4 bg-muted/40 select-none">
       {/* Top Header */}
@@ -115,7 +206,6 @@ export const MovieMasterPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-
           {canCreate && (
             <Button variant="default" size="sm" onClick={handleOpenCreate}>
               <Plus className="w-3.5 h-3.5 mr-1" />
@@ -175,7 +265,7 @@ export const MovieMasterPage: React.FC = () => {
                     <td className="px-3 py-2.5 text-right space-x-1">
                       {canUpdate && (
                         <Button variant="outline" size="xs" onClick={() => handleOpenEdit(m)}>
-                          <Edit className="w-3 h-3 mr-0.5" /> Edit
+                          <Pencil className="w-3 h-3 mr-0.5" /> Edit
                         </Button>
                       )}
                       {canDelete && (
@@ -224,17 +314,8 @@ export const MovieMasterPage: React.FC = () => {
                   <label className="text-xs font-bold text-foreground">Distributor *</label>
                   <button
                     type="button"
-                    onClick={async () => {
-                      const name = window.prompt('Enter new Distributor name:');
-                      if (name && name.trim()) {
-                        await movieService.saveDistributor({ name: name.trim(), is_active: true });
-                        const dList = await movieService.getDistributors();
-                        setDistributors(dList);
-                        const created = dList.find(d => d.name === name.trim());
-                        if (created) setEditingMovie({ ...editingMovie, distributor_id: created.id });
-                      }
-                    }}
-                    className="text-2xs text-primary hover:underline font-bold flex items-center"
+                    onClick={() => handleOpenQuickAdd('distributor')}
+                    className="text-2xs text-primary hover:underline font-bold flex items-center cursor-pointer"
                   >
                     <Plus className="w-3 h-3 mr-0.5" /> Add New
                   </button>
@@ -310,7 +391,16 @@ export const MovieMasterPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-2xs font-bold text-muted-foreground uppercase">Movie Type *</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-2xs font-bold text-muted-foreground uppercase">Movie Type *</label>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickAdd('movie_type')}
+                      className="text-3xs text-primary hover:underline font-bold flex items-center cursor-pointer"
+                    >
+                      <Plus className="w-2.5 h-2.5 mr-0.5" /> Add
+                    </button>
+                  </div>
                   <Select
                     value={String(editingMovie.movie_type_id || '')}
                     onValueChange={(val) => setEditingMovie({ ...editingMovie, movie_type_id: Number(val) })}
@@ -331,19 +421,10 @@ export const MovieMasterPage: React.FC = () => {
                     <label className="text-2xs font-bold text-muted-foreground uppercase">Language *</label>
                     <button
                       type="button"
-                      onClick={async () => {
-                        const name = window.prompt('Enter new Language:');
-                        if (name && name.trim()) {
-                          await movieService.saveLanguage({ name: name.trim(), is_active: true });
-                          const lList = await movieService.getLanguages();
-                          setLanguages(lList);
-                          const created = lList.find(l => l.name === name.trim());
-                          if (created) setEditingMovie({ ...editingMovie, language_id: created.id });
-                        }
-                      }}
-                      className="text-3xs text-primary hover:underline font-bold"
+                      onClick={() => handleOpenQuickAdd('language')}
+                      className="text-3xs text-primary hover:underline font-bold flex items-center cursor-pointer"
                     >
-                      + Add
+                      <Plus className="w-2.5 h-2.5 mr-0.5" /> Add
                     </button>
                   </div>
                   <Select
@@ -373,7 +454,16 @@ export const MovieMasterPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-2xs font-bold text-muted-foreground uppercase">Category *</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-2xs font-bold text-muted-foreground uppercase">Category *</label>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickAdd('category')}
+                      className="text-3xs text-primary hover:underline font-bold flex items-center cursor-pointer"
+                    >
+                      <Plus className="w-2.5 h-2.5 mr-0.5" /> Add
+                    </button>
+                  </div>
                   <Select
                     value={String(editingMovie.category_id || '')}
                     onValueChange={(val) => setEditingMovie({ ...editingMovie, category_id: Number(val) })}
@@ -484,6 +574,115 @@ export const MovieMasterPage: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* Quick-Add Sub-Modal */}
+      <Modal
+        isOpen={Boolean(quickAddType)}
+        onClose={handleCloseQuickAdd}
+        title={
+          quickAddType === 'distributor'
+            ? 'Add New Distributor'
+            : quickAddType === 'language'
+            ? 'Add New Language'
+            : quickAddType === 'movie_type'
+            ? 'Add New Movie Format / Type'
+            : quickAddType === 'category'
+            ? 'Add New Censor Rating / Category'
+            : 'Add Master Item'
+        }
+        description={
+          quickAddType === 'distributor'
+            ? 'Add a film distributor or production agency'
+            : quickAddType === 'language'
+            ? 'Add a language for audio tracks / subtitles'
+            : quickAddType === 'movie_type'
+            ? 'Add presentation format (e.g. 2D, 3D, IMAX, 4DX)'
+            : 'Add censor classification (e.g. U, UA, A, S)'
+        }
+        maxWidth="md"
+      >
+        <div className="space-y-3 text-xs">
+          {quickAddError && (
+            <div className="p-2.5 rounded-xs bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold">
+              {quickAddError}
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-foreground">
+              {quickAddType === 'distributor'
+                ? 'Distributor Name *'
+                : quickAddType === 'language'
+                ? 'Language Name *'
+                : quickAddType === 'movie_type'
+                ? 'Format / Type Name (e.g. IMAX 3D) *'
+                : 'Rating / Category Name (e.g. UA 16+) *'}
+            </label>
+            <Input
+              value={quickAddName}
+              onChange={(e) => setQuickAddName(e.target.value)}
+              placeholder={
+                quickAddType === 'distributor'
+                  ? 'e.g. Warner Bros Pictures, Yash Raj Films'
+                  : quickAddType === 'language'
+                  ? 'e.g. Hindi, English, Tamil, Telugu'
+                  : quickAddType === 'movie_type'
+                  ? 'e.g. 2D, 3D, IMAX 3D, 4DX'
+                  : 'e.g. U, UA 13+, A'
+              }
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSaveQuickAdd();
+                }
+              }}
+            />
+          </div>
+
+          {quickAddType === 'distributor' && (
+            <>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-foreground">Contact Person (Optional)</label>
+                <Input
+                  value={quickAddContact}
+                  onChange={(e) => setQuickAddContact(e.target.value)}
+                  placeholder="e.g. Regional Manager / Booking Agent"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-foreground">Phone / Mobile (Optional)</label>
+                <Input
+                  value={quickAddPhone}
+                  onChange={(e) => setQuickAddPhone(e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCloseQuickAdd}
+              disabled={isSubmittingQuickAdd}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSaveQuickAdd}
+              disabled={isSubmittingQuickAdd}
+              className="font-bold bg-primary text-primary-foreground"
+            >
+              {isSubmittingQuickAdd ? 'Saving...' : 'Add & Select'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
+export default MovieMasterPage;

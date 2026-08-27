@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { IndianRupee, Plus, Trash2, Edit } from 'lucide-react';
+import { IndianRupee, Plus, Trash2, Pencil } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const PricingMasterPage: React.FC = () => {
@@ -194,7 +194,7 @@ export const PricingMasterPage: React.FC = () => {
                     <td className="px-3 py-2.5 text-right space-x-1">
                       {canUpdate && (
                         <Button variant="outline" size="xs" onClick={() => handleOpenEdit(p)}>
-                          <Edit className="w-3 h-3 mr-0.5" /> Edit
+                          <Pencil className="w-3 h-3 mr-0.5" /> Edit
                         </Button>
                       )}
                       {canDelete && (

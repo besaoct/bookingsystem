@@ -6,7 +6,9 @@ import { Sidebar, NavPage } from '@/components/layout/Sidebar';
 import { TitleBar } from '@/components/layout/TitleBar';
 import { LoginView } from '@/components/auth/LoginModal';
 import { FirstTimeSetupView } from '@/components/auth/FirstTimeSetupView';
-import { userService } from '@/services';
+import { LicenseActivationView } from '@/components/license/LicenseActivationView';
+import { userService, licenseService } from '@/services';
+import { LicenseVerificationResult } from '@/lib/license-crypto';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,6 +28,7 @@ import { PricingMasterPage } from '@/pages/masters/PricingMasterPage';
 import { TaxGstConfigPage } from '@/pages/masters/TaxGstConfigPage';
 import { CoreDropdownsPage } from '@/pages/masters/CoreDropdownsPage';
 import { UsersPermissionsPage } from '@/pages/UsersPermissionsPage';
+import { PrinterSettingsPage } from '@/pages/PrinterSettingsPage';
 import { SystemSettingsPage } from '@/pages/SystemSettingsPage';
 import { AuditBackupPage } from '@/pages/AuditBackupPage';
 
@@ -37,7 +40,29 @@ export const App: React.FC = () => {
   const [isSetupDone, setIsSetupDone] = useState<boolean | null>(null);
   const [forceSetupScreen, setForceSetupScreen] = useState(false);
 
+  // License State
+  const [licenseStatus, setLicenseStatus] = useState<LicenseVerificationResult | null>(null);
+  const [isCheckingLicense, setIsCheckingLicense] = useState<boolean>(true);
+
   useEffect(() => {
+    // 1. Check software license status first
+    licenseService
+      .checkLicenseStatus()
+      .then((res) => {
+        setLicenseStatus(res);
+      })
+      .catch((err) => {
+        console.error('Failed to check software license:', err);
+        setLicenseStatus({
+          status: 'UNLICENSED',
+          isValid: false,
+          message: 'No active software license found.',
+        });
+      })
+      .finally(() => {
+        setIsCheckingLicense(false);
+      });
+
     loadInitialAuth().catch((err) => {
       console.error('Failed to load initial auth:', err);
     });
@@ -59,6 +84,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsSetupDone((prev) => (prev === null ? true : prev));
+      setIsCheckingLicense(false);
     }, 3500);
     return () => clearTimeout(timer);
   }, []);
@@ -100,7 +126,8 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleGlobalKeys);
   }, [user, hasPermission]);
 
-  if (isLoading || isSetupDone === null) {
+  // 1. Initial splash / loading state
+  if (isCheckingLicense || (licenseStatus?.isValid && (isLoading || isSetupDone === null))) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center font-sans" style={{ background: 'hsl(217 88% 46%)' }}>
         <TitleBar />
@@ -112,7 +139,22 @@ export const App: React.FC = () => {
     );
   }
 
-  // First-time user setup screen
+  // 2. Strict Pre-Boot Gatekeeper: All views locked until valid software license is loaded
+  if (!licenseStatus || !licenseStatus.isValid) {
+    return (
+      <>
+        <TitleBar />
+        <LicenseActivationView
+          initialError={licenseStatus && licenseStatus.status !== 'UNLICENSED' ? licenseStatus.message : null}
+          onActivated={(res) => {
+            setLicenseStatus(res);
+          }}
+        />
+      </>
+    );
+  }
+
+  // 3. First-time user setup screen
   if (isSetupDone === false || forceSetupScreen) {
     return (
       <>
@@ -127,6 +169,7 @@ export const App: React.FC = () => {
     );
   }
 
+  // 4. User Login screen
   if (!isAuthenticated) {
     return (
       <>
@@ -228,13 +271,18 @@ export const App: React.FC = () => {
                 <UsersPermissionsPage />
               </PermissionGuard>
             )}
-            {activePage === 'system_settings' && (
+            {activePage === 'printer_settings' && (
               <PermissionGuard module="settings" action="can_read" onNavigate={setActivePage}>
+                <PrinterSettingsPage />
+              </PermissionGuard>
+            )}
+            {activePage === 'system_settings' && (
+              <PermissionGuard module="system_settings" action="can_read" onNavigate={setActivePage}>
                 <SystemSettingsPage />
               </PermissionGuard>
             )}
             {activePage === 'audit_backup' && (
-              <PermissionGuard adminOnly onNavigate={setActivePage}>
+              <PermissionGuard module="audit_backup" action="can_read" onNavigate={setActivePage}>
                 <AuditBackupPage />
               </PermissionGuard>
             )}

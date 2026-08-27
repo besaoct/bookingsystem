@@ -68,7 +68,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           type="button"
           disabled={disabled}
           className={cn(
-            'flex h-8 w-full items-center justify-between rounded-xs border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-muted/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-left',
+            'flex h-9 w-full items-center justify-between rounded-xs border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-muted/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-left',
             !parsedDate && 'text-muted-foreground font-normal',
             className
           )}

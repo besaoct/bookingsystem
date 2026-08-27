@@ -1,0 +1,123 @@
+name: Generate Customer License
+
+on:
+  workflow_dispatch:
+    inputs:
+      machine_id:
+        description: 'Customer Machine ID (e.g. BS-8F2A-99B1-4CD0-E7A3 or * for wildcard)'
+        required: true
+        type: string
+      client_name:
+        description: 'Client / Cinema Name (e.g. Grand Multiplex)'
+        required: true
+        type: string
+      licensee:
+        description: 'Contact Person / Manager Name (Optional)'
+        required: false
+        type: string
+        default: ''
+      license_type:
+        description: 'License Type'
+        required: true
+        type: choice
+        options:
+          - subscription
+          - lifetime
+          - trial
+        default: subscription
+      days:
+        description: 'Validity Period in Days (for subscription or trial)'
+        required: false
+        type: string
+        default: '365'
+      private_key:
+        description: 'Developer Private Key (PKCS#8 PEM). Leave blank if stored in Secret LICENSE_PRIVATE_KEY'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  generate:
+    name: Generate & Sign License
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Configure Developer Private Key
+        env:
+          INPUT_KEY: ${{ github.event.inputs.private_key }}
+          SECRET_KEY: ${{ secrets.LICENSE_PRIVATE_KEY }}
+        run: |
+          mkdir -p .license-keys
+          if [ -n "$INPUT_KEY" ]; then
+            echo "$INPUT_KEY" > .license-keys/private.key
+          elif [ -n "$SECRET_KEY" ]; then
+            echo "$SECRET_KEY" > .license-keys/private.key
+          else
+            echo "::error::Private key was not provided in inputs and secret LICENSE_PRIVATE_KEY is not configured."
+            exit 1
+          fi
+          chmod 600 .license-keys/private.key
+
+      - name: Generate Signed Software License
+        id: generate
+        run: |
+          MACHINE_ID="${{ github.event.inputs.machine_id }}"
+          CLIENT_NAME="${{ github.event.inputs.client_name }}"
+          LICENSEE="${{ github.event.inputs.licensee }}"
+          TYPE="${{ github.event.inputs.license_type }}"
+          DAYS="${{ github.event.inputs.days }}"
+
+          CMD="node scripts/generate-license.js --machine \"$MACHINE_ID\" --client \"$CLIENT_NAME\""
+
+          if [ -n "$LICENSEE" ]; then
+            CMD="$CMD --licensee \"$LICENSEE\""
+          fi
+
+          if [ "$TYPE" = "lifetime" ]; then
+            CMD="$CMD --lifetime"
+          elif [ "$TYPE" = "trial" ]; then
+            CMD="$CMD --trial $DAYS"
+          else
+            CMD="$CMD --days $DAYS"
+          fi
+
+          eval $CMD
+
+      - name: Publish Step Summary
+        run: |
+          LIC_FILE=$(ls *.lic 2>/dev/null | head -n 1)
+          if [ -f "$LIC_FILE" ]; then
+            KEY_BASE64=$(base64 -w 0 "$LIC_FILE" 2>/dev/null || base64 "$LIC_FILE")
+            echo "### 🎬 Software License Generated Successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Client Name** | ${{ github.event.inputs.client_name }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Machine ID** | \`${{ github.event.inputs.machine_id }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **License Type** | ${{ github.event.inputs.license_type }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **License File** | \`$LIC_FILE\` (Download below in Artifacts) |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### 🔑 Activation Key String (Copy & Send):" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            echo "$KEY_BASE64" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload .lic License File as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.client_name }}-License
+          path: '*.lic'
+          retention-days: 30
+
+      - name: Cleanup Private Key from Runner
+        if: always()
+        run: |
+          rm -rf .license-keys/

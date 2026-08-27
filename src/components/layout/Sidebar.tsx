@@ -40,6 +40,7 @@ export type NavPage =
   | 'master_taxes'
   | 'master_others'
   | 'users_permissions'
+  | 'printer_settings'
   | 'system_settings'
   | 'audit_backup';
 
@@ -159,14 +160,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           allowed: isSystemAdmin || hasPermission('users', 'can_read'),
         },
         {
-          id: 'system_settings' as NavPage,
+          id: 'printer_settings' as NavPage,
           label: 'Printer & Ticket Copies',
           allowed: isSystemAdmin || hasPermission('settings', 'can_read'),
         },
         {
           id: 'audit_backup' as NavPage,
           label: 'Audit Log & Backup',
-          allowed: isSystemAdmin,
+          allowed: isSystemAdmin || hasPermission('audit_backup', 'can_read'),
+        },
+        {
+          id: 'system_settings' as NavPage,
+          label: 'System Settings',
+          allowed: isSystemAdmin || hasPermission('system_settings', 'can_read'),
         },
       ].filter((c) => c.allowed),
     },

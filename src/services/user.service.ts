@@ -11,9 +11,11 @@ export const ALL_SYSTEM_MODULES: Array<{ id: string; name: string; desc: string 
   { id: 'seat_layout', name: 'Screens & Seat Layouts', desc: 'View and adjust screen auditorium seat rows' },
   { id: 'pricing', name: 'Ticket Pricing', desc: 'Set class rates & show price overrides' },
   { id: 'taxes', name: 'Tax & GST Setup', desc: 'Configure GST percentages & calculation rules' },
-  { id: 'settings', name: 'Printer & System Settings', desc: 'Thermal printer name, dimensions, ticket copies' },
+  { id: 'settings', name: 'Printer & Ticket Copies', desc: 'Thermal printer device, dimensions, invoice series, ticket copies' },
   { id: 'master_others', name: 'System Lookups & Core Values', desc: 'Manage distributors, languages, movie formats, censor categories, and cancel reasons' },
-  { id: 'users', name: 'User Management', desc: 'Create operator accounts and grant permissions' },
+  { id: 'users', name: 'User Management', desc: 'Create operator accounts and grant granular permissions' },
+  { id: 'audit_backup', name: 'Audit Trail & DB Backup', desc: 'View audit logs, export and restore database backups' },
+  { id: 'system_settings', name: 'System Settings & License', desc: 'Software license activation, database re-seed, and full system reset' },
 ];
 
 export const userService = {
@@ -173,8 +175,8 @@ export const userService = {
   ): Promise<void> {
     await dbService.init();
 
-    // 1. Seed default master data, screen layout, movies, shows, pricing, etc.
-    dbService.exec(SEED_DATA_SQL);
+    // 1. Ensure role permissions exist
+    await this.ensureModulePermissions();
 
     // 2. Update/Insert Admin Account
     const adminExists = dbService.queryOne<{ id: number }>(
