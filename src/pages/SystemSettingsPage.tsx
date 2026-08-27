@@ -213,7 +213,13 @@ export const SystemSettingsPage: React.FC = () => {
                   {licenseService.isLicenseDisabled()
                     ? 'Lifetime (Never Expires)'
                     : licenseInfo?.payload?.expiresAt
-                    ? `${licenseInfo.payload.expiresAt.slice(0, 10)} (${licenseInfo.daysRemaining ?? 0} days remaining)`
+                    ? `${licenseInfo.payload.expiresAt.slice(0, 10)} (${
+                        licenseInfo.daysRemaining === 0
+                          ? 'Expiring today'
+                          : licenseInfo.daysRemaining === 1
+                          ? '1 day remaining'
+                          : `${licenseInfo.daysRemaining} days remaining`
+                      })`
                     : 'Lifetime (Never Expires)'}
                 </p>
                 <p className="text-3xs text-muted-foreground">

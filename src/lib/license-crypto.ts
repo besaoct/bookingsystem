@@ -249,7 +249,7 @@ export async function verifyLicense(
     if (payload.expiresAt) {
       const expDate = new Date(payload.expiresAt);
       const diffMs = expDate.getTime() - now.getTime();
-      daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      daysRemaining = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 
       if (now.getTime() > expDate.getTime()) {
         return {
