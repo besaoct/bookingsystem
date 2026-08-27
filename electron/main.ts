@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, nativeTheme, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, nativeTheme, shell, Menu, MenuItemConstructorOptions } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -48,6 +48,118 @@ function getFormattedMachineId(): string {
 
 let mainWindow: BrowserWindow | null = null;
 
+function restoreOrCreateMainWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
+    createWindow();
+  }
+}
+
+function setupApplicationMenu() {
+  const isMac = process.platform === 'darwin';
+
+  const template: MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [
+          {
+            label: app.name || 'Booking System',
+            submenu: [
+              { role: 'about' as const },
+              { type: 'separator' as const },
+              { role: 'services' as const },
+              { type: 'separator' as const },
+              { role: 'hide' as const },
+              { role: 'hideOthers' as const },
+              { role: 'unhide' as const },
+              { type: 'separator' as const },
+              { role: 'quit' as const },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'New Window',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => {
+            restoreOrCreateMainWindow();
+          },
+        },
+        { type: 'separator' as const },
+        isMac ? { role: 'close' as const } : { role: 'quit' as const },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' as const },
+        { role: 'redo' as const },
+        { type: 'separator' as const },
+        { role: 'cut' as const },
+        { role: 'copy' as const },
+        { role: 'paste' as const },
+        { role: 'selectAll' as const },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' as const },
+        { role: 'forceReload' as const },
+        { role: 'toggleDevTools' as const },
+        { type: 'separator' as const },
+        { role: 'resetZoom' as const },
+        { role: 'zoomIn' as const },
+        { role: 'zoomOut' as const },
+        { type: 'separator' as const },
+        { role: 'togglefullscreen' as const },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' as const },
+        { role: 'zoom' as const },
+        ...(isMac
+          ? [
+              { type: 'separator' as const },
+              {
+                label: 'Booking System',
+                accelerator: 'CmdOrCtrl+1',
+                click: () => {
+                  restoreOrCreateMainWindow();
+                },
+              },
+              { type: 'separator' as const },
+              { role: 'front' as const },
+              { type: 'separator' as const },
+              { role: 'window' as const },
+            ]
+          : [{ role: 'close' as const }]),
+      ],
+    },
+    {
+      role: 'help',
+      submenu: [
+        {
+          label: 'Booking System Help',
+          click: async () => {
+            await shell.openExternal('https://github.com/besaoct/bookingsystem');
+          },
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 function createWindow() {
   const isMac = process.platform === 'darwin';
 
@@ -86,10 +198,11 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  setupApplicationMenu();
   createWindow();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    restoreOrCreateMainWindow();
   });
 });
 
