@@ -19,12 +19,15 @@ Options:
   --client, -c      Client / Cinema / Business Name (e.g. "Grand Multiplex") [REQUIRED]
   --licensee, -u    Contact Person / Licensee Name (optional)
   --days, -d        Validity period in days from today (default: 365)
+  --minutes         Validity period in minutes from right now (for testing short expiry)
+  --seconds         Validity period in seconds from right now (for testing short expiry)
   --lifetime, -l    Issue a Lifetime License with no expiration
   --trial [days]    Issue a Trial License (default: 14 days, e.g. --trial 7 or --trial --days 30)
   --out, -o         Custom destination path for .lic file
 
 Examples:
   npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Grand Multiplex" --days 365
+  npm run license:generate -- --machine "*" --client "Test Cinema" --minutes 2
   npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Apex Theaters" --lifetime
   npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Cinema" --trial 7
   npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Cinema" --trial --days 30
@@ -55,6 +58,8 @@ const licensee = getArg('--licensee', '-u') || '';
 const isLifetime = hasFlag('--lifetime', '-l');
 const isTrial = hasFlag('--trial');
 const daysStr = getArg('--days', '-d');
+const minutesStr = getArg('--minutes');
+const secondsStr = getArg('--seconds');
 const customOutPath = getArg('--out', '-o');
 
 function getTrialDays() {
@@ -92,6 +97,14 @@ let expiresAt = null;
 if (isLifetime) {
   licenseType = 'lifetime';
   expiresAt = null;
+} else if (secondsStr && /^\d+$/.test(secondsStr)) {
+  licenseType = 'subscription';
+  const sec = parseInt(secondsStr, 10);
+  expiresAt = new Date(now.getTime() + sec * 1000).toISOString();
+} else if (minutesStr && /^\d+$/.test(minutesStr)) {
+  licenseType = 'subscription';
+  const mins = parseInt(minutesStr, 10);
+  expiresAt = new Date(now.getTime() + mins * 60 * 1000).toISOString();
 } else if (isTrial) {
   licenseType = 'trial';
   const trialDays = getTrialDays();

@@ -304,14 +304,21 @@
           <div class="form-group">
             <label>License Type</label>
             <select id="licenseTypeSelect" onchange="handleTypeChange()">
-              <option value="subscription">Subscription (Annual / Fixed)</option>
+              <option value="subscription">Subscription (Annual / Fixed Days)</option>
               <option value="lifetime">Lifetime (Never Expires)</option>
               <option value="trial">Trial License</option>
+              <option value="short_test">Test Expiry (Minutes / Seconds)</option>
             </select>
           </div>
           <div class="form-group" id="daysGroup">
             <label id="daysLabel">Validity Period (Days)</label>
-            <input type="number" id="daysInput" value="365" min="1">
+            <div style="display: flex; gap: 6px;">
+              <input type="number" id="daysInput" value="365" min="1" style="flex: 1;">
+              <select id="timeUnitSelect" style="display: none; width: 110px;">
+                <option value="minutes">Minutes</option>
+                <option value="seconds">Seconds</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -379,6 +386,7 @@
       const daysGroup = document.getElementById('daysGroup');
       const daysLabel = document.getElementById('daysLabel');
       const daysInput = document.getElementById('daysInput');
+      const timeUnitSelect = document.getElementById('timeUnitSelect');
 
       if (type === 'lifetime') {
         daysGroup.style.display = 'none';
@@ -386,10 +394,17 @@
         daysGroup.style.display = 'flex';
         daysLabel.textContent = 'Trial Duration (Days)';
         daysInput.value = '14';
+        timeUnitSelect.style.display = 'none';
+      } else if (type === 'short_test') {
+        daysGroup.style.display = 'flex';
+        daysLabel.textContent = 'Test Validity Duration';
+        daysInput.value = '2';
+        timeUnitSelect.style.display = 'block';
       } else {
         daysGroup.style.display = 'flex';
         daysLabel.textContent = 'Validity Period (Days)';
         daysInput.value = '365';
+        timeUnitSelect.style.display = 'none';
       }
     }
 
@@ -442,8 +457,9 @@
       const machineId = document.getElementById('machineIdInput').value.trim().toUpperCase();
       const clientName = document.getElementById('clientNameInput').value.trim();
       const licensee = document.getElementById('licenseeInput').value.trim();
-      const licenseType = document.getElementById('licenseTypeSelect').value;
-      const days = parseInt(document.getElementById('daysInput').value, 10) || 365;
+      const selectedType = document.getElementById('licenseTypeSelect').value;
+      const durationVal = parseInt(document.getElementById('daysInput').value, 10) || 1;
+      const timeUnit = document.getElementById('timeUnitSelect').value;
 
       if (!pem) {
         alert('Please paste your Developer Private Key (PKCS#8 PEM).');
@@ -465,9 +481,19 @@
         );
 
         const now = new Date();
+        let licenseType = selectedType === 'short_test' ? 'subscription' : selectedType;
         let expiresAt = null;
-        if (licenseType !== 'lifetime') {
-          const exp = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+        if (selectedType === 'lifetime') {
+          expiresAt = null;
+        } else if (selectedType === 'short_test') {
+          if (timeUnit === 'seconds') {
+            expiresAt = new Date(now.getTime() + durationVal * 1000).toISOString();
+          } else {
+            expiresAt = new Date(now.getTime() + durationVal * 60 * 1000).toISOString();
+          }
+        } else {
+          const exp = new Date(now.getTime() + durationVal * 24 * 60 * 60 * 1000);
           exp.setHours(23, 59, 59, 999);
           expiresAt = exp.toISOString();
         }
@@ -501,11 +527,15 @@
         const jsonDoc = JSON.stringify(generatedLicenseDoc, null, 2);
         generatedBase64 = btoa(jsonDoc);
 
+        const expDisplay = payload.expiresAt
+          ? `${payload.expiresAt.slice(0, 10)} ${new Date(payload.expiresAt).toLocaleTimeString()}`
+          : 'LIFETIME';
+
         document.getElementById('outputKey').value = generatedBase64;
         document.getElementById('resultSummary').innerHTML = `
           <strong>Client:</strong> ${payload.clientName} &nbsp;&bull;&nbsp; 
           <strong>Tier:</strong> ${payload.licenseType.toUpperCase()} &nbsp;&bull;&nbsp; 
-          <strong>Expires:</strong> ${payload.expiresAt ? payload.expiresAt.slice(0, 10) : 'LIFETIME'}<br>
+          <strong>Expires:</strong> ${expDisplay}<br>
           <strong>Machine ID:</strong> ${payload.machineId}
         `;
         document.getElementById('resultBox').style.display = 'flex';

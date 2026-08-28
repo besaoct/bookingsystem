@@ -63,6 +63,23 @@ export const App: React.FC = () => {
         setIsCheckingLicense(false);
       });
 
+    // Periodic background license re-verification (every 30 seconds)
+    const licenseInterval = setInterval(() => {
+      if (!licenseService.isLicenseDisabled()) {
+        licenseService.checkLicenseStatus().then((res) => {
+          setLicenseStatus((prev) => {
+            // Only update state if validity or status changed to avoid unnecessary re-renders
+            if (!prev || prev.isValid !== res.isValid || prev.status !== res.status) {
+              return res;
+            }
+            return prev;
+          });
+        }).catch((err) => {
+          console.warn('Background license re-verification check failed:', err);
+        });
+      }
+    }, 30000);
+
     loadInitialAuth().catch((err) => {
       console.error('Failed to load initial auth:', err);
     });
@@ -78,6 +95,10 @@ export const App: React.FC = () => {
         console.error('Failed to check initial setup:', err);
         setIsSetupDone(true);
       });
+
+    return () => {
+      clearInterval(licenseInterval);
+    };
   }, []);
 
   // Safety fallback: Never lock screen indefinitely if background initialization hangs
