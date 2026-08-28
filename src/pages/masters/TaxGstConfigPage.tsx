@@ -64,12 +64,11 @@ export const TaxGstConfigPage: React.FC = () => {
 
         <div className="flex items-center space-x-2">
           {isSaved && (
-            <span className="text-success text-xs font-bold flex items-center mr-2">
-              <CheckCircle className="w-4 h-4 mr-1" /> Settings Saved Successfully
+            <span className="bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-xs flex items-center space-x-1.5 shadow-xs animate-in fade-in">
+              <CheckCircle className="w-4 h-4 mr-1 shrink-0 text-white" />
+              <span>Tax &amp; GST Settings Saved Successfully</span>
             </span>
           )}
-
-
         </div>
       </div>
 

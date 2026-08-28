@@ -147,8 +147,9 @@ export const SystemSettingsPage: React.FC = () => {
         </div>
 
         {statusMessage && (
-          <span className="text-success text-xs font-medium flex items-center bg-success/10 px-2.5 py-1 rounded-xs border border-success/20 animate-pulse">
-            <ShieldCheck className="w-4 h-4 mr-1 text-success" /> {statusMessage}
+          <span className="bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-xs flex items-center space-x-1.5 shadow-xs animate-in fade-in">
+            <ShieldCheck className="w-4 h-4 mr-1 shrink-0 text-white" />
+            <span>{statusMessage}</span>
           </span>
         )}
       </div>
@@ -178,8 +179,8 @@ export const SystemSettingsPage: React.FC = () => {
           </CardHeader>
           <CardContent className="p-4 space-y-4 text-xs">
             {licenseMsg && (
-              <div className="p-2 rounded-xs bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-2xs font-medium flex items-center space-x-1.5">
-                <Check className="w-3.5 h-3.5" />
+              <div className="p-2.5 rounded-xs bg-emerald-600 text-white text-xs font-medium flex items-center space-x-2 shadow-xs animate-in fade-in">
+                <Check className="w-4 h-4 shrink-0 text-white" />
                 <span>{licenseMsg}</span>
               </div>
             )}

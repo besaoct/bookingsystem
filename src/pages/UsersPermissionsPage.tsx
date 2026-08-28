@@ -405,8 +405,9 @@ export const UsersPermissionsPage: React.FC = () => {
 
         <div className="flex items-center space-x-2">
           {isSaved && (
-            <span className="text-success text-xs font-bold flex items-center mr-2 animate-in fade-in">
-              <Check className="w-3.5 h-3.5 mr-1" /> Updated Successfully
+            <span className="bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-xs flex items-center space-x-1.5 shadow-xs animate-in fade-in mr-2">
+              <Check className="w-3.5 h-3.5 mr-1 shrink-0 text-white" />
+              <span>Permissions Updated Successfully</span>
             </span>
           )}
 
@@ -718,8 +719,8 @@ export const UsersPermissionsPage: React.FC = () => {
       >
         <div className="space-y-3 text-xs">
           {addError && (
-            <div className="p-2.5 bg-destructive/10 border border-destructive/20 rounded-xs text-destructive text-xs flex items-center space-x-1.5">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-2.5 bg-destructive text-white rounded-xs text-xs font-medium flex items-center space-x-2 shadow-xs animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-white" />
               <span>{addError}</span>
             </div>
           )}
@@ -811,8 +812,8 @@ export const UsersPermissionsPage: React.FC = () => {
         {editingUser && (
           <div className="space-y-3 text-xs">
             {editError && (
-              <div className="p-2.5 bg-destructive/10 border border-destructive/20 rounded-xs text-destructive text-xs flex items-center space-x-1.5">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-2.5 bg-destructive text-white rounded-xs text-xs font-medium flex items-center space-x-2 shadow-xs animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-white" />
                 <span>{editError}</span>
               </div>
             )}
