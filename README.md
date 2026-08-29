@@ -34,8 +34,8 @@
 
 ### 🪑 3. Dynamic Screen & Seat Layout Designer
 - **Visual Auditorium Builder**: Add and arrange custom rows (A, B, C...) with variable seat counts, aisle gaps, blocked seats, and wheelchair accessibility.
-- **Seat Class & Palette Master**: Assign individual classes (`Gold Plus`, `Gold`, `Platinum`, `Silver`, `Recliner`, `Balcony`) with custom hex color identifiers and display orders.
-- **Zoom & Pan Controls**: Multi-level zoom controls with scale reset for auditorium configurations.
+- **Seat Class & Palette Master**: Assign individual classes (`Gold Plus`, `Gold`, `Platinum`, `Silver`, `Recliner`, `Balcony`) with custom hex color identifiers, circular swatches, and display orders.
+- **Instant Class Navigation**: Direct routing from the layout editor to the Seat Classes management tab in Dropdowns & Lookups Master.
 
 ### 💰 4. Dynamic Pricing & Tax (GST) Masters
 - **Multi-Tier Pricing Engine**: Base pricing rules per seat class + custom rate overrides per movie showtime.
@@ -52,11 +52,12 @@
 - **Built-in Security Roles**: `SYSTEM_ADMIN` (full control) and `OPERATOR` (box office counter operations).
 - **Hardened SQLite Engine**: Strictly parameterized SQL statements to eliminate injection vulnerabilities.
 
-### 🛡️ 7. Offline Cryptographic Machine Licensing
+### 🛡️ 7. Offline Cryptographic Machine Licensing & Capacity Quotas
 - **Asymmetric ECDSA (P-256 / SHA-256)**: Public key embedded in client binary; private key kept strictly offline by developer.
 - **Hardware Machine ID Binding**: Cryptographically tied to non-volatile host PC hardware (macOS `IOPlatformUUID`, Windows `MachineGuid`/`wmic`, Linux `machine-id`).
+- **Screen & Seating Capacity Quotas**: Enforce granular capacity limits (`maxScreens`, `maxSeats`) or grant **Unlimited** access signed tamper-proof into the payload.
+- **Quota Enforcement & Upgrade Dialog**: Real-time enforcement in Cinema and Screen Layout builders with one-click Machine ID copy and upgrade assistance.
 - **Pre-Boot Gatekeeper**: Completely locks application views until an authentic `.lic` file matching the computer's Machine ID is verified.
-- **Full-Software Licensing**: Single license activates the entire host installation without artificial screen or auditorium limits.
 
 ---
 
@@ -119,28 +120,32 @@ npm run electron:build:mas
 
 ## 🔐 Offline Software License Generation (Developer Guide)
 
-The system includes a built-in CLI tool for issuing cryptographically signed software licenses.
+The system includes both a **Web GUI Generator** and a **CLI Tool** for issuing cryptographically signed software licenses with optional screen and seat capacity restrictions.
 
-### 1. Generating Customer Licenses
+### 🌐 Option A: Standalone Web GUI Generator
+Open [`tools/license-generator.html`](tools/license-generator.html) directly in any modern browser:
+- Features built-in cryptographic signing using browser WebCrypto (`SubtleCrypto` ECDSA P-256).
+- Supports configuring **Max Screen Limit** and **Max Seat Limit** with instant "Unlimited" toggle switches.
+- One-click `.lic` file download and Base64 activation key copying.
 
+### 💻 Option B: CLI Generator Tool
 Run the `license:generate` CLI script from your terminal:
 
 ```bash
-# A. 1-Year Subscription License (365 Days)
-npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Grand Multiplex" --days 365
+# 1. 1-Year Subscription License with Screen & Seat Quota
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Grand Multiplex" --days 365 --screens 4 --seats 600
 
-# B. Lifetime License (Never Expires)
-npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Star Cinemas" --lifetime
+# 2. Lifetime License with Unlimited Screens & Seats
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Star Cinemas" --lifetime --screens unlimited --seats unlimited
 
-# C. Custom Trial License (e.g., 7 Days or 30 Days)
-npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Theaters" --trial 7
-npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Theaters" --trial --days 30
+# 3. Custom Trial License (e.g., 7 Days or 30 Days)
+npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Theaters" --trial 7 --screens 2 --seats 300
 
-# D. Developer Master License (Runs on Any PC)
+# 4. Developer Master License (Runs on Any PC)
 npm run license:generate -- --machine "*" --client "Master Demo" --lifetime
 ```
 
-### 2. Available CLI Flags
+### 📋 Available CLI Flags
 
 | Flag | Description | Default |
 |---|---|---|
@@ -150,16 +155,18 @@ npm run license:generate -- --machine "*" --client "Master Demo" --lifetime
 | `--days`, `-d` | Number of days license remains valid | `365` |
 | `--lifetime`, `-l` | Issues a permanent Lifetime License (`expiresAt: null`) | `false` |
 | `--trial [days]` | Issues a Trial License (default: 14 days, or pass custom days) | `false` |
+| `--screens`, `-s` | Maximum screen / auditorium limit (number or `unlimited`) | `unlimited` |
+| `--seats` | Maximum seating capacity quota (number or `unlimited`) | `unlimited` |
 | `--out`, `-o` | Custom output destination path for `.lic` file | `./[Client]_Software_License.lic` |
 
-### 3. Customer Activation Workflow
+### 🔄 Customer Activation Workflow
 
 ```
 Customer PC                          You (Developer)
 ────────                         ──────────────
 1. Installs app
-2. Sees Machine ID  ──────────►  3. You run: npm run license:generate
-                                 4. Generates signed [Client].lic file
+2. Sees Machine ID  ──────────►  3. Open tools/license-generator.html or run CLI
+                                 4. Generates signed [Client].lic with quotas
 5. Receives .lic    ◄──────────  5. You send .lic file (or activation key)
 6. Loads .lic file
 7. Suite Unlocked! (100% Offline)
@@ -216,14 +223,17 @@ bookingsystem/
 ├── scripts/                  # Developer CLI tools
 │   ├── generate-keys.js      # ECDSA P-256 keypair generator (npm run license:keys)
 │   ├── generate-license.js   # Customer license generator (npm run license:generate)
-│   └── test-license.js       # Automated cryptographic test suite
+│   ├── test-license.js       # Automated cryptographic test suite
+│   └── test-web-generator.js # Standalone Web generator validation test
+├── tools/                    # Standalone Web Developer Tools
+│   └── license-generator.html# Browser-based ECDSA P-256 License Generator
 ├── public/                   # Static assets & WASM binaries
 │   └── sql-wasm.wasm         # SQLite WebAssembly engine
 ├── src/
 │   ├── components/           # Reusable UI & Business Components
 │   │   ├── auth/             # Login, first-time setup, and permission guards
 │   │   ├── layout/           # TitleBar, Header, Sidebar, CommandMenu
-│   │   ├── license/          # LicenseActivationView (Pre-boot gatekeeper)
+│   │   ├── license/          # LicenseActivationView & LicenseUpgradeModal
 │   │   ├── seatmap/          # Interactive visual seat grid
 │   │   ├── ticket/           # Thermal ticket preview & printing
 │   │   └── ui/               # Radix UI design system primitives & TimePicker
