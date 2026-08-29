@@ -322,6 +322,28 @@
           </div>
         </div>
 
+        <!-- Limits: Max Screens & Max Seats -->
+        <div class="grid-2">
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label>Max Screen Limit</label>
+              <label style="font-size: 10px; font-weight: 500; text-transform: none; display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--muted-foreground);">
+                <input type="checkbox" id="unlimitedScreensCheck" checked onchange="toggleScreenLimit()"> Unlimited
+              </label>
+            </div>
+            <input type="number" id="maxScreensInput" placeholder="Allowed Screens (e.g. 2)" min="1" value="2" style="display: none;">
+          </div>
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label>Max Seat Limit</label>
+              <label style="font-size: 10px; font-weight: 500; text-transform: none; display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--muted-foreground);">
+                <input type="checkbox" id="unlimitedSeatsCheck" checked onchange="toggleSeatLimit()"> Unlimited
+              </label>
+            </div>
+            <input type="number" id="maxSeatsInput" placeholder="Total Allowed Seats (e.g. 250)" min="1" value="250" style="display: none;">
+          </div>
+        </div>
+
         <!-- Submit Button -->
         <button type="button" onclick="generateLicense()" style="width: 100%; margin-top: 4px;">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
@@ -380,6 +402,18 @@
         document.getElementById('keyStatus').style.color = 'var(--success)';
       }
     });
+
+    function toggleScreenLimit() {
+      const isUnlimited = document.getElementById('unlimitedScreensCheck').checked;
+      const input = document.getElementById('maxScreensInput');
+      input.style.display = isUnlimited ? 'none' : 'block';
+    }
+
+    function toggleSeatLimit() {
+      const isUnlimited = document.getElementById('unlimitedSeatsCheck').checked;
+      const input = document.getElementById('maxSeatsInput');
+      input.style.display = isUnlimited ? 'none' : 'block';
+    }
 
     function handleTypeChange() {
       const type = document.getElementById('licenseTypeSelect').value;
@@ -461,6 +495,12 @@
       const durationVal = parseInt(document.getElementById('daysInput').value, 10) || 1;
       const timeUnit = document.getElementById('timeUnitSelect').value;
 
+      const isUnlimitedScreens = document.getElementById('unlimitedScreensCheck').checked;
+      const maxScreens = isUnlimitedScreens ? null : parseInt(document.getElementById('maxScreensInput').value, 10) || 1;
+
+      const isUnlimitedSeats = document.getElementById('unlimitedSeatsCheck').checked;
+      const maxSeats = isUnlimitedSeats ? null : parseInt(document.getElementById('maxSeatsInput').value, 10) || 100;
+
       if (!pem) {
         alert('Please paste your Developer Private Key (PKCS#8 PEM).');
         return;
@@ -507,6 +547,8 @@
           licensee,
           issuedAt: now.toISOString(),
           expiresAt,
+          maxScreens,
+          maxSeats,
         };
 
         const canonicalString = JSON.stringify(payload, Object.keys(payload).sort());
@@ -531,11 +573,16 @@
           ? `${payload.expiresAt.slice(0, 10)} ${new Date(payload.expiresAt).toLocaleTimeString()}`
           : 'LIFETIME';
 
+        const screensDisplay = payload.maxScreens !== null && payload.maxScreens !== undefined ? `${payload.maxScreens} Screen(s)` : 'UNLIMITED';
+        const seatsDisplay = payload.maxSeats !== null && payload.maxSeats !== undefined ? `${payload.maxSeats} Seats` : 'UNLIMITED';
+
         document.getElementById('outputKey').value = generatedBase64;
         document.getElementById('resultSummary').innerHTML = `
           <strong>Client:</strong> ${payload.clientName} &nbsp;&bull;&nbsp; 
           <strong>Tier:</strong> ${payload.licenseType.toUpperCase()} &nbsp;&bull;&nbsp; 
           <strong>Expires:</strong> ${expDisplay}<br>
+          <strong>Screens:</strong> ${screensDisplay} &nbsp;&bull;&nbsp; 
+          <strong>Seats:</strong> ${seatsDisplay}<br>
           <strong>Machine ID:</strong> ${payload.machineId}
         `;
         document.getElementById('resultBox').style.display = 'flex';

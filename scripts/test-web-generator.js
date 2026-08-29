@@ -68,6 +68,8 @@ async function testWebSigning() {
     licensee: '',
     issuedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+    maxScreens: 1,
+    maxSeats: 50,
   };
 
   const canonical = JSON.stringify(payload, Object.keys(payload).sort());
@@ -89,7 +91,7 @@ async function testWebSigning() {
   verifier.end();
   const isValid = verifier.verify(publicKeyPem, signatureBase64, 'base64');
 
-  console.log('Web Generator Cryptographic Compatibility Test:', isValid ? 'PASS ✓ (100% Compatible)' : 'FAIL ✗');
+  console.log('Web Generator Cryptographic Compatibility Test (with limits):', isValid ? 'PASS ✓ (100% Compatible)' : 'FAIL ✗');
 }
 
 testWebSigning().catch(console.error);

@@ -18,6 +18,8 @@ export interface LicensePayload {
   licensee?: string;
   issuedAt: string;
   expiresAt: string | null;
+  maxScreens?: number | null; // null or undefined means unlimited screens
+  maxSeats?: number | null;   // null or undefined means unlimited total seats
 }
 
 export interface LicenseDocument {

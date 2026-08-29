@@ -16,6 +16,8 @@ import {
 import { Armchair, Plus, Trash2, ZoomIn, ZoomOut, RotateCcw, Tag } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { NavPage } from '@/components/layout/Sidebar';
+import { licenseService } from '@/services/license.service';
+import { LicenseUpgradeModal } from '@/components/license/LicenseUpgradeModal';
 
 interface SeatDialogState {
   seat: any;
@@ -37,6 +39,19 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
   const [seats, setSeats] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [zoom, setZoom] = useState<number>(1.0);
+
+  // Upgrade Modal State
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean;
+    limitType: 'screen' | 'seat';
+    currentCount: number;
+    maxLimit: number;
+  }>({
+    isOpen: false,
+    limitType: 'seat',
+    currentCount: 0,
+    maxLimit: 0,
+  });
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(1.8, Math.round((prev + 0.15) * 100) / 100));
@@ -103,6 +118,18 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
       return;
     }
 
+    const seatCheck = await licenseService.validateAddSeats(newRowSeatsCount);
+    if (!seatCheck.allowed && seatCheck.maxSeats !== null) {
+      setIsAddRowOpen(false);
+      setUpgradeModal({
+        isOpen: true,
+        limitType: 'seat',
+        currentCount: seatCheck.currentSeats,
+        maxLimit: seatCheck.maxSeats,
+      });
+      return;
+    }
+
     await screenService.addRowToScreen(selectedScreenId, newRowName, newRowSeatsCount, newRowClassId);
     setIsAddRowOpen(false);
     setNewRowName('');
@@ -132,6 +159,19 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
   };
 
   const handleToggleSeatBlocked = async (seatId: number, currentBlocked: boolean) => {
+    if (currentBlocked) {
+      // Unblocking will add 1 active seat, check limit
+      const seatCheck = await licenseService.validateAddSeats(1);
+      if (!seatCheck.allowed && seatCheck.maxSeats !== null) {
+        setUpgradeModal({
+          isOpen: true,
+          limitType: 'seat',
+          currentCount: seatCheck.currentSeats,
+          maxLimit: seatCheck.maxSeats,
+        });
+        return;
+      }
+    }
     await screenService.toggleSeatBlocked(seatId, currentBlocked);
     await fetchLayout();
   };
@@ -513,6 +553,16 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
           </div>
         </div>
       </Modal>
+
+      {/* License Upgrade Dialog */}
+      <LicenseUpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={() => setUpgradeModal((prev) => ({ ...prev, isOpen: false }))}
+        limitType={upgradeModal.limitType}
+        currentCount={upgradeModal.currentCount}
+        maxLimit={upgradeModal.maxLimit}
+        onNavigateToSettings={onNavigate ? () => onNavigate('system_settings') : undefined}
+      />
     </div>
   );
 };

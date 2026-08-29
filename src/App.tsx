@@ -253,7 +253,7 @@ export const App: React.FC = () => {
             )}
             {activePage === 'master_cinema' && (
               <PermissionGuard module="settings" action="can_read" onNavigate={setActivePage}>
-                <CinemaMasterPage />
+                <CinemaMasterPage onNavigate={setActivePage} />
               </PermissionGuard>
             )}
             {activePage === 'master_movies' && (

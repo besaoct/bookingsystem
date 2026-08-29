@@ -44,6 +44,14 @@ export const SystemSettingsPage: React.FC = () => {
   const [confirmKeyword, setConfirmKeyword] = useState('');
   const [isFullResetting, setIsFullResetting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [limits, setLimits] = useState<{
+    maxScreens: number | null;
+    maxSeats: number | null;
+    currentScreens: number;
+    currentSeats: number;
+    isScreensUnlimited: boolean;
+    isSeatsUnlimited: boolean;
+  } | null>(null);
 
   const loadData = async () => {
     try {
@@ -51,6 +59,8 @@ export const SystemSettingsPage: React.FC = () => {
       setMachineId(mId);
       const lic = await licenseService.checkLicenseStatus();
       setLicenseInfo(lic);
+      const lims = await licenseService.getLicenseLimits();
+      setLimits(lims);
     } catch (err) {
       console.error('Failed to load license info:', err);
     }
@@ -185,7 +195,7 @@ export const SystemSettingsPage: React.FC = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
                 <span className="text-3xs font-medium uppercase text-muted-foreground">Licensed Client</span>
                 <p className="font-semibold text-foreground truncate">
@@ -193,7 +203,7 @@ export const SystemSettingsPage: React.FC = () => {
                     ? 'Apple App Store User'
                     : licenseInfo?.payload?.clientName || 'Unregistered'}
                 </p>
-                <p className="text-3xs text-muted-foreground">
+                <p className="text-3xs text-muted-foreground truncate">
                   {licenseService.isLicenseDisabled()
                     ? 'Official App Store Purchase'
                     : licenseInfo?.payload?.licensee || 'Direct Client'}
@@ -201,16 +211,11 @@ export const SystemSettingsPage: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
-                <span className="text-3xs font-medium uppercase text-muted-foreground">License Tier</span>
-                <p className="font-semibold text-primary uppercase">
+                <span className="text-3xs font-medium uppercase text-muted-foreground">License Tier &amp; Validity</span>
+                <p className="font-semibold text-primary uppercase truncate">
                   {licenseService.isLicenseDisabled() ? 'App Store Lifetime' : `${licenseInfo?.payload?.licenseType || 'Standard'} License`}
                 </p>
-                <p className="text-3xs text-muted-foreground">Full Installation &amp; Unlimited Screens</p>
-              </div>
-
-              <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
-                <span className="text-3xs font-medium uppercase text-muted-foreground">Validity &amp; Expiry</span>
-                <p className="font-semibold text-foreground">
+                <p className="text-3xs text-muted-foreground truncate">
                   {licenseService.isLicenseDisabled()
                     ? 'Lifetime (Never Expires)'
                     : licenseInfo?.payload?.expiresAt
@@ -223,10 +228,33 @@ export const SystemSettingsPage: React.FC = () => {
                       })`
                     : 'Lifetime (Never Expires)'}
                 </p>
-                <p className="text-3xs text-muted-foreground">
-                  {licenseService.isLicenseDisabled()
-                    ? 'Managed by Apple Store'
-                    : `Issued: ${licenseInfo?.payload?.issuedAt?.slice(0, 10) || 'N/A'}`}
+              </div>
+
+              <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
+                <span className="text-3xs font-medium uppercase text-muted-foreground">Screen / Audi Quota</span>
+                <p className="font-semibold text-foreground truncate">
+                  {limits?.isScreensUnlimited
+                    ? 'Unlimited Screens'
+                    : `${limits?.currentScreens || 0} / ${limits?.maxScreens} Allowed`}
+                </p>
+                <p className="text-3xs text-muted-foreground truncate">
+                  {limits?.isScreensUnlimited
+                    ? 'No Screen Restrictions'
+                    : `${Math.max(0, (limits?.maxScreens || 0) - (limits?.currentScreens || 0))} Screen(s) Available`}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
+                <span className="text-3xs font-medium uppercase text-muted-foreground">Seat Capacity Quota</span>
+                <p className="font-semibold text-foreground truncate">
+                  {limits?.isSeatsUnlimited
+                    ? 'Unlimited Seats'
+                    : `${limits?.currentSeats || 0} / ${limits?.maxSeats} Seats`}
+                </p>
+                <p className="text-3xs text-muted-foreground truncate">
+                  {limits?.isSeatsUnlimited
+                    ? 'No Seating Limit'
+                    : `${Math.max(0, (limits?.maxSeats || 0) - (limits?.currentSeats || 0))} Seats Available`}
                 </p>
               </div>
             </div>

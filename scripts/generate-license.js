@@ -19,6 +19,8 @@ Options:
   --client, -c      Client / Cinema / Business Name (e.g. "Grand Multiplex") [REQUIRED]
   --licensee, -u    Contact Person / Licensee Name (optional)
   --days, -d        Validity period in days from today (default: 365)
+  --screens, -s     Max Screen / Auditorium limit (e.g. --screens 2 or "unlimited", default: unlimited)
+  --seats           Max Total Seat capacity limit across screens (e.g. --seats 250 or "unlimited", default: unlimited)
   --minutes         Validity period in minutes from right now (for testing short expiry)
   --seconds         Validity period in seconds from right now (for testing short expiry)
   --lifetime, -l    Issue a Lifetime License with no expiration
@@ -26,11 +28,10 @@ Options:
   --out, -o         Custom destination path for .lic file
 
 Examples:
-  npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Grand Multiplex" --days 365
-  npm run license:generate -- --machine "*" --client "Test Cinema" --minutes 2
+  npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Grand Multiplex" --days 365 --screens 2 --seats 250
+  npm run license:generate -- --machine "*" --client "Test Cinema" --minutes 2 --screens 1 --seats 50
   npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Apex Theaters" --lifetime
   npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Cinema" --trial 7
-  npm run license:generate -- --machine "BS-8F2A-99B1-4CD0-E7A3" --client "Beta Cinema" --trial --days 30
 `);
 }
 
@@ -58,6 +59,8 @@ const licensee = getArg('--licensee', '-u') || '';
 const isLifetime = hasFlag('--lifetime', '-l');
 const isTrial = hasFlag('--trial');
 const daysStr = getArg('--days', '-d');
+const screensStr = getArg('--screens', '-s');
+const seatsStr = getArg('--seats');
 const minutesStr = getArg('--minutes');
 const secondsStr = getArg('--seconds');
 const customOutPath = getArg('--out', '-o');
@@ -118,6 +121,22 @@ if (isLifetime) {
   expiresAt = exp.toISOString();
 }
 
+let maxScreens = null;
+if (screensStr && screensStr.toLowerCase() !== 'unlimited') {
+  const parsed = parseInt(screensStr, 10);
+  if (!isNaN(parsed) && parsed > 0) {
+    maxScreens = parsed;
+  }
+}
+
+let maxSeats = null;
+if (seatsStr && seatsStr.toLowerCase() !== 'unlimited') {
+  const parsed = parseInt(seatsStr, 10);
+  if (!isNaN(parsed) && parsed > 0) {
+    maxSeats = parsed;
+  }
+}
+
 const payload = {
   version: 1,
   product: 'Booking System Desktop Suite',
@@ -127,6 +146,8 @@ const payload = {
   licensee: licensee.trim(),
   issuedAt: now.toISOString(),
   expiresAt,
+  maxScreens,
+  maxSeats,
 };
 
 // Canonical payload string for signature verification
@@ -161,6 +182,8 @@ console.log(`License Type:  ${payload.licenseType.toUpperCase()}`);
 console.log(`Machine ID:    ${payload.machineId}`);
 console.log(`Issued Date:   ${payload.issuedAt.slice(0, 10)}`);
 console.log(`Expires:       ${payload.expiresAt ? payload.expiresAt.slice(0, 10) : 'LIFETIME (Never)'}`);
+console.log(`Max Screens:   ${maxScreens !== null ? `${maxScreens} Screen(s)` : 'UNLIMITED'}`);
+console.log(`Max Seats:     ${maxSeats !== null ? `${maxSeats} Seats` : 'UNLIMITED'}`);
 console.log('------------------------------------------------------');
 console.log(`File Saved:    ${outFileName}`);
 console.log('------------------------------------------------------');

@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Modal } from '@/components/ui/modal';
 import { Building2, Save, Plus, Pencil, Trash2, Armchair, FileText, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { licenseService } from '@/services/license.service';
+import { LicenseUpgradeModal } from '@/components/license/LicenseUpgradeModal';
 
-export const CinemaMasterPage: React.FC = () => {
+export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ onNavigate }) => {
   const { hasPermission, user } = useAuthStore();
   const isSystemAdmin = user?.role === 'SYSTEM_ADMIN';
   const canUpdate = isSystemAdmin || hasPermission('settings', 'can_update');
@@ -28,6 +30,19 @@ export const CinemaMasterPage: React.FC = () => {
   // Screen Sub-Master state
   const [isScreenModalOpen, setIsScreenModalOpen] = useState(false);
   const [editingScreen, setEditingScreen] = useState<Partial<Screen> | null>(null);
+
+  // Upgrade Modal State
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean;
+    limitType: 'screen' | 'seat';
+    currentCount: number;
+    maxLimit: number;
+  }>({
+    isOpen: false,
+    limitType: 'screen',
+    currentCount: 0,
+    maxLimit: 0,
+  });
 
   const fetchScreens = async () => {
     const scList = await screenService.getScreens();
@@ -62,19 +77,43 @@ export const CinemaMasterPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.address || !formData.gstin) {
-      alert('Cinema Name, Address, and GSTIN are required fields.');
-      return;
-    }
-
     await updateCinema(formData);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
 
+  const handleOpenAddScreen = async () => {
+    const check = await licenseService.validateAddScreen();
+    if (!check.allowed && check.maxScreens !== null) {
+      setUpgradeModal({
+        isOpen: true,
+        limitType: 'screen',
+        currentCount: check.currentScreens,
+        maxLimit: check.maxScreens,
+      });
+      return;
+    }
+    setEditingScreen({ name: '', capacity: 140, is_active: true });
+    setIsScreenModalOpen(true);
+  };
+
   const handleSaveScreen = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingScreen?.name) return;
+
+    if (!editingScreen.id) {
+      const check = await licenseService.validateAddScreen();
+      if (!check.allowed && check.maxScreens !== null) {
+        setIsScreenModalOpen(false);
+        setUpgradeModal({
+          isOpen: true,
+          limitType: 'screen',
+          currentCount: check.currentScreens,
+          maxLimit: check.maxScreens,
+        });
+        return;
+      }
+    }
 
     await screenService.saveScreen(editingScreen);
     setIsScreenModalOpen(false);
@@ -321,10 +360,7 @@ export const CinemaMasterPage: React.FC = () => {
             <Button
               variant="default"
               size="sm"
-              onClick={() => {
-                setEditingScreen({ name: `Screen ${screens.length + 1}`, capacity: 140, is_active: true });
-                setIsScreenModalOpen(true);
-              }}
+              onClick={handleOpenAddScreen}
               className="font-bold cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 mr-1" /> Add Screen
@@ -452,6 +488,16 @@ export const CinemaMasterPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* License Upgrade Dialog */}
+      <LicenseUpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={() => setUpgradeModal((prev) => ({ ...prev, isOpen: false }))}
+        limitType={upgradeModal.limitType}
+        currentCount={upgradeModal.currentCount}
+        maxLimit={upgradeModal.maxLimit}
+        onNavigateToSettings={onNavigate ? () => onNavigate('system_settings') : undefined}
+      />
     </div>
   );
 };

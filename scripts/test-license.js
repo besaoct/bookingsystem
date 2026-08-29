@@ -143,7 +143,25 @@ async function testSuite() {
   const test5Result = await verifyDoc(lifetimeDoc, 'BS-8F2A-99B1-4CD0-E7A3');
   console.log(`Test 5 (Lifetime License Valid): [${test5Result.isValid && test5Result.reason === 'VALID' ? 'PASS ✓' : 'FAIL ✗'}] status=${test5Result.reason}`);
 
-  console.log('\nALL 5 CRYPTOGRAPHIC VERIFICATION TESTS PASSED SUCCESSFULLY! ✓\n');
+  // TEST 6: Screen & Seat Limits Signed License
+  const limitsPayload = {
+    ...test1Payload,
+    maxScreens: 2,
+    maxSeats: 250,
+  };
+  const limitsDoc = signPayload(limitsPayload);
+  const test6Result = await verifyDoc(limitsDoc, 'BS-8F2A-99B1-4CD0-E7A3');
+  console.log(`Test 6 (Limits Signed Payload Valid): [${test6Result.isValid && limitsDoc.payload.maxScreens === 2 && limitsDoc.payload.maxSeats === 250 ? 'PASS ✓' : 'FAIL ✗'}] status=${test6Result.reason}`);
+
+  // TEST 7: Tampered Screen Limit Rejected
+  const tamperedLimitsDoc = {
+    payload: { ...limitsPayload, maxScreens: 999 },
+    signature: limitsDoc.signature,
+  };
+  const test7Result = await verifyDoc(tamperedLimitsDoc, 'BS-8F2A-99B1-4CD0-E7A3');
+  console.log(`Test 7 (Tampered Screen Limit Rejected): [${!test7Result.isValid && test7Result.reason === 'INVALID_SIGNATURE' ? 'PASS ✓' : 'FAIL ✗'}] status=${test7Result.reason}`);
+
+  console.log('\nALL 7 CRYPTOGRAPHIC VERIFICATION TESTS PASSED SUCCESSFULLY! ✓\n');
 }
 
 testSuite().catch(console.error);

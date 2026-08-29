@@ -61,7 +61,7 @@ export const licenseService = {
   async getStoredLicense(): Promise<string | null> {
     try {
       await dbService.init();
-      const rows = await dbService.query<{ license_key: string }>(
+      const rows = dbService.query<{ license_key: string }>(
         'SELECT license_key FROM software_license ORDER BY id DESC LIMIT 1'
       );
       if (rows && rows.length > 0 && rows[0].license_key) {
@@ -125,7 +125,7 @@ export const licenseService = {
     let lastTimestamp: number | undefined = undefined;
     try {
       await dbService.init();
-      const rows = await dbService.query<{ last_verified_at: string }>(
+      const rows = dbService.query<{ last_verified_at: string }>(
         'SELECT last_verified_at FROM software_license ORDER BY id DESC LIMIT 1'
       );
       if (rows && rows.length > 0 && rows[0].last_verified_at) {
@@ -237,5 +237,104 @@ export const licenseService = {
       return window.electronAPI.loadLicenseFile();
     }
     return null;
+  },
+
+  /**
+   * Returns current active screen and seat counts alongside the license limits.
+   */
+  async getLicenseLimits(): Promise<{
+    maxScreens: number | null;
+    maxSeats: number | null;
+    currentScreens: number;
+    currentSeats: number;
+    isScreensUnlimited: boolean;
+    isSeatsUnlimited: boolean;
+    canAddScreen: boolean;
+    availableSeats: number | null;
+  }> {
+    const status = await this.checkLicenseStatus();
+    const rawMaxScreens = status.isValid && status.payload?.maxScreens ? Number(status.payload.maxScreens) : null;
+    const rawMaxSeats = status.isValid && status.payload?.maxSeats ? Number(status.payload.maxSeats) : null;
+
+    let currentScreens = 0;
+    let currentSeats = 0;
+
+    try {
+      await dbService.init();
+      // Count active screens
+      const screenRows = dbService.query<{ count: number }>(
+        'SELECT COUNT(*) as count FROM screens WHERE is_active = 1'
+      );
+      currentScreens = screenRows?.[0]?.count || 0;
+
+      // Count total actual configured active seats across all active screens
+      const seatRows = dbService.query<{ total: number }>(
+        `SELECT COUNT(s.id) as total 
+         FROM seats s 
+         JOIN seat_rows sr ON s.row_id = sr.id 
+         JOIN screens sc ON sr.screen_id = sc.id 
+         WHERE sc.is_active = 1 AND s.is_blocked = 0`
+      );
+      currentSeats = seatRows?.[0]?.total || 0;
+    } catch (err) {
+      console.warn('Failed to query screen/seat count for limits:', err);
+    }
+
+    const isScreensUnlimited = rawMaxScreens === null || rawMaxScreens <= 0;
+    const isSeatsUnlimited = rawMaxSeats === null || rawMaxSeats <= 0;
+
+    const maxScreens = isScreensUnlimited ? null : rawMaxScreens;
+    const maxSeats = isSeatsUnlimited ? null : rawMaxSeats;
+
+    const canAddScreen = isScreensUnlimited || (currentScreens < maxScreens!);
+    const availableSeats = isSeatsUnlimited ? null : Math.max(0, maxSeats! - currentSeats);
+
+    return {
+      maxScreens,
+      maxSeats,
+      currentScreens,
+      currentSeats,
+      isScreensUnlimited,
+      isSeatsUnlimited,
+      canAddScreen,
+      availableSeats,
+    };
+  },
+
+  /**
+   * Checks if adding a new screen is allowed under the current license.
+   */
+  async validateAddScreen(): Promise<{ allowed: boolean; maxScreens: number | null; currentScreens: number }> {
+    const limits = await this.getLicenseLimits();
+    return {
+      allowed: limits.canAddScreen,
+      maxScreens: limits.maxScreens,
+      currentScreens: limits.currentScreens,
+    };
+  },
+
+  /**
+   * Checks if adding N seats to an auditorium is allowed under the current license.
+   */
+  async validateAddSeats(
+    additionalSeats: number
+  ): Promise<{ allowed: boolean; maxSeats: number | null; currentSeats: number; newTotal: number }> {
+    const limits = await this.getLicenseLimits();
+    if (limits.isSeatsUnlimited) {
+      return {
+        allowed: true,
+        maxSeats: null,
+        currentSeats: limits.currentSeats,
+        newTotal: limits.currentSeats + additionalSeats,
+      };
+    }
+
+    const newTotal = limits.currentSeats + additionalSeats;
+    return {
+      allowed: newTotal <= (limits.maxSeats || 0),
+      maxSeats: limits.maxSeats,
+      currentSeats: limits.currentSeats,
+      newTotal,
+    };
   },
 };
