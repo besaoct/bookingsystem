@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Armchair, Plus, Trash2, ZoomIn, ZoomOut, RotateCcw, Tag } from 'lucide-react';
+import { Armchair, Plus, Trash2, Tag } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { NavPage } from '@/components/layout/Sidebar';
 import { licenseService } from '@/services/license.service';
@@ -24,7 +24,7 @@ interface SeatDialogState {
   isOpen: boolean;
 }
 
-export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage) => void }> = ({ onNavigate }) => {
+export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage, tab?: string) => void }> = ({ onNavigate }) => {
   const { hasPermission, user } = useAuthStore();
   const isSystemAdmin = user?.role === 'SYSTEM_ADMIN';
   const canRead = isSystemAdmin || hasPermission('seat_layout', 'can_read');
@@ -38,7 +38,6 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
   const [rows, setRows] = useState<SeatRow[]>([]);
   const [seats, setSeats] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [zoom, setZoom] = useState<number>(1.0);
 
   // Upgrade Modal State
   const [upgradeModal, setUpgradeModal] = useState<{
@@ -52,18 +51,6 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
     currentCount: 0,
     maxLimit: 0,
   });
-
-  const handleZoomIn = () => {
-    setZoom((prev) => Math.min(1.8, Math.round((prev + 0.15) * 100) / 100));
-  };
-
-  const handleZoomOut = () => {
-    setZoom((prev) => Math.max(0.65, Math.round((prev - 0.15) * 100) / 100));
-  };
-
-  const handleResetZoom = () => {
-    setZoom(1.0);
-  };
 
   // Add Screen / Row Modal
   const [isAddRowOpen, setIsAddRowOpen] = useState(false);
@@ -228,83 +215,11 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Zoom Controls */}
-          <div className="flex items-center space-x-1 bg-muted/60 p-0.5 rounded-xs border border-border mr-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={handleZoomOut}
-                  disabled={zoom <= 0.65}
-                  className="h-7 w-7 p-0 hover:bg-background text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-30"
-                >
-                  <ZoomOut className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <span>Zoom Out ({(zoom * 100).toFixed(0)}%)</span>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={handleResetZoom}
-                  className="px-2 py-0.5 text-[11px] font-mono font-bold text-foreground hover:bg-background rounded-xs cursor-pointer"
-                >
-                  {Math.round(zoom * 100)}%
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <span>Reset to 100%</span>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={handleZoomIn}
-                  disabled={zoom >= 1.8}
-                  className="h-7 w-7 p-0 hover:bg-background text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-30"
-                >
-                  <ZoomIn className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <span>Zoom In ({(zoom * 100).toFixed(0)}%)</span>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={handleResetZoom}
-                  disabled={zoom === 1.0}
-                  className="h-7 w-7 p-0 hover:bg-background text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-30"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <span>Reset Zoom</span>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
           {onNavigate && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onNavigate('master_others')}
+              onClick={() => onNavigate('master_others', 'classes')}
               className="cursor-pointer"
             >
               <Tag className="w-3.5 h-3.5 mr-1 text-primary" />
@@ -340,10 +255,7 @@ export const ScreenSeatLayoutMasterPage: React.FC<{ onNavigate?: (page: NavPage)
         </div>
 
         {/* Rows & Interactive Scalable Seat Tiles */}
-        <div
-          className="space-y-3 transition-transform duration-100 ease-out origin-top pb-8"
-          style={{ transform: `scale(${zoom})` }}
-        >
+        <div className="space-y-3 pb-8">
           {rows.map((row) => {
             const rowSeats = seats.filter((s) => s.row_id === row.id);
             const firstSeatClassId = rowSeats[0]?.seat_class_id || 1;

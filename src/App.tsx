@@ -36,9 +36,15 @@ export const App: React.FC = () => {
   const { user, isAuthenticated, isLoading, loadInitialAuth, hasPermission } = useAuthStore();
   const { fetchSettings } = useSettingsStore();
   const [activePage, setActivePage] = useState<NavPage>('dashboard');
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
   const [collapsed, setCollapsed] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState<boolean | null>(null);
   const [forceSetupScreen, setForceSetupScreen] = useState(false);
+
+  const handleNavigate = (page: NavPage, tab?: string) => {
+    setActivePage(page);
+    setActiveTab(tab);
+  };
 
   // License State
   const [licenseStatus, setLicenseStatus] = useState<LicenseVerificationResult | null>(null);
@@ -210,7 +216,7 @@ export const App: React.FC = () => {
         <div className="sticky top-0 z-20 hidden h-full shrink-0 self-start md:flex print:hidden">
           <Sidebar
             activePage={activePage}
-            onSelectPage={setActivePage}
+            onSelectPage={(p) => handleNavigate(p)}
             collapsed={collapsed}
           />
           {/* collapse toggle */}
@@ -228,82 +234,82 @@ export const App: React.FC = () => {
 
           {/* ── Right: Header + main content ── */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible print:w-full">
-          <Header onNavigate={setActivePage} />
+          <Header onNavigate={handleNavigate} />
 
           <main className="flex-1 relative overflow-y-auto bg-muted/40 print:overflow-visible">
             {activePage === 'pos' && (
-              <PermissionGuard module="booking" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="booking" action="can_read" onNavigate={handleNavigate}>
                 <POSCounterPage />
               </PermissionGuard>
             )}
             {activePage === 'dcr' && (
-              <PermissionGuard module="reports" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="reports" action="can_read" onNavigate={handleNavigate}>
                 <DCRReportPage />
               </PermissionGuard>
             )}
             {activePage === 'cancel' && (
-              <PermissionGuard module="cancellation" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="cancellation" action="can_read" onNavigate={handleNavigate}>
                 <TicketCancellationPage />
               </PermissionGuard>
             )}
             {activePage === 'dashboard' && (
-              <PermissionGuard module="reports" action="can_read" onNavigate={setActivePage}>
-                <DashboardPage onNavigate={setActivePage} />
+              <PermissionGuard module="reports" action="can_read" onNavigate={handleNavigate}>
+                <DashboardPage onNavigate={handleNavigate} />
               </PermissionGuard>
             )}
             {activePage === 'master_cinema' && (
-              <PermissionGuard module="settings" action="can_read" onNavigate={setActivePage}>
-                <CinemaMasterPage onNavigate={setActivePage} />
+              <PermissionGuard module="settings" action="can_read" onNavigate={handleNavigate}>
+                <CinemaMasterPage onNavigate={handleNavigate} />
               </PermissionGuard>
             )}
             {activePage === 'master_movies' && (
-              <PermissionGuard module="movies" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="movies" action="can_read" onNavigate={handleNavigate}>
                 <MovieMasterPage />
               </PermissionGuard>
             )}
             {activePage === 'master_shows' && (
-              <PermissionGuard module="shows" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="shows" action="can_read" onNavigate={handleNavigate}>
                 <ShowTimingMasterPage />
               </PermissionGuard>
             )}
             {activePage === 'master_screens' && (
-              <PermissionGuard module="seat_layout" action="can_read" onNavigate={setActivePage}>
-                <ScreenSeatLayoutMasterPage onNavigate={setActivePage} />
+              <PermissionGuard module="seat_layout" action="can_read" onNavigate={handleNavigate}>
+                <ScreenSeatLayoutMasterPage onNavigate={handleNavigate} />
               </PermissionGuard>
             )}
 
             {activePage === 'master_pricing' && (
-              <PermissionGuard module="pricing" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="pricing" action="can_read" onNavigate={handleNavigate}>
                 <PricingMasterPage />
               </PermissionGuard>
             )}
             {activePage === 'master_taxes' && (
-              <PermissionGuard module="taxes" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="taxes" action="can_read" onNavigate={handleNavigate}>
                 <TaxGstConfigPage />
               </PermissionGuard>
             )}
             {activePage === 'master_others' && (
-              <PermissionGuard module="master_others" action="can_read" onNavigate={setActivePage}>
-                <CoreDropdownsPage />
+              <PermissionGuard module="master_others" action="can_read" onNavigate={handleNavigate}>
+                <CoreDropdownsPage initialTab={activeTab as any} />
               </PermissionGuard>
             )}
             {activePage === 'users_permissions' && (
-              <PermissionGuard module="users" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="users" action="can_read" onNavigate={handleNavigate}>
                 <UsersPermissionsPage />
               </PermissionGuard>
             )}
             {activePage === 'printer_settings' && (
-              <PermissionGuard module="settings" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="settings" action="can_read" onNavigate={handleNavigate}>
                 <PrinterSettingsPage />
               </PermissionGuard>
             )}
             {activePage === 'system_settings' && (
-              <PermissionGuard module="system_settings" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="system_settings" action="can_read" onNavigate={handleNavigate}>
                 <SystemSettingsPage />
               </PermissionGuard>
             )}
             {activePage === 'audit_backup' && (
-              <PermissionGuard module="audit_backup" action="can_read" onNavigate={setActivePage}>
+              <PermissionGuard module="audit_backup" action="can_read" onNavigate={handleNavigate}>
                 <AuditBackupPage />
               </PermissionGuard>
             )}

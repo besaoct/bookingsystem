@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 type DropdownTab = 'distributors' | 'languages' | 'types' | 'categories' | 'classes' | 'reasons';
 
-export const CoreDropdownsPage: React.FC = () => {
+export const CoreDropdownsPage: React.FC<{ initialTab?: DropdownTab }> = ({ initialTab }) => {
   const { user, hasPermission } = useAuthStore();
   const isSystemAdmin = user?.role === 'SYSTEM_ADMIN';
   const canRead = isSystemAdmin || hasPermission('master_others', 'can_read');
@@ -18,7 +18,13 @@ export const CoreDropdownsPage: React.FC = () => {
   const canUpdate = isSystemAdmin || hasPermission('master_others', 'can_update');
   const canDelete = isSystemAdmin || hasPermission('master_others', 'can_delete');
 
-  const [activeTab, setActiveTab] = useState<DropdownTab>('distributors');
+  const [activeTab, setActiveTab] = useState<DropdownTab>(initialTab || 'distributors');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [movieTypes, setMovieTypes] = useState<MovieType[]>([]);
@@ -191,15 +197,15 @@ export const CoreDropdownsPage: React.FC = () => {
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex flex-wrap items-center gap-1 border border-border bg-muted/60 p-1 rounded-xs shadow-xs">
+      <div className="flex flex-wrap items-center gap-1 border border-border bg-card p-1 rounded-xs shadow-xs">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-3 py-1.5 text-xs rounded-xs transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all cursor-pointer ${
               activeTab === tab.id
-                ? 'bg-primary text-primary-foreground shadow-xs font-bold hover:bg-primary/90'
-                : 'text-muted-foreground font-semibold hover:text-foreground hover:bg-background/80'
+                ? 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90'
+                : 'text-muted-foreground hover:text-foreground hover:bg-background/80'
             }`}
           >
             {tab.label}
@@ -387,7 +393,7 @@ export const CoreDropdownsPage: React.FC = () => {
                 <div key={sc.id} className="p-3 border border-border rounded-xs bg-muted/20 flex justify-between items-center hover:bg-muted/40 transition-colors">
                   <div className="flex items-center space-x-2.5">
                     <span
-                      className="w-5 h-5 rounded-xs border border-border shadow-xs shrink-0"
+                      className="w-5 h-5 rounded-full border border-border shadow-xs shrink-0"
                       style={{ backgroundColor: sc.color }}
                     />
                     <div>
@@ -523,7 +529,7 @@ export const CoreDropdownsPage: React.FC = () => {
                   type="color"
                   value={newItemExtra || '#3b82f6'}
                   onChange={(e) => setNewItemExtra(e.target.value)}
-                  className="w-10 h-8 rounded-xs border border-border cursor-pointer p-0.5"
+                  className="w-8 h-8 rounded-full border border-border cursor-pointer p-0 overflow-hidden shrink-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-full [&::-moz-color-swatch]:border-none [&::-moz-color-swatch]:rounded-full"
                 />
                 <Input
                   value={newItemExtra || '#3b82f6'}
@@ -595,7 +601,7 @@ export const CoreDropdownsPage: React.FC = () => {
                       type="color"
                       value={editingItem.color || '#3b82f6'}
                       onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
-                      className="w-10 h-8 rounded-xs border border-border cursor-pointer p-0.5"
+                      className="w-8 h-8 rounded-full border border-border cursor-pointer p-0 overflow-hidden shrink-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-full [&::-moz-color-swatch]:border-none [&::-moz-color-swatch]:rounded-full"
                     />
                     <Input
                       value={editingItem.color || '#3b82f6'}
@@ -604,7 +610,7 @@ export const CoreDropdownsPage: React.FC = () => {
                       className="font-mono text-xs"
                     />
                     <span
-                      className="w-8 h-8 rounded-xs border border-border shrink-0"
+                      className="w-9 h-9 rounded-xs border border-border shrink-0"
                       style={{ backgroundColor: editingItem.color || '#3b82f6' }}
                     />
                   </div>

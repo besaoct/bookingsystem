@@ -10,7 +10,7 @@ import {
   PhoneCall,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/modal';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { licenseService } from '@/services/license.service';
 import logoSrc from '@/assets/logo.svg';
 
@@ -55,25 +55,12 @@ export const LicenseUpgradeModal: React.FC<LicenseUpgradeModalProps> = ({
   const isScreen = limitType === 'screen';
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title=""
-      description=""
-      maxWidth="md"
-      className="p-0 overflow-hidden border-border shadow-2xl rounded-lg"
-    >
-      <div className="flex flex-col font-sans select-none">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="p-0 overflow-hidden border-border shadow-2xl rounded-lg max-w-md gap-0 [&>button]:text-white/80 hover:[&>button]:text-white [&>button]:hover:bg-white/20 [&>button]:top-3.5 [&>button]:right-3.5 [&>button]:z-10">
+        <DialogTitle className="sr-only">License Limit Reached</DialogTitle>
+        <div className="flex flex-col font-sans select-none">
         {/* Header matching License Activation Screen */}
         <div className="bg-primary text-primary-foreground p-5 text-center flex flex-col items-center justify-center relative">
-          <button
-            onClick={onClose}
-            type="button"
-            className="absolute top-3.5 right-3.5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full w-7 h-7 flex items-center justify-center text-xs cursor-pointer transition-colors"
-          >
-            ✕
-          </button>
-
           <div className="w-12 h-12 bg-card rounded-md shadow-md flex items-center justify-center p-1.5 mb-2.5">
             <img src={logoSrc} alt="Logo" className="w-full h-full object-contain" />
           </div>
@@ -107,11 +94,11 @@ export const LicenseUpgradeModal: React.FC<LicenseUpgradeModalProps> = ({
 
           {/* Limit Usage Metrics Card */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
-              <span className="text-3xs font-medium uppercase text-muted-foreground">
+            <div className="p-2.5 rounded-xs bg-muted/40 border border-border space-y-1">
+              <span className="text-[10px] font-medium uppercase text-muted-foreground block">
                 {isScreen ? 'Currently Configured' : 'Current Configured Seats'}
               </span>
-              <p className="text-sm font-semibold text-foreground flex items-center">
+              <p className="text-xs font-bold text-foreground flex items-center">
                 {isScreen ? (
                   <>
                     <Layers className="w-3.5 h-3.5 mr-1.5 text-primary" />
@@ -126,11 +113,11 @@ export const LicenseUpgradeModal: React.FC<LicenseUpgradeModalProps> = ({
               </p>
             </div>
 
-            <div className="p-3 rounded-xs bg-muted/40 border border-border space-y-1">
-              <span className="text-3xs font-medium uppercase text-muted-foreground">
+            <div className="p-2.5 rounded-xs bg-muted/40 border border-border space-y-1">
+              <span className="text-[10px] font-medium uppercase text-muted-foreground block">
                 Your Licensed Limit
               </span>
-              <p className="text-sm font-semibold text-primary flex items-center">
+              <p className="text-xs font-bold text-primary flex items-center">
                 {maxLimit} {isScreen ? 'Screen(s)' : 'Seats Max'}
               </p>
             </div>
@@ -176,7 +163,7 @@ export const LicenseUpgradeModal: React.FC<LicenseUpgradeModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-border">
+          <div className="flex items-center justify-end space-x-2 pt-1">
             <Button
               type="button"
               variant="outline"
@@ -206,11 +193,11 @@ export const LicenseUpgradeModal: React.FC<LicenseUpgradeModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-2.5 bg-muted/40 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground font-normal">
-          <span>Booking System Cryptographic Licensing Authority</span>
+        <div className="px-5 py-2 bg-muted/40 border-t border-border flex items-center justify-center text-[10px] text-muted-foreground font-normal">
           <span>ECDSA P-256 Quota Protection</span>
         </div>
       </div>
-    </Modal>
-  );
+    </DialogContent>
+  </Dialog>
+);
 };
