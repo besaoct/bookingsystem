@@ -240,7 +240,7 @@ export const licenseService = {
   },
 
   /**
-   * Returns current active screen and seat counts alongside the license limits.
+   * Retrieves active screen count, seat count, and compares against current license payload.
    */
   async getLicenseLimits(): Promise<{
     maxScreens: number | null;
@@ -252,10 +252,6 @@ export const licenseService = {
     canAddScreen: boolean;
     availableSeats: number | null;
   }> {
-    const status = await this.checkLicenseStatus();
-    const rawMaxScreens = status.isValid && status.payload?.maxScreens ? Number(status.payload.maxScreens) : null;
-    const rawMaxSeats = status.isValid && status.payload?.maxSeats ? Number(status.payload.maxSeats) : null;
-
     let currentScreens = 0;
     let currentSeats = 0;
 
@@ -279,6 +275,23 @@ export const licenseService = {
     } catch (err) {
       console.warn('Failed to query screen/seat count for limits:', err);
     }
+
+    if (isLicenseDisabled) {
+      return {
+        maxScreens: null,
+        maxSeats: null,
+        currentScreens,
+        currentSeats,
+        isScreensUnlimited: true,
+        isSeatsUnlimited: true,
+        canAddScreen: true,
+        availableSeats: null,
+      };
+    }
+
+    const status = await this.checkLicenseStatus();
+    const rawMaxScreens = status.isValid && status.payload?.maxScreens ? Number(status.payload.maxScreens) : null;
+    const rawMaxSeats = status.isValid && status.payload?.maxSeats ? Number(status.payload.maxSeats) : null;
 
     const isScreensUnlimited = rawMaxScreens === null || rawMaxScreens <= 0;
     const isSeatsUnlimited = rawMaxSeats === null || rawMaxSeats <= 0;
@@ -305,6 +318,9 @@ export const licenseService = {
    * Checks if adding a new screen is allowed under the current license.
    */
   async validateAddScreen(): Promise<{ allowed: boolean; maxScreens: number | null; currentScreens: number }> {
+    if (isLicenseDisabled) {
+      return { allowed: true, maxScreens: null, currentScreens: 0 };
+    }
     const limits = await this.getLicenseLimits();
     return {
       allowed: limits.canAddScreen,
@@ -319,6 +335,9 @@ export const licenseService = {
   async validateAddSeats(
     additionalSeats: number
   ): Promise<{ allowed: boolean; maxSeats: number | null; currentSeats: number; newTotal: number }> {
+    if (isLicenseDisabled) {
+      return { allowed: true, maxSeats: null, currentSeats: 0, newTotal: 0 };
+    }
     const limits = await this.getLicenseLimits();
     if (limits.isSeatsUnlimited) {
       return {
