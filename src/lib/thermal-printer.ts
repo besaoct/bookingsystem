@@ -53,10 +53,11 @@ export interface TicketPrintData {
   ticketWidthCm?: number | string;
   ticketHeightCm?: number | string;
   printerName?: string;
+  invoiceSeries?: string;
 }
 
 export function generateThermalTicketHTML(data: TicketPrintData): string {
-  const { cinema, booking, copyConfigs } = data;
+  const { cinema, booking, copyConfigs, invoiceSeries } = data;
   const widthCm = data.ticketWidthCm || '10.2';
   const heightCm = data.ticketHeightCm || '3.5';
 
@@ -82,7 +83,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const tickets = booking.tickets || [];
   const firstTicketNo = tickets[0]?.ticket_no || (booking.booking_no ? booking.booking_no.slice(-7) : '');
   const txnNo = `A${String(booking.id).padStart(6, '0')}-${firstTicketNo ? firstTicketNo.slice(-2) : '01'}W`;
-  const invNo = `000${String(booking.id).padStart(6, '0')}`;
+  const invSeq = `000${String(booking.id).padStart(6, '0')}`;
+  const invNo = invoiceSeries ? `${invoiceSeries}/${invSeq}` : invSeq;
 
   // Date breakdown
   const bookingDateObj = new Date(booking.booking_date || new Date());
@@ -112,14 +114,15 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
 
   return copiesToPrint
     .map((copy) => {
-      const copyBadge = copy.header_label ? copy.header_label.trim().charAt(0) : 'D';
+      const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
+      const badgeFontSize = copyBadge.length > 2 ? '7px' : '9px';
       return `
-      <div class="ticket-slip" style="width: ${widthCm}cm; height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; padding: 4px 6px; font-family: 'Montserrat', sans-serif; font-size: 8px; line-height: 1.1; page-break-after: always; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; background: #fff; color: #000; border: 1px solid #000;">
+      <div class="ticket-slip" style="width: ${widthCm}cm; min-height: ${heightCm}cm; box-sizing: border-box; padding: 4px 6px; font-family: 'Montserrat', sans-serif; font-size: 8px; line-height: 1.1; page-break-after: always; display: flex; flex-direction: column; justify-content: space-between; background: #fff; color: #000; border: 1px solid #000;">
         
         <!-- Header Top: Copy Code Badge + Cinema Name + Quantity Circle -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #000; padding-bottom: 2px;">
           <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1.5px solid #000; font-weight: 900; font-size: 9px; border-radius: 2px;">${copyBadge}</span>
+            <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 14px; padding: 0 2px; border: 1.5px solid #000; font-weight: 900; font-size: ${badgeFontSize}; border-radius: 2px;">${copyBadge}</span>
             <span style="font-weight: 900; font-size: 9.5px; letter-spacing: 0.2px; text-transform: uppercase;">${cinema.header_text || cinema.name || ''}</span>
           </div>
           <div style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1.5px solid #000; border-radius: 50%; font-weight: 900; font-size: 9px;">

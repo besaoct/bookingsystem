@@ -15,6 +15,8 @@ interface SettingsState {
   updateCinema: (cinema: Partial<Cinema>) => Promise<void>;
   updateTaxConfig: (taxConfig: Partial<TaxConfig>) => Promise<void>;
   updateTicketCopies: (copies: TicketCopyConfig[]) => Promise<void>;
+  addTicketCopy: (copy: Partial<TicketCopyConfig>) => Promise<void>;
+  deleteTicketCopy: (id: number) => Promise<void>;
   updateSystemSetting: (key: string, value: string) => Promise<void>;
 }
 
@@ -73,7 +75,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     for (const copy of copies) {
       await settingsService.saveTicketCopyConfig(copy);
     }
-    set({ ticketCopies: copies });
+    const fresh = await settingsService.getTicketCopyConfigs();
+    set({ ticketCopies: fresh });
+  },
+
+  addTicketCopy: async (copy) => {
+    await settingsService.saveTicketCopyConfig(copy);
+    const fresh = await settingsService.getTicketCopyConfigs();
+    set({ ticketCopies: fresh });
+  },
+
+  deleteTicketCopy: async (id: number) => {
+    await settingsService.deleteTicketCopyConfig(id);
+    const fresh = await settingsService.getTicketCopyConfigs();
+    set({ ticketCopies: fresh });
   },
 
   updateSystemSetting: async (key: string, value: string) => {

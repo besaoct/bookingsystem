@@ -19,11 +19,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Ban, Search, RefreshCw, Ticket, CheckCircle } from 'lucide-react';
+import { Ban, Search, RefreshCw, Ticket, CheckCircle, Trash2 } from 'lucide-react';
 
 export const TicketCancellationPage: React.FC = () => {
   const { user, hasPermission } = useAuthStore();
   const canCancel = user?.role === 'SYSTEM_ADMIN' || hasPermission('cancellation', 'can_create') || hasPermission('cancellation', 'can_delete');
+  const canDelete = user?.role === 'SYSTEM_ADMIN' || hasPermission('cancellation', 'can_delete') || hasPermission('booking', 'can_delete');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'CANCELLED'>('ALL');
@@ -89,6 +90,21 @@ export const TicketCancellationPage: React.FC = () => {
       alert('Failed to cancel ticket. Please check error logs.');
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleDeleteBooking = async (b: Booking) => {
+    if (!confirm(`Are you sure you want to permanently delete cancelled booking #${b.booking_no}? This will remove it from transaction records.`)) {
+      return;
+    }
+    try {
+      await bookingService.deleteBooking(b.id, user?.id);
+      setSuccessMsg(`Cancelled booking #${b.booking_no} permanently deleted.`);
+      await fetchBookings();
+      setTimeout(() => setSuccessMsg(null), 5000);
+    } catch (e) {
+      console.error('Error deleting booking:', e);
+      alert('Failed to delete booking record.');
     }
   };
 
@@ -350,6 +366,17 @@ export const TicketCancellationPage: React.FC = () => {
                           >
                             <Ban className="w-3 h-3 mr-1" />
                             Cancel Ticket
+                          </Button>
+                        )}
+                        {canDelete && isCancelled && (
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            onClick={() => handleDeleteBooking(b)}
+                            className="text-destructive hover:bg-destructive/10 font-semibold cursor-pointer h-7 px-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            Delete
                           </Button>
                         )}
                       </td>

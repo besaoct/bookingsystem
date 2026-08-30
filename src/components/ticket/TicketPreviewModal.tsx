@@ -46,7 +46,9 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const tickets = booking.tickets || [];
   const firstTicketNo = tickets[0]?.ticket_no || (booking.booking_no ? booking.booking_no.slice(-7) : '');
   const txnNo = `A${String(booking.id).padStart(6, '0')}-${firstTicketNo ? firstTicketNo.slice(-2) : '01'}W`;
-  const invNo = `000${String(booking.id).padStart(6, '0')}`;
+  const invoiceSeries = systemSettings?.['invoice_series'] || '';
+  const invSeq = `000${String(booking.id).padStart(6, '0')}`;
+  const invNo = invoiceSeries ? `${invoiceSeries}/${invSeq}` : invSeq;
 
   const bookingDateObj = new Date(booking.booking_date || new Date());
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -89,6 +91,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           ticketWidthCm: ticketWidth,
           ticketHeightCm: ticketHeight,
           printerName,
+          invoiceSeries,
         },
         silent
       );
@@ -156,20 +159,20 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
         </div>
 
         {/* Visual Thermal Slips Container */}
-        <div className="bg-slate-200/80 dark:bg-slate-900/80 p-4 rounded-xs flex flex-col items-center space-y-4 overflow-y-auto max-h-[55vh]">
+        <div className="bg-slate-200/80 dark:bg-slate-900/80 p-4 rounded-xs flex flex-col items-center space-y-4 overflow-y-auto max-h-[62vh] min-h-55">
           {(selectedCopyTab === 'ALL'
             ? activeCopies
             : activeCopies.filter((c) => c.header_label === selectedCopyTab)
           ).map((copy) => {
-            const copyBadge = copy.header_label ? copy.header_label.trim().charAt(0) : 'D';
+            const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
+            const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
             return (
               <div
                 key={copy.id}
-                className="bg-white text-black rounded-xs shadow-md select-text"
+                className="bg-white text-black rounded-xs shadow-md select-text shrink-0"
                 style={{
                   width: `${ticketWidth}cm`,
-                  height: `${ticketHeight}cm`,
-                  maxHeight: `${ticketHeight}cm`,
+                  minHeight: `${ticketHeight}cm`,
                   boxSizing: 'border-box',
                   padding: '4px 6px',
                   fontFamily: "'Montserrat', sans-serif",
@@ -178,7 +181,6 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  overflow: 'hidden',
                   background: '#fff',
                   color: '#000',
                   border: '1px solid #000',
@@ -187,7 +189,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                 {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', fontWeight: 900, fontSize: '9px', borderRadius: '2px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', minWidth: '14px', height: '14px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: badgeFontSize, borderRadius: '2px' }}>
                       {copyBadge}
                     </span>
                     <span style={{ fontWeight: 900, fontSize: '9.5px', letterSpacing: '0.2px', textTransform: 'uppercase' }}>

@@ -93,8 +93,8 @@ INSERT OR IGNORE INTO cancellation_reasons (id, reason, is_active) VALUES
 
 -- 7. Ticket Copy Configurations
 INSERT OR IGNORE INTO ticket_copy_configs (id, copy_name, is_enabled, print_order, header_label, purpose) VALUES
-(1, 'Distributor', 1, 1, 'D', 'Distributor Copy'),
-(2, 'Accounts', 1, 2, 'A', 'Accounts / Office Copy'),
+(1, 'Security', 1, 1, 'S', 'Security Gate Pass'),
+(2, 'Office', 1, 2, 'O', 'Office / Accounts Copy'),
 (3, 'Customer', 1, 3, 'C', 'Customer Entry Ticket');
 
 -- 8. Report Parameters for Daily Collection Report (DCR)
@@ -308,8 +308,8 @@ INSERT OR IGNORE INTO cancellation_reasons (id, reason, is_active) VALUES
 
 -- 12. Ticket Copy Configurations
 INSERT OR IGNORE INTO ticket_copy_configs (id, copy_name, is_enabled, print_order, header_label, purpose) VALUES
-(1, 'Distributor', 1, 1, 'D', 'Distributor Copy'),
-(2, 'Accounts', 1, 2, 'A', 'Accounts / Office Copy'),
+(1, 'Security', 1, 1, 'S', 'Security Gate Pass'),
+(2, 'Office', 1, 2, 'O', 'Office / Accounts Copy'),
 (3, 'Customer', 1, 3, 'C', 'Customer Entry Ticket');
 
 -- 13. Report Parameters for Daily Collection Report (DCR)
@@ -340,17 +340,4 @@ INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) V
 ('financial_year', '2026-2027', 'general'),
 ('invoice_series', 'NC-LKP-26', 'general'),
 ('session_timeout_min', '480', 'general');
-
--- 15. Initial Sample Booking
-INSERT OR IGNORE INTO bookings (id, booking_no, show_id, booking_date, total_net, total_cgst, total_sgst, total_service_charge, total_gross, is_gst_applied, payment_mode_id, booked_by, status) VALUES
-(1, 'BK-2026-001', 1, date('now'), 230.24, 20.72, 20.72, 24.00, 300.00, 1, 1, 1, 'BOOKED');
-
-INSERT OR IGNORE INTO booking_seats (id, booking_id, seat_id, row_name, seat_number, seat_class_id, seat_class_name, price_net, cgst, sgst, service_charge, price_gross) VALUES
-(1, 1, 7, 'C', 1, 1, 'Gold Plus', 115.12, 10.36, 10.36, 12.00, 150.00),
-(2, 1, 8, 'C', 2, 1, 'Gold Plus', 115.12, 10.36, 10.36, 12.00, 150.00);
-
-INSERT OR IGNORE INTO tickets (id, booking_id, ticket_no, copy_type, printed_at, is_cancelled) VALUES
-(1, 1, '0008602', 'D', datetime('now', 'localtime'), 0),
-(2, 1, '0008602', 'A', datetime('now', 'localtime'), 0),
-(3, 1, '0008602', 'C', datetime('now', 'localtime'), 0);
 `;

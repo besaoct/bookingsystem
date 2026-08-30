@@ -425,10 +425,12 @@ class SQLiteService {
             }
           }
 
-          // Ensure standard role consistency
+          // Ensure standard role consistency and update legacy default copy names
           try {
             this.db!.run("UPDATE users SET role = 'OPERATOR' WHERE role = 'ADMIN';");
             this.db!.run("UPDATE role_permissions SET role = 'OPERATOR' WHERE role = 'ADMIN';");
+            this.db!.run("UPDATE ticket_copy_configs SET copy_name = 'Security', header_label = 'S', purpose = 'Security Gate Pass' WHERE copy_name = 'Distributor' AND header_label = 'D';");
+            this.db!.run("UPDATE ticket_copy_configs SET copy_name = 'Office', header_label = 'O', purpose = 'Office / Accounts Copy' WHERE copy_name = 'Accounts' AND header_label = 'A';");
             this.saveToStorage();
           } catch (e) {
             console.warn('Migration note:', e);

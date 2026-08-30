@@ -89,19 +89,26 @@ export const settingsService = {
     return dbService.query<TicketCopyConfig>("SELECT * FROM ticket_copy_configs ORDER BY print_order ASC");
   },
 
-  async saveTicketCopyConfig(config: Partial<TicketCopyConfig>): Promise<void> {
+  async saveTicketCopyConfig(config: Partial<TicketCopyConfig>): Promise<number> {
     await dbService.init();
     if (config.id) {
       dbService.run(
         "UPDATE ticket_copy_configs SET copy_name = ?, header_label = ?, purpose = ?, print_order = ?, is_enabled = ? WHERE id = ?",
         [config.copy_name, config.header_label, config.purpose || '', config.print_order || 1, config.is_enabled ? 1 : 0, config.id]
       );
+      return config.id;
     } else {
-      dbService.run(
+      const res = dbService.run(
         "INSERT INTO ticket_copy_configs (copy_name, header_label, purpose, print_order, is_enabled) VALUES (?, ?, ?, ?, ?)",
         [config.copy_name, config.header_label, config.purpose || '', config.print_order || 1, config.is_enabled ? 1 : 0]
       );
+      return res.lastInsertRowid;
     }
+  },
+
+  async deleteTicketCopyConfig(id: number): Promise<void> {
+    await dbService.init();
+    dbService.run("DELETE FROM ticket_copy_configs WHERE id = ?", [id]);
   },
 
   async getSystemSettings(): Promise<Record<string, string>> {

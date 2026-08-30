@@ -141,7 +141,13 @@ export const bookingService = {
       const formattedTicketNo = String(nextTicketNum).padStart(6, '0');
       nextTicketNum++;
 
-      const copies = ['CUSTOMER', 'OFFICE', 'SECURITY'];
+      const activeCopyRows = dbService.query<{ copy_name: string; header_label: string }>(
+        "SELECT copy_name, header_label FROM ticket_copy_configs WHERE is_enabled = 1 ORDER BY print_order ASC"
+      );
+      const copies = activeCopyRows && activeCopyRows.length > 0
+        ? activeCopyRows.map((c) => c.copy_name.toUpperCase())
+        : ['CUSTOMER'];
+
       for (const copy of copies) {
         const tktRes = dbService.run(`
           INSERT INTO tickets (booking_id, ticket_no, copy_type, printed_at, is_cancelled)
@@ -288,6 +294,29 @@ export const bookingService = {
       "INSERT INTO audit_logs (user_id, username, action, module, details) VALUES (?, (SELECT username FROM users WHERE id = ?), 'CANCEL_BOOKING', 'cancellation', ?)",
       [userId, userId, `Cancelled booking #${bookingId} - Reason: ${reasonText || reasonId}`]
     );
+
+    return true;
+  },
+
+  async deleteBooking(bookingId: number, userId?: number): Promise<boolean> {
+    await dbService.init();
+    const booking = dbService.queryOne<{ booking_no: string }>(
+      "SELECT booking_no FROM bookings WHERE id = ?",
+      [bookingId]
+    );
+
+    // Delete associated child records
+    dbService.run("DELETE FROM tickets WHERE booking_id = ?", [bookingId]);
+    dbService.run("DELETE FROM booking_seats WHERE booking_id = ?", [bookingId]);
+    dbService.run("DELETE FROM bookings WHERE id = ?", [bookingId]);
+
+    // Audit log
+    if (userId && booking) {
+      dbService.run(
+        "INSERT INTO audit_logs (user_id, username, action, module, details) VALUES (?, (SELECT username FROM users WHERE id = ?), 'DELETE_BOOKING', 'cancellation', ?)",
+        [userId, userId, `Permanently deleted booking record #${booking.booking_no}`]
+      );
+    }
 
     return true;
   },

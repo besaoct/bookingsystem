@@ -261,12 +261,10 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
           }
           .ticket-slip {
             width: ${widthCm}cm;
-            height: ${heightCm}cm;
-            max-height: ${heightCm}cm;
+            min-height: ${heightCm}cm;
             page-break-after: always;
             box-sizing: border-box;
             padding: 2mm 3mm;
-            overflow: hidden;
             font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
           }
           .ticket-slip:last-child {
