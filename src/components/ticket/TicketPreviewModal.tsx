@@ -148,7 +148,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
             <Button
               variant="default"
               size="sm"
-              onClick={() => handlePrint(false)}
+              onClick={() => handlePrint(systemSettings?.['silent_print'] === 'true')}
               disabled={isPrinting}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 cursor-pointer shadow-xs"
             >

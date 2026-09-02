@@ -33,6 +33,7 @@ export const PrinterSettingsPage: React.FC = () => {
   const [printerName, setPrinterName] = useState('Default Thermal POS-80');
   const [invoiceSeries, setInvoiceSeries] = useState('NC-LKP-26');
   const [financialYear, setFinancialYear] = useState('2026-2027');
+  const [silentPrint, setSilentPrint] = useState(false);
 
   // Detected Hardware Printers
   const [detectedPrinters, setDetectedPrinters] = useState<Array<{ name: string; isDefault: boolean }>>([]);
@@ -85,6 +86,7 @@ export const PrinterSettingsPage: React.FC = () => {
       setPrinterName(systemSettings['thermal_printer_name'] || 'Default Thermal POS-80');
       setInvoiceSeries(systemSettings['invoice_series'] || 'NC-LKP-26');
       setFinancialYear(systemSettings['financial_year'] || '2026-2027');
+      setSilentPrint(systemSettings['silent_print'] === 'true');
     }
   }, [ticketCopies, systemSettings]);
 
@@ -164,6 +166,7 @@ export const PrinterSettingsPage: React.FC = () => {
     await updateSystemSetting('ticket_width_cm', ticketWidth);
     await updateSystemSetting('ticket_height_cm', ticketHeight);
     await updateSystemSetting('thermal_printer_name', printerName);
+    await updateSystemSetting('silent_print', silentPrint ? 'true' : 'false');
     await updateSystemSetting('invoice_series', invoiceSeries);
     await updateSystemSetting('financial_year', financialYear);
 
@@ -391,7 +394,24 @@ export const PrinterSettingsPage: React.FC = () => {
                 disabled={!canUpdate}
               />
               <p className="text-[10px] text-muted-foreground">
-                Matches the installed printer driver on the host computer. Silent thermal printing will target this device name.
+                Matches the installed printer driver on the host computer.
+              </p>
+
+              <div className="flex items-center space-x-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="silentPrintToggle"
+                  checked={silentPrint}
+                  onChange={(e) => setSilentPrint(e.target.checked)}
+                  className="rounded-xs text-primary h-4 w-4 cursor-pointer align-middle"
+                  disabled={!canUpdate}
+                />
+                <label htmlFor="silentPrintToggle" className="text-xs font-medium text-foreground cursor-pointer select-none">
+                  Direct Silent Printing (Skip OS Dialog for named device)
+                </label>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                When unchecked (default), clicking Print opens the standard OS printing dialog setup. When checked with a matching printer, print jobs are sent directly.
               </p>
             </div>
 

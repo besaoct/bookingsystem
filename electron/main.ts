@@ -258,14 +258,20 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
             line-height: 1.15;
             background: #fff;
             color: #000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
           .ticket-slip {
             width: ${widthCm}cm;
             min-height: ${heightCm}cm;
             page-break-after: always;
+            page-break-inside: avoid;
+            break-after: page;
+            break-inside: avoid;
             box-sizing: border-box;
             padding: 2mm 3mm;
             font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+            overflow: hidden;
           }
           .ticket-slip:last-child {
             page-break-after: auto;
@@ -286,49 +292,32 @@ ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, opti
     // Give fonts/layout a moment to settle before printing
     await new Promise((r) => setTimeout(r, 600));
 
-    // Validate the printer name
+    // Validate the printer name if specified
     const availablePrinters = await printWindow.webContents.getPrintersAsync();
     const printerNames = availablePrinters.map((p) => p.name);
     const hasValidPrinter =
       !!options?.printerName && printerNames.includes(options.printerName);
 
-    // Any platform with a named thermal printer: direct silent print
-    // (webContents.print with silent:true + deviceName works on both macOS and Windows)
-    if (hasValidPrinter) {
-      return new Promise((resolve) => {
-        printWindow.webContents.print(
-          {
-            silent: options?.silent ?? true,
-            deviceName: options!.printerName!,
-            margins: { marginType: 'none' },
-            pageSize: { width: widthMicrons, height: heightMicrons },
-          },
-          (success, failureReason) => {
-            try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
-            if (!success) console.error('Ticket print failed:', failureReason);
-            resolve(success);
+    // Silent print only when explicitly requested AND a matching printer is connected
+    const isSilent = Boolean(options?.silent && hasValidPrinter);
+
+    return new Promise((resolve) => {
+      printWindow.webContents.print(
+        {
+          silent: isSilent,
+          deviceName: hasValidPrinter ? options!.printerName! : undefined,
+          margins: { marginType: 'none' },
+          pageSize: { width: widthMicrons, height: heightMicrons },
+        },
+        (success, failureReason) => {
+          try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
+          if (!success && failureReason !== 'cancelled') {
+            console.error('Ticket print failed:', failureReason);
           }
-        );
-      });
-    }
-
-    // macOS or no named printer: printToPDF → temp file → open in system viewer
-    // Use A4 so content renders correctly; user selects custom paper in the print dialog
-    const pdfBuffer = await printWindow.webContents.printToPDF({
-      landscape: false,
-      pageSize: 'A4',
-      printBackground: true,
-      margins: { marginType: 'none' },
+          resolve(success);
+        }
+      );
     });
-
-    try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
-
-    const tmpDir = app.getPath('temp');
-    const tmpFile = path.join(tmpDir, `Ticket_${Date.now()}.pdf`);
-    fs.writeFileSync(tmpFile, pdfBuffer);
-
-    await shell.openPath(tmpFile);
-    return true;
   } catch (err) {
     console.error('Error in print-thermal-tickets handler:', err);
     return false;
@@ -394,26 +383,32 @@ ipcMain.handle(
       );
 
       // Wait for fonts and layout to render fully
-      await new Promise((r) => setTimeout(r, 800));
+      const availablePrinters = await printWindow.webContents.getPrintersAsync();
+      const printerNames = availablePrinters.map((p) => p.name);
+      const hasValidPrinter =
+        !!options?.printerName && printerNames.includes(options.printerName);
 
-      const pdfBuffer = await printWindow.webContents.printToPDF({
-        landscape: options?.orientation !== 'portrait',
-        pageSize: (options?.pageSize as any) || 'A4',
-        printBackground: true,
-        margins: { marginType: 'printableArea' },
+      const isSilent = Boolean(options?.silent && hasValidPrinter);
+
+      return new Promise((resolve) => {
+        printWindow.webContents.print(
+          {
+            silent: isSilent,
+            deviceName: hasValidPrinter ? options!.printerName! : undefined,
+            landscape: options?.orientation === 'landscape',
+            pageSize: (options?.pageSize as any) || 'A4',
+            printBackground: true,
+            margins: { marginType: 'printableArea' },
+          },
+          (success, failureReason) => {
+            try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
+            if (!success && failureReason !== 'cancelled') {
+              console.error('DCR document print failed:', failureReason);
+            }
+            resolve(success);
+          }
+        );
       });
-
-      try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
-
-      // Write to a temp file and open in the OS default PDF viewer
-      // macOS: opens in Preview (Cmd+P for print panel)
-      // Windows: opens in Edge / Adobe Reader (Ctrl+P for print dialog)
-      const tmpDir = app.getPath('temp');
-      const tmpFile = path.join(tmpDir, `DCR_Report_${Date.now()}.pdf`);
-      fs.writeFileSync(tmpFile, pdfBuffer);
-
-      await shell.openPath(tmpFile);
-      return true;
     } catch (err) {
       console.error('Error in print-dcr-document handler:', err);
       return false;
