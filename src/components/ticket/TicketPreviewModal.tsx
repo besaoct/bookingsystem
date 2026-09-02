@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Booking, Cinema, TicketCopyConfig, TaxConfig } from '@/types';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Printer, CheckCircle, Copy, FileText } from 'lucide-react';
-import { printTickets, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
+import { printTickets, fitTicketContent, resolveTicketDimensions, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 interface TicketPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBookingConfirmed?: () => void;
   booking: Booking | null;
   cinema: Cinema | null;
   copyConfigs: TicketCopyConfig[];
@@ -20,6 +21,7 @@ interface TicketPreviewModalProps {
 export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   isOpen,
   onClose,
+  onBookingConfirmed,
   booking,
   cinema,
   copyConfigs,
@@ -30,12 +32,21 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const systemSettings = propSystemSettings || storeSystemSettings;
   const [isPrinting, setIsPrinting] = useState(false);
   const [printSuccess, setPrintSuccess] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const [selectedCopyTab, setSelectedCopyTab] = useState<string>('ALL');
+  const previewRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (previewRef.current) {
+      fitTicketContent(previewRef.current);
+    }
+  });
 
-  if (!booking || !cinema || !taxConfig) return null;
+  if (!isOpen || !booking || !cinema || !taxConfig) return null;
 
-  const ticketWidth = systemSettings?.['ticket_width_cm'] || '10.2';
-  const ticketHeight = systemSettings?.['ticket_height_cm'] || '3.5';
+  const { widthCm: ticketWidth, heightCm: ticketHeight } = resolveTicketDimensions({
+    ticketWidthCm: systemSettings?.['ticket_width_cm'],
+    ticketHeightCm: systemSettings?.['ticket_height_cm'],
+  });
   const printerName = systemSettings?.['thermal_printer_name'];
   const orientation = (systemSettings?.['ticket_orientation'] as 'portrait' | 'landscape') || 'landscape';
   const marginMm = systemSettings?.['ticket_margin_mm'] !== undefined ? Number(systemSettings['ticket_margin_mm']) : 2;
@@ -52,6 +63,8 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
   const effectiveFontSize = `${(Number(fontSizePt) * (fontScale / 100)).toFixed(1)}pt`;
+  const padV = Math.max(1, Math.min(marginMm, 3));
+  const padH = Math.max(2, Math.min(marginMm * 1.5, 5));
 
   const activeCopies = copyConfigs
     .filter((c) => c.is_enabled)
@@ -92,7 +105,9 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const now = new Date();
   const issuedOn = `${dStr}-${bookingDateObj.toLocaleString('en-US', { month: 'short' })}-${String(yStr).slice(-2)} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}`;
 
-  const layoutMode = (systemSettings?.['ticket_layout_mode'] as 'side-by-side' | 'vertical-continuous' | 'sequential') || 'side-by-side';
+  const layoutMode = (systemSettings?.['ticket_layout_mode'] as 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential') || 'side-by-side';
+  const rotation = (systemSettings?.['ticket_rotation'] as '0' | '90' | '180' | '270') || '0';
+  const rotationDeg = Number(rotation) || 0;
 
   const handlePrint = async (silent = false) => {
     setIsPrinting(true);
@@ -112,6 +127,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           printerName,
           invoiceSeries,
           orientation,
+          rotation,
           marginMm,
           fontScale,
           fontFamily,
@@ -126,13 +142,157 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
 
       if (success) {
         setPrintSuccess(true);
-        setTimeout(() => setPrintSuccess(false), 3000);
+        setIsConfirmed(true);
+        // Auto-close and notify parent after 2 seconds
+        setTimeout(() => {
+          setPrintSuccess(false);
+          setIsConfirmed(false);
+          if (onBookingConfirmed) onBookingConfirmed();
+        }, 2000);
       }
     } catch (e) {
       console.error('Print failed:', e);
     } finally {
       setIsPrinting(false);
     }
+  };
+
+  const isVertical =
+    orientation === 'portrait' ||
+    Number(ticketHeight) > Number(ticketWidth);
+
+
+  const renderModalTicketContent = (copy: TicketCopyConfig) => {
+    const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
+    const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
+    const cinemaName = cinema.header_text || cinema.name || '';
+    const gstin = cinema.show_gstin_on_ticket && cinema.gstin ? cinema.gstin : null;
+    const cin = cinema.cin || null;
+
+    const baseWeight = Number(fontWeight) || 600;
+    const boldWeight = Math.min(900, baseWeight + 200);
+    const semiWeight = Math.min(900, baseWeight + 100);
+    const normalWeight = baseWeight;
+
+    const padV = Math.max(1, Math.min(marginMm, 3));
+    const padH = Math.max(2, Math.min(marginMm * 1.5, 5));
+
+    const rawMovieName = booking.movie_name || (booking as any).movieTitle || '';
+    const rawMovieType = booking.movie_type_name || '';
+    const displayMovieTitle = rawMovieName ? rawMovieName.trim().toUpperCase() : 'CINEMA MOVIE';
+    const displayMovieType = rawMovieType ? rawMovieType.trim().toUpperCase() : '';
+    const fullMovieName = displayMovieType && !displayMovieTitle.includes(displayMovieType)
+      ? `${displayMovieTitle} ${displayMovieType}`
+      : displayMovieTitle;
+
+    // Landscape content — used directly for landscape slips, rotated inside portrait slips
+    const landscapeContent = (
+      <div data-ticket-scale="1" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transformOrigin: 'top left', fontFamily: resolvedFontFamily, fontSize: effectiveFontSize, fontWeight: normalWeight }}>
+        {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '0.2em', minWidth: 0, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3em', minWidth: 0, overflow: 'hidden', flex: 1 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5em', height: '1.5em', border: '1.5px solid #000', fontWeight: boldWeight, fontSize: badgeFontSize, borderRadius: '2px', flexShrink: 0 }}>
+              {copyBadge}
+            </span>
+            <span style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {cinemaName}
+            </span>
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.6em', height: '1.6em', border: '1.5px solid #000', borderRadius: '50%', fontWeight: boldWeight, fontSize: '1.0em', flexShrink: 0, marginLeft: '0.2em' }}>
+            {qty}
+          </div>
+        </div>
+
+        {/* Movie Title Line - Guaranteed visible after headline line */}
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.1em 0', lineHeight: 1.25, minHeight: '1.25em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {fullMovieName}
+        </div>
+
+        {/* Middle 3 Columns */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.1fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '0.2em 0', fontSize: '0.9em', flexShrink: 0 }}>
+          {/* Column 1: Financials */}
+          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.18, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: normalWeight }}>ADM</span>
+              <span style={{ fontWeight: semiWeight }}>{admNet}</span>
+            </div>
+            {is3D && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: normalWeight }}>3D</span>
+                <span style={{ fontWeight: semiWeight }}>{threeDNet}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: normalWeight }}>CGST</span>
+              <span style={{ fontWeight: semiWeight }}>{booking.total_cgst.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: normalWeight }}>SGST</span>
+              <span style={{ fontWeight: semiWeight }}>{booking.total_sgst.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: normalWeight }}>S.CH</span>
+              <span style={{ fontWeight: semiWeight }}>{booking.total_service_charge.toFixed(2)}</span>
+            </div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '0.1em', borderTop: '0.5px solid #000' }}>
+              Total: {booking.total_gross.toFixed(2)}
+            </div>
+          </div>
+
+          {/* Column 2: Date & Time */}
+          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.2, overflow: 'hidden' }}>
+            <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap' }}>{formattedDate}</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '1.05em', margin: '0.1em 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.88em', marginTop: '0.15em' }}>SAC 997321</div>
+          </div>
+
+          {/* Column 3: Screen & Seat */}
+          <div style={{ paddingLeft: '0.3em', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
+            <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.1em 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
+          </div>
+        </div>
+
+        {/* Footer Section */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.78em', lineHeight: 1.15, paddingTop: '0.15em', fontWeight: normalWeight, flexShrink: 0 }}>
+          <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
+            {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
+            {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
+          </div>
+          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+            <div>Ticket No: {firstTicketNo}&nbsp;&nbsp;L.No. Transaction No: {txnNo}</div>
+            <div>INV No. : {invNo}&nbsp;&nbsp;Issued on: {issuedOn}</div>
+          </div>
+        </div>
+      </div>
+    );
+
+    // For portrait/vertical slips: rotate the landscape content 90° so text reads along the long edge
+    if (isVertical) {
+      const wCm = Number(ticketWidth);
+      const hCm = Number(ticketHeight);
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', clipPath: 'inset(0)' }}>
+          <div data-ticket-box="1" style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: `${hCm}cm`,
+            height: `${wCm}cm`,
+            transform: `translate(0, ${hCm}cm) rotate(-90deg)`,
+            transformOrigin: '0 0',
+            padding: `${padV}mm ${padH}mm`,
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+          }}>
+            {landscapeContent}
+          </div>
+        </div>
+      );
+    }
+
+    return landscapeContent;
   };
 
   return (
@@ -183,338 +343,170 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Visual Thermal Slips Container */}
-        {layoutMode === 'side-by-side' && selectedCopyTab === 'ALL' ? (
-          /* Multi-Column 3-Panel Single Perforated Sheet (Horizontally Scrollable) */
-          <div className="bg-slate-900 p-4 rounded-xs overflow-x-auto w-full">
+        {/* Visual Clean Thermal Slips Container */}
+        <div ref={previewRef} className="p-6 bg-muted/20 border border-border/40 rounded-xs overflow-auto max-h-[65vh] flex w-full select-text">
+          {/* Safe auto-margin scroll container prevents left/top clipping */}
+          <div className="m-auto flex items-center justify-center shrink-0">
             <div
-              className="bg-white text-black shadow-2xl select-text rounded-xs flex flex-row items-stretch border border-black shrink-0 transition-all w-fit"
+              className="transition-all duration-200 shrink-0"
               style={{
-                fontFamily: resolvedFontFamily,
-                fontWeight: fontWeight,
-                fontSize: `${Number(fontSizePt) || 8}pt`,
-                lineHeight: 1.15,
+                transform: rotationDeg ? `rotate(${rotationDeg}deg)` : undefined,
+                transformOrigin: 'center center',
               }}
             >
-              {activeCopies.map((copy, idx) => {
-                const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
-                return (
-                  <div
-                    key={copy.id}
-                    className="flex flex-col justify-between overflow-hidden relative shrink-0"
-                    style={{
-                      width: `${ticketWidth}cm`,
-                      minWidth: `${ticketWidth}cm`,
-                      height: `${ticketHeight}cm`,
-                      minHeight: `${ticketHeight}cm`,
-                      padding: `${Math.max(2, Number(marginMm) || 2)}mm`,
-                      boxSizing: 'border-box',
-                      borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
-                    }}
-                  >
-                    {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '13px', height: '13px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: copyBadge.length > 2 ? '6.5px' : '8px', borderRadius: '2px', flexShrink: 0 }}>
-                          {copyBadge}
-                        </span>
-                        <span style={{ fontWeight: 900, fontSize: '8.5px', letterSpacing: '0.1px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {cinema.header_text || cinema.name || ''}
-                        </span>
-                      </div>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '8px', flexShrink: 0, marginLeft: '2px' }}>
-                        {qty}
-                      </div>
-                    </div>
-
-                    {/* Movie Title */}
-                    <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {booking.movie_name || ''} {booking.movie_type_name && !booking.movie_name?.includes(booking.movie_type_name) ? booking.movie_type_name : ''}
-                    </div>
-
-                    {/* Middle 3 Columns */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', marginTop: '1px', fontSize: '7.5px' }}>
-                      {/* Column 1: Financials */}
-                      <div style={{ borderRight: '1px solid #000', paddingRight: '3px', lineHeight: 1.15 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>ADM</span>
-                          <span style={{ fontWeight: 700 }}>{admNet}</span>
-                          {is3D && <span>3D</span>}
-                          {is3D && <span style={{ fontWeight: 700 }}>{threeDNet}</span>}
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>CGST</span>
-                          <span style={{ fontWeight: 700 }}>{booking.total_cgst.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>SGST</span>
-                          <span style={{ fontWeight: 700 }}>{booking.total_sgst.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>S.CH</span>
-                          <span style={{ fontWeight: 700 }}>{booking.total_service_charge.toFixed(2)}</span>
-                        </div>
-                        <div style={{ fontWeight: 900, fontSize: '8px', marginTop: '1px' }}>
-                          Total: ₹{booking.total_gross.toFixed(2)}
-                        </div>
-                      </div>
-
-                      {/* Column 2: Date & Time */}
-                      <div style={{ borderRight: '1px solid #000', padding: '0 3px', lineHeight: 1.2 }}>
-                        <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap' }}>{formattedDate}</div>
-                        <div style={{ fontWeight: 800, fontSize: '8.5px', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
-                        <div style={{ fontWeight: 700, fontSize: '7px', marginTop: '1px' }}>SAC 997321</div>
-                      </div>
-
-                      {/* Column 3: Screen & Seat */}
-                      <div style={{ paddingLeft: '3px', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
-                        <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
-                        <div style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>{seatLabels}</div>
-                        <div style={{ fontWeight: 900, fontSize: '8px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
-                      </div>
-                    </div>
-
-                    {/* Footer Section */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
-                      <div>
-                        {cinema.show_gstin_on_ticket && cinema.gstin ? <div style={{ fontWeight: 700 }}>GSTIN: {cinema.gstin}</div> : null}
-                        {cinema.cin ? <div>CIN: {cinema.cin}</div> : null}
-                      </div>
-                      <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <div>Tkt: {firstTicketNo}&nbsp;&nbsp;Txn: {txnNo}</div>
-                        <div>INV: {invNo}&nbsp;&nbsp;{issuedOn}</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : layoutMode === 'vertical-continuous' && selectedCopyTab === 'ALL' ? (
-          /* Multi-Copy Continuous Uncut Strip (Vertically Scrollable) */
-          <div className="bg-slate-900 p-4 rounded-xs overflow-y-auto max-h-[62vh] flex flex-col items-center w-full">
-            <div
-              className="bg-white text-black shadow-2xl select-text rounded-xs flex flex-col border border-black shrink-0 transition-all w-fit"
-              style={{
-                fontFamily: resolvedFontFamily,
-                fontWeight: fontWeight,
-                fontSize: `${Number(fontSizePt) || 8}pt`,
-                lineHeight: 1.15,
-              }}
-            >
-              {activeCopies.map((copy, idx) => {
-                const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
-                return (
-                  <div
-                    key={copy.id}
-                    className="flex flex-col justify-between overflow-hidden relative shrink-0"
-                    style={{
-                      width: `${ticketWidth}cm`,
-                      minWidth: `${ticketWidth}cm`,
-                      height: `${ticketHeight}cm`,
-                      minHeight: `${ticketHeight}cm`,
-                      padding: `${Math.max(2, Number(marginMm) || 2)}mm`,
-                      boxSizing: 'border-box',
-                      borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
-                    }}
-                  >
-                    {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '13px', height: '13px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: copyBadge.length > 2 ? '6.5px' : '8px', borderRadius: '2px', flexShrink: 0 }}>
-                          {copyBadge}
-                        </span>
-                        <span style={{ fontWeight: 900, fontSize: '8.5px', letterSpacing: '0.1px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {cinema.header_text || cinema.name || ''}
-                        </span>
-                      </div>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '8px', flexShrink: 0, marginLeft: '2px' }}>
-                        {qty}
-                      </div>
-                    </div>
-
-                    {/* Movie Title */}
-                    <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {booking.movie_name || ''} {booking.movie_type_name && !booking.movie_name?.includes(booking.movie_type_name) ? booking.movie_type_name : ''}
-                    </div>
-
-                    {/* Middle 3 Columns */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', marginTop: '1px', fontSize: '7.5px' }}>
-                      {/* Column 1: Financials */}
-                      <div style={{ borderRight: '1px solid #000', paddingRight: '3px', lineHeight: 1.15 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>ADM</span>
-                          <span style={{ fontWeight: 700 }}>{admNet}</span>
-                          {is3D && <span>3D</span>}
-                          {is3D && <span style={{ fontWeight: 700 }}>{threeDNet}</span>}
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>CGST</span>
-                          <span style={{ fontWeight: 700 }}>{booking.total_cgst.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>SGST</span>
-                          <span style={{ fontWeight: 700 }}>{booking.total_sgst.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>S.CH</span>
-                          <span style={{ fontWeight: 700 }}>{booking.total_service_charge.toFixed(2)}</span>
-                        </div>
-                        <div style={{ fontWeight: 900, fontSize: '8px', marginTop: '1px' }}>
-                          Total: ₹{booking.total_gross.toFixed(2)}
-                        </div>
-                      </div>
-
-                      {/* Column 2: Date & Time */}
-                      <div style={{ borderRight: '1px solid #000', padding: '0 3px', lineHeight: 1.2 }}>
-                        <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap' }}>{formattedDate}</div>
-                        <div style={{ fontWeight: 800, fontSize: '8.5px', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
-                        <div style={{ fontWeight: 700, fontSize: '7px', marginTop: '1px' }}>SAC 997321</div>
-                      </div>
-
-                      {/* Column 3: Audi & Seat */}
-                      <div style={{ paddingLeft: '3px', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
-                        <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
-                        <div style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>{seatLabels}</div>
-                        <div style={{ fontWeight: 900, fontSize: '8px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
-                      </div>
-                    </div>
-
-                    {/* Footer Section */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6px', lineHeight: 1.1, paddingTop: '1px' }}>
-                      <div style={{ fontWeight: 600 }}>
-                        {cinema.show_gstin_on_ticket && cinema.gstin ? <div style={{ fontWeight: 700 }}>GSTIN: {cinema.gstin}</div> : null}
-                        {cinema.cin ? <div>CIN: {cinema.cin}</div> : null}
-                      </div>
-                      <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <div>Tkt: {firstTicketNo}&nbsp;&nbsp;Txn: {txnNo}</div>
-                        <div>INV: {invNo}&nbsp;&nbsp;{issuedOn}</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* Sequential / Single Copy Slips (Vertically Scrollable) */
-          <div className="bg-slate-900 p-4 rounded-xs overflow-y-auto max-h-[62vh] flex flex-col items-center gap-4 w-full">
-            {(selectedCopyTab === 'ALL'
-              ? activeCopies
-              : activeCopies.filter((c) => c.header_label === selectedCopyTab)
-            ).map((copy) => {
-              const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
-              return (
+              {(layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') && selectedCopyTab === 'ALL' ? (
+                /* Multi-Column Single Perforated Sheet across X */
                 <div
-                  key={copy.id}
-                  className="bg-white text-black shadow-2xl select-text rounded-xs flex flex-col justify-between border border-black shrink-0 transition-all"
+                  className="bg-white text-black shadow-md select-text rounded-xs flex flex-row items-stretch border border-neutral-800 shrink-0 transition-all"
                   style={{
-                    width: `${ticketWidth}cm`,
-                    minHeight: `${ticketHeight}cm`,
-                    height: `${ticketHeight}cm`,
-                    padding: `${Math.max(2, Number(marginMm) || 2)}mm`,
-                    boxSizing: 'border-box',
                     fontFamily: resolvedFontFamily,
                     fontWeight: fontWeight,
-                    fontSize: `${Number(fontSizePt) || 8}pt`,
+                    fontSize: effectiveFontSize,
                     lineHeight: 1.15,
                   }}
                 >
-                  {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '14px', height: '14px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: copyBadge.length > 2 ? '7px' : '8.5px', borderRadius: '2px', flexShrink: 0 }}>
-                        {copyBadge}
-                      </span>
-                      <span style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.1px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {cinema.header_text || cinema.name || ''}
-                      </span>
+                  {activeCopies.map((copy, idx) => (
+                    <div
+                      key={copy.id}
+                      data-ticket-box={!isVertical ? '1' : undefined}
+                      className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                      style={{
+                        width: `${ticketWidth}cm`,
+                        minWidth: `${ticketWidth}cm`,
+                        maxWidth: `${ticketWidth}cm`,
+                        height: `${ticketHeight}cm`,
+                        minHeight: `${ticketHeight}cm`,
+                        maxHeight: `${ticketHeight}cm`,
+                        padding: isVertical ? 0 : `${padV}mm ${padH}mm`,
+                        boxSizing: 'border-box',
+                        borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                      }}
+                    >
+                      {renderModalTicketContent(copy)}
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '15px', height: '15px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '8.5px', flexShrink: 0, marginLeft: '2px' }}>
-                      {qty}
-                    </div>
-                  </div>
-
-                  {/* Movie Title Line */}
-                  <div style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {booking.movie_name || ''} {booking.movie_type_name && !booking.movie_name?.includes(booking.movie_type_name) ? booking.movie_type_name : ''}
-                  </div>
-
-                  {/* Middle 3-Column Section */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', marginTop: '1px', fontSize: '7.5px' }}>
-                    {/* Column 1: Financial & Tax Breakup */}
-                    <div style={{ borderRight: '1px solid #000', paddingRight: '3px', lineHeight: 1.15 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>ADM</span>
-                        <span style={{ fontWeight: 700 }}>{admNet}</span>
-                        {is3D && <span>3D</span>}
-                        {is3D && <span style={{ fontWeight: 700 }}>{threeDNet}</span>}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>CGST</span>
-                        <span style={{ fontWeight: 700 }}>{booking.total_cgst.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>SGST</span>
-                        <span style={{ fontWeight: 700 }}>{booking.total_sgst.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>S.CH</span>
-                        <span style={{ fontWeight: 700 }}>{booking.total_service_charge.toFixed(2)}</span>
-                      </div>
-                      <div style={{ fontWeight: 900, fontSize: '8px', marginTop: '1px' }}>
-                        Total: ₹{booking.total_gross.toFixed(2)}
-                      </div>
-                    </div>
-
-                    {/* Column 2: Date, Showtime & SAC Code */}
-                    <div style={{ borderRight: '1px solid #000', padding: '0 3px', lineHeight: 1.2 }}>
-                      <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap' }}>{formattedDate}</div>
-                      <div style={{ fontWeight: 800, fontSize: '8.5px', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
-                      <div style={{ fontWeight: 700, fontSize: '7px', marginTop: '1px' }}>SAC 997321</div>
-                    </div>
-
-                    {/* Column 3: Auditorium, Seat Numbers & Class */}
-                    <div style={{ paddingLeft: '3px', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
-                      <div style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>{seatLabels}</div>
-                      <div style={{ fontWeight: 900, fontSize: '8px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
-                    </div>
-                  </div>
-
-                  {/* Footer Section: Tax IDs & Audit Tracking */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
-                    <div>
-                      {cinema.show_gstin_on_ticket && cinema.gstin ? <div style={{ fontWeight: 700 }}>GSTIN: {cinema.gstin}</div> : null}
-                      {cinema.cin ? <div>CIN: {cinema.cin}</div> : null}
-                    </div>
-                    <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <div>Tkt: {firstTicketNo}&nbsp;&nbsp;Txn: {txnNo}</div>
-                      <div>INV: {invNo}&nbsp;&nbsp;{issuedOn}</div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
+              ) : layoutMode === 'side-by-side-y' && selectedCopyTab === 'ALL' ? (
+                /* Multi-Copy Single Perforated Sheet along Y */
+                <div
+                  className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all"
+                  style={{
+                    fontFamily: resolvedFontFamily,
+                    fontWeight: fontWeight,
+                    fontSize: effectiveFontSize,
+                    lineHeight: 1.15,
+                  }}
+                >
+                  {activeCopies.map((copy, idx) => (
+                    <div
+                      key={copy.id}
+                      data-ticket-box={!isVertical ? '1' : undefined}
+                      className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                      style={{
+                        width: `${ticketWidth}cm`,
+                        minWidth: `${ticketWidth}cm`,
+                        maxWidth: `${ticketWidth}cm`,
+                        height: `${ticketHeight}cm`,
+                        minHeight: `${ticketHeight}cm`,
+                        maxHeight: `${ticketHeight}cm`,
+                        padding: isVertical ? 0 : `${padV}mm ${padH}mm`,
+                        boxSizing: 'border-box',
+                        borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                      }}
+                    >
+                      {renderModalTicketContent(copy)}
+                    </div>
+                  ))}
+                </div>
+              ) : layoutMode === 'vertical-continuous' && selectedCopyTab === 'ALL' ? (
+                /* Multi-Copy Continuous Uncut Strip */
+                <div
+                  className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all"
+                  style={{
+                    fontFamily: resolvedFontFamily,
+                    fontWeight: fontWeight,
+                    fontSize: effectiveFontSize,
+                    lineHeight: 1.15,
+                  }}
+                >
+                  {activeCopies.map((copy, idx) => (
+                    <div
+                      key={copy.id}
+                      data-ticket-box={!isVertical ? '1' : undefined}
+                      className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                      style={{
+                        width: `${ticketWidth}cm`,
+                        minWidth: `${ticketWidth}cm`,
+                        maxWidth: `${ticketWidth}cm`,
+                        height: `${ticketHeight}cm`,
+                        minHeight: `${ticketHeight}cm`,
+                        maxHeight: `${ticketHeight}cm`,
+                        padding: isVertical ? 0 : `${padV}mm ${padH}mm`,
+                        boxSizing: 'border-box',
+                        borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                      }}
+                    >
+                      {renderModalTicketContent(copy)}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* Sequential / Single Copy Slips */
+                <div className="flex flex-col items-center gap-4">
+                  {(selectedCopyTab === 'ALL'
+                    ? activeCopies
+                    : activeCopies.filter((c) => c.header_label === selectedCopyTab)
+                  ).map((copy) => (
+                    <div
+                      key={copy.id}
+                      data-ticket-box={!isVertical ? '1' : undefined}
+                      className="bg-white text-black shadow-md select-text rounded-xs relative overflow-hidden border border-neutral-800 shrink-0 transition-all"
+                      style={{
+                        width: `${ticketWidth}cm`,
+                        minWidth: `${ticketWidth}cm`,
+                        maxWidth: `${ticketWidth}cm`,
+                        height: `${ticketHeight}cm`,
+                        minHeight: `${ticketHeight}cm`,
+                        maxHeight: `${ticketHeight}cm`,
+                        padding: isVertical ? 0 : `${padV}mm ${padH}mm`,
+                        boxSizing: 'border-box',
+                        fontFamily: resolvedFontFamily,
+                        fontWeight: fontWeight,
+                        fontSize: effectiveFontSize,
+                        lineHeight: 1.15,
+                      }}
+                    >
+                      {renderModalTicketContent(copy)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Footer info & Confirmation */}
         <div className="flex items-center justify-between pt-2">
-          <div className="text-2xs text-slate-500">
-            Target Size: <strong>10.2 cm × 3.5 cm</strong> (Compatible with Thermal Receipt Printers)
+          <div className="text-2xs text-muted-foreground font-mono">
+            Sheet: <strong className="text-foreground">{layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x' ? `${(Number(ticketWidth) * activeCopies.length).toFixed(1)} cm (X) × ${ticketHeight} cm (Y)` : layoutMode === 'side-by-side-y' || layoutMode === 'vertical-continuous' ? `${ticketWidth} cm (X) × ${(Number(ticketHeight) * activeCopies.length).toFixed(1)} cm (Y)` : `${ticketWidth} cm (X) × ${ticketHeight} cm (Y)`}</strong> ({orientation.toUpperCase()}{rotation !== '0' ? `, ${rotation}°` : ''})
           </div>
           <div className="flex items-center space-x-2">
-            {printSuccess && (
+            {isConfirmed ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-emerald-600 text-white text-xs font-extrabold tracking-wide animate-pulse">
+                <CheckCircle className="w-4 h-4" />
+                BOOKING CONFIRMED — closing…
+              </span>
+            ) : printSuccess ? (
               <span className="text-emerald-600 text-xs font-bold flex items-center">
                 <CheckCircle className="w-4 h-4 mr-1" /> Printed Successfully
               </span>
-            )}
-            <Button variant="outline" size="sm" onClick={onClose}>
+            ) : null}
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isConfirmed}>
               Done / Close
             </Button>
           </div>
         </div>
+
       </div>
     </Modal>
   );

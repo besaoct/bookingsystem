@@ -543,6 +543,10 @@ export const POSCounterPage: React.FC = () => {
       <TicketPreviewModal
         isOpen={isTicketModalOpen}
         onClose={() => setIsTicketModalOpen(false)}
+        onBookingConfirmed={() => {
+          setIsTicketModalOpen(false);
+          clearSeatSelection();
+        }}
         booking={lastBooking}
         cinema={cinema}
         copyConfigs={ticketCopies}

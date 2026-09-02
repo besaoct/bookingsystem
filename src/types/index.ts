@@ -213,7 +213,7 @@ export interface TicketCopyConfig {
 }
 
 // Bookings and Tickets
-export type BookingStatus = 'BOOKED' | 'CONFIRMED' | 'CANCELLED';
+export type BookingStatus = 'BOOKED' | 'CANCELLED';
 
 export interface Booking {
   id: number;

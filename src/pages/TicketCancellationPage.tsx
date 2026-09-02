@@ -110,12 +110,12 @@ export const TicketCancellationPage: React.FC = () => {
   };
 
   const filteredBookings = bookings.filter((b) => {
-    if (statusFilter === 'ACTIVE') return b.status === 'BOOKED' || b.status === 'CONFIRMED';
+    if (statusFilter === 'ACTIVE') return b.status === 'BOOKED';
     if (statusFilter === 'CANCELLED') return b.status === 'CANCELLED';
     return true;
   });
 
-  const activeCount = bookings.filter((b) => b.status === 'BOOKED' || b.status === 'CONFIRMED').length;
+  const activeCount = bookings.filter((b) => b.status === 'BOOKED').length;
   const cancelledCount = bookings.filter((b) => b.status === 'CANCELLED').length;
 
   return (

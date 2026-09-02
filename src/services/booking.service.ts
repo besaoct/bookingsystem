@@ -196,13 +196,21 @@ export const bookingService = {
       created_at: new Date().toISOString(),
       show_name: startTime ? `${startTime} Show` : 'Show',
       start_time: startTime,
-      movie_name: movieName || 'Cinema Movie',
+      movie_name: movieName || '',
       movie_type_name: movieTypeName,
-      screen_name: screenName || 'Screen 1',
+      screen_name: screenName || '',
       payment_mode_name: pm?.name || 'CASH',
       seats: createdSeats,
       tickets: createdTickets,
     };
+  },
+
+  async updateBookingStatus(bookingId: number, status: 'BOOKED' | 'CANCELLED'): Promise<void> {
+    await dbService.init();
+    dbService.run(
+      `UPDATE bookings SET status = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`,
+      [status, bookingId]
+    );
   },
 
   async getBookings(options?: { date?: string; searchQuery?: string }): Promise<Booking[]> {

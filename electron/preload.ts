@@ -9,6 +9,7 @@ export interface IElectronAPI {
       widthCm?: number | string;
       heightCm?: number | string;
       orientation?: 'portrait' | 'landscape';
+      rotation?: '0' | '90' | '180' | '270' | number;
       marginMm?: number | string;
       fontScale?: number | string;
       fontFamily?: string;
@@ -16,7 +17,8 @@ export interface IElectronAPI {
       fontWeight?: string;
       autoCut?: boolean;
       feedLines?: number;
-      layoutMode?: 'side-by-side' | 'vertical-continuous' | 'sequential';
+      layoutMode?: 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential';
+      copiesCount?: number;
     }
   ) => Promise<boolean>;
   getPrinters: () => Promise<Array<{ name: string; isDefault: boolean }>>;

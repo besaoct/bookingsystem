@@ -224,6 +224,7 @@ ipcMain.handle(
       widthCm?: number | string;
       heightCm?: number | string;
       orientation?: 'portrait' | 'landscape';
+      rotation?: '0' | '90' | '180' | '270' | number;
       marginMm?: number | string;
       fontScale?: number | string;
       fontFamily?: string;
@@ -231,13 +232,19 @@ ipcMain.handle(
       fontWeight?: string;
       autoCut?: boolean;
       feedLines?: number;
-      layoutMode?: 'side-by-side' | 'vertical-continuous' | 'sequential';
+      layoutMode?: 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential';
+      copiesCount?: number;
     }
   ) => {
     try {
-      const isLandscape = options?.orientation !== 'portrait';
-      const widthCm = Number(options?.widthCm) || 10.2;
-      const heightCm = Number(options?.heightCm) || 3.5;
+      const isLandscape = options?.orientation === 'landscape';
+      const rotationDeg = Number(options?.rotation) || 0;
+      const DEFAULT_TICKET_WIDTH_CM = 10.2;
+      const DEFAULT_TICKET_HEIGHT_CM = 3.5;
+      const parsedWidth = Number(options?.widthCm);
+      const parsedHeight = Number(options?.heightCm);
+      const widthCm = Number.isFinite(parsedWidth) && parsedWidth > 0 ? parsedWidth : DEFAULT_TICKET_WIDTH_CM;
+      const heightCm = Number.isFinite(parsedHeight) && parsedHeight > 0 ? parsedHeight : DEFAULT_TICKET_HEIGHT_CM;
       const marginMm = options?.marginMm !== undefined ? Number(options.marginMm) : 2;
       const fontScale = Number(options?.fontScale) || 100;
       const baseFontSize = Number(options?.fontSizePt) || 8.0;
@@ -246,26 +253,57 @@ ipcMain.handle(
       const autoCut = options?.autoCut !== false;
       const feedLines = Number(options?.feedLines) || 0;
       const layoutMode = options?.layoutMode || 'side-by-side';
+      const copiesCount = Math.max(1, Number(options?.copiesCount) || 1);
+
+      let sheetWidthCm = widthCm;
+      let sheetHeightCm = heightCm;
+
+      if (layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') {
+        sheetWidthCm = Number((widthCm * copiesCount).toFixed(2));
+        sheetHeightCm = heightCm;
+      } else if (layoutMode === 'side-by-side-y' || layoutMode === 'vertical-continuous') {
+        sheetWidthCm = widthCm;
+        sheetHeightCm = Number((heightCm * copiesCount).toFixed(2));
+      } else {
+        sheetWidthCm = widthCm;
+        sheetHeightCm = heightCm;
+      }
+
+      // Rotation bounding box: after rotating W×H by theta, the new extents are:
+      //   Wp = |W*cos(t)| + |H*sin(t)|,  Hp = |W*sin(t)| + |H*cos(t)|
+      // This matches the preview which uses rotate(Ndeg) transform-origin: center center.
+      const toRad = (d: number) => d * Math.PI / 180;
+      const cosT = Math.abs(Math.cos(toRad(rotationDeg)));
+      const sinT = Math.abs(Math.sin(toRad(rotationDeg)));
+      const printPageWidthCm = Number((sheetWidthCm * cosT + sheetHeightCm * sinT).toFixed(4));
+      const printPageHeightCm = Number((sheetWidthCm * sinT + sheetHeightCm * cosT).toFixed(4));
+
+      // Center-center offset so the rotated wrapper stays fully in positive page space
+      const wrapperLeftCm = Number(((printPageWidthCm - sheetWidthCm) / 2).toFixed(4));
+      const wrapperTopCm = Number(((printPageHeightCm - sheetHeightCm) / 2).toFixed(4));
+      const sheetTransform = rotationDeg
+        ? `transform: rotate(${rotationDeg}deg); transform-origin: center center;`
+        : '';
 
       const FONT_MAP: Record<string, string> = {
-        'system-sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        'arial': 'Arial, "Helvetica Neue", Helvetica, sans-serif',
-        'verdana': 'Verdana, Geneva, sans-serif',
-        'tahoma': 'Tahoma, Verdana, Segoe, sans-serif',
-        'trebuchet': '"Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode", sans-serif',
-        'consolas': 'Consolas, "Courier New", "Lucida Console", Monaco, monospace',
-        'courier': '"Courier New", Courier, monospace',
-        'impact': 'Impact, "Arial Black", sans-serif',
+        'system-sans': "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        'arial': "Arial, 'Helvetica Neue', Helvetica, sans-serif",
+        'verdana': "Verdana, Geneva, sans-serif",
+        'tahoma': "Tahoma, Verdana, Segoe, sans-serif",
+        'trebuchet': "'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif",
+        'consolas': "Consolas, 'Courier New', 'Lucida Console', Monaco, monospace",
+        'courier': "'Courier New', Courier, monospace",
+        'impact': "Impact, 'Arial Black', sans-serif",
       };
 
       const fontFamilyKey = options?.fontFamily || 'system-sans';
       const resolvedFontFamily =
         FONT_MAP[fontFamilyKey] ||
         fontFamilyKey ||
-        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
-      const widthMicrons = Math.round(widthCm * 10000);
-      const heightMicrons = Math.round(heightCm * 10000);
+      const widthMicrons = Math.round(printPageWidthCm * 10000);
+      const heightMicrons = Math.round(printPageHeightCm * 10000);
 
       const printWindow = new BrowserWindow({
         show: false,
@@ -297,12 +335,14 @@ ipcMain.handle(
               -webkit-font-smoothing: antialiased;
             }
             @page {
-              size: ${widthCm}cm ${heightCm}cm;
+              size: ${printPageWidthCm}cm ${printPageHeightCm}cm;
               margin: 0;
             }
             html, body {
               margin: 0;
               padding: 0;
+              width: ${printPageWidthCm}cm;
+              height: ${printPageHeightCm}cm;
               font-family: ${resolvedFontFamily} !important;
               font-size: ${effectiveFontSize}pt;
               font-weight: ${fontWeight};
@@ -311,41 +351,86 @@ ipcMain.handle(
               color: #000;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+              overflow: hidden;
+              position: relative;
+            }
+            .ticket-sheet-wrapper {
+              position: absolute;
+              top: ${wrapperTopCm}cm;
+              left: ${wrapperLeftCm}cm;
+              width: ${sheetWidthCm}cm;
+              height: ${sheetHeightCm}cm;
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              ${sheetTransform}
             }
             .ticket-page-grid {
               display: flex;
               flex-direction: row;
-              width: fit-content;
+              width: ${sheetWidthCm}cm;
+              min-width: ${sheetWidthCm}cm;
+              max-width: ${sheetWidthCm}cm;
+              height: ${sheetHeightCm}cm;
+              min-height: ${sheetHeightCm}cm;
+              max-height: ${sheetHeightCm}cm;
               box-sizing: border-box;
+              margin: 0;
+              padding: 0;
               page-break-inside: avoid;
               break-inside: avoid;
               page-break-after: auto;
               break-after: auto;
+            }
+            .ticket-page-grid-y {
+              display: flex;
+              flex-direction: column;
+              width: ${sheetWidthCm}cm;
+              min-width: ${sheetWidthCm}cm;
+              max-width: ${sheetWidthCm}cm;
+              height: ${sheetHeightCm}cm;
+              min-height: ${sheetHeightCm}cm;
+              max-height: ${sheetHeightCm}cm;
+              box-sizing: border-box;
+              margin: 0;
               padding: 0;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              page-break-after: auto;
+              break-after: auto;
             }
             .ticket-vertical-strip {
               display: flex;
               flex-direction: column;
-              width: ${widthCm}cm;
+              width: ${sheetWidthCm}cm;
+              min-width: ${sheetWidthCm}cm;
+              max-width: ${sheetWidthCm}cm;
+              height: ${sheetHeightCm}cm;
+              min-height: ${sheetHeightCm}cm;
+              max-height: ${sheetHeightCm}cm;
               box-sizing: border-box;
+              margin: 0;
+              padding: 0;
               page-break-inside: avoid;
               break-inside: avoid;
               page-break-after: auto;
               break-after: auto;
-              padding: 0;
             }
             .ticket-slip {
               width: ${widthCm}cm;
-              min-height: ${heightCm}cm;
+              min-width: ${widthCm}cm;
+              max-width: ${widthCm}cm;
               height: ${heightCm}cm;
-              ${autoCut && layoutMode === 'sequential' ? 'page-break-after: always; break-after: page;' : 'page-break-after: avoid; break-after: avoid;'}
-              page-break-inside: avoid;
-              break-inside: avoid;
+              min-height: ${heightCm}cm;
+              max-height: ${heightCm}cm;
               box-sizing: border-box;
               padding: ${marginMm}mm;
               font-family: ${resolvedFontFamily} !important;
               font-weight: ${fontWeight};
               overflow: hidden;
+              ${autoCut && layoutMode === 'sequential' ? 'page-break-after: always; break-after: page;' : 'page-break-after: avoid; break-after: avoid;'}
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
             .ticket-slip:last-child {
               page-break-after: auto;
@@ -354,7 +439,9 @@ ipcMain.handle(
           </style>
         </head>
         <body>
-          ${htmlContent}
+          <div class="ticket-sheet-wrapper">
+            ${htmlContent}
+          </div>
           ${feedHtml}
         </body>
         </html>`;
@@ -381,8 +468,9 @@ ipcMain.handle(
           {
             silent: isSilent,
             deviceName: hasValidPrinter ? options!.printerName! : undefined,
-            landscape: isLandscape,
+            landscape: false,
             margins: { marginType: 'none' },
+            printBackground: true,
             pageSize: { width: widthMicrons, height: heightMicrons },
           },
           (success, failureReason) => {
