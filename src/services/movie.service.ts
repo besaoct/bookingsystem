@@ -1,5 +1,6 @@
 import { dbService } from '@/db/sqlite-service';
 import { Movie, Language, MovieType, Category, Distributor } from '@/types';
+import { getLocalDateString } from '@/lib/utils';
 
 export const movieService = {
   async getMovies(activeOnly = true): Promise<Movie[]> {
@@ -16,7 +17,7 @@ export const movieService = {
       LEFT JOIN categories c ON m.category_id = c.id
       LEFT JOIN distributors d ON m.distributor_id = d.id
       ${activeOnly ? 'WHERE m.is_active = 1' : ''}
-      ORDER BY m.id DESC
+      ORDER BY m.name ASC
     `;
     return dbService.query<Movie>(sql);
   },
@@ -41,7 +42,7 @@ export const movieService = {
 
   async saveMovie(movie: Partial<Movie>): Promise<void> {
     await dbService.init();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     if (movie.id) {
       dbService.run(
         `UPDATE movies 

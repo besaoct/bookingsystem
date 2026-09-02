@@ -1,5 +1,6 @@
 import { dbService } from '@/db/sqlite-service';
 import { Show } from '@/types';
+import { getLocalDateString } from '@/lib/utils';
 
 export const showService = {
   async getShows(options?: { date?: string; screenId?: number; activeOnly?: boolean }): Promise<Show[]> {
@@ -66,7 +67,7 @@ export const showService = {
 
   async saveShow(show: Partial<Show>): Promise<void> {
     await dbService.init();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     if (show.id) {
       dbService.run(
         `UPDATE shows 

@@ -1,6 +1,7 @@
 import { dbService } from '@/db/sqlite-service';
 import { Booking, BookingSeat, Ticket, CancellationReason, TaxConfig } from '@/types';
 import { calculateSeatTaxes } from '@/lib/tax-calculator';
+import { getLocalDateString } from '@/lib/utils';
 
 export interface CreateBookingParams {
   showId: number;
@@ -69,7 +70,7 @@ export const bookingService = {
     });
 
     const timestamp = Date.now();
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = getLocalDateString().replace(/-/g, '');
     const bookingNo = `BK-${dateStr}-${String(timestamp).slice(-4)}`;
 
     const bookingRes = dbService.run(`
@@ -81,7 +82,7 @@ export const bookingService = {
     `, [
       bookingNo,
       showId,
-      showDate || new Date().toISOString().slice(0, 10),
+      showDate || getLocalDateString(),
       totalNet,
       totalCgst,
       totalSgst,

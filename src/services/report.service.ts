@@ -1,28 +1,52 @@
 import { dbService } from '@/db/sqlite-service';
 import { DCRReportData, DCRShowGroup, DCRRow } from '@/types';
+import { getLocalDateString } from '@/lib/utils';
 
 export const reportService = {
   async generateDCRReport(selectedDate: string, cinemaName = 'Booking System'): Promise<DCRReportData> {
     await dbService.init();
 
+    // Query shows active for this date (or having booked tickets on this date)
     const shows = dbService.query<any>(`
       SELECT s.*, m.name as movie_name, sc.name as screen_name
       FROM shows s
       LEFT JOIN movies m ON s.movie_id = m.id
       LEFT JOIN screens sc ON s.screen_id = sc.id
-      WHERE s.is_active = 1
-      ORDER BY s.start_time ASC
-    `);
+      WHERE s.is_active = 1 AND (s.show_date = ? OR s.id IN (SELECT show_id FROM bookings WHERE booking_date = ?))
+      ORDER BY s.start_time ASC, s.id ASC
+    `, [selectedDate, selectedDate]);
 
     const seatClasses = dbService.query<any>("SELECT * FROM seat_classes WHERE is_active = 1 ORDER BY display_order ASC");
 
+    // Strictly query tickets for this show date
     const ticketItems = dbService.query<any>(`
       SELECT bs.*, b.show_id, b.booking_date, b.is_gst_applied, t.ticket_no
       FROM booking_seats bs
       JOIN bookings b ON bs.booking_id = b.id
       LEFT JOIN tickets t ON t.booking_id = b.id AND t.copy_type = 'CUSTOMER'
-      WHERE (b.booking_date = ? OR date(b.created_at) = ?) AND b.status = 'BOOKED'
+      WHERE b.booking_date = ? AND b.status = 'BOOKED'
       ORDER BY t.ticket_no ASC
+    `, [selectedDate]);
+
+    // Payment Modes breakdown for the selected show date
+    const paymentSummaries = dbService.query<any>(`
+      SELECT pm.id as payment_mode_id, pm.name as payment_mode_name, 
+             COUNT(b.id) as total_bookings, 
+             COALESCE(SUM(b.total_gross), 0) as total_amount
+      FROM payment_modes pm
+      LEFT JOIN bookings b ON b.payment_mode_id = pm.id AND b.booking_date = ? AND b.status = 'BOOKED'
+      GROUP BY pm.id, pm.name
+      ORDER BY total_amount DESC, pm.id ASC
+    `, [selectedDate]);
+
+    // Cancellation summary for the selected show date
+    const cancellationStats = dbService.queryOne<any>(`
+      SELECT 
+        (SELECT COUNT(bs.id) FROM booking_seats bs JOIN bookings b2 ON bs.booking_id = b2.id WHERE b2.booking_date = ? AND b2.status = 'CANCELLED') as cancelled_tickets,
+        COALESCE(SUM(total_gross), 0) as refunded_gross,
+        COALESCE(SUM(total_net), 0) as refunded_net
+      FROM bookings
+      WHERE booking_date = ? AND status = 'CANCELLED'
     `, [selectedDate, selectedDate]);
 
     const showGroups: DCRShowGroup[] = [];
@@ -133,8 +157,14 @@ export const reportService = {
     return {
       cinema_name: cinemaName,
       date: selectedDate,
-      day_name: dayNames[dateObj.getDay()],
+      day_name: dayNames[dateObj.getDay()] || '',
       show_groups: showGroups,
+      payment_summaries: paymentSummaries.filter((p: any) => p.total_amount > 0),
+      cancellation_summary: {
+        cancelled_tickets: cancellationStats?.cancelled_tickets || 0,
+        refunded_gross: cancellationStats?.refunded_gross || 0,
+        refunded_net: cancellationStats?.refunded_net || 0,
+      },
       grand_total: {
         total_sold: grandTotalTickets,
         net_amount: grandTotalNet,
@@ -160,23 +190,23 @@ export const reportService = {
     recentBookings: any[];
   }> {
     await dbService.init();
-    const today = dateStr || new Date().toISOString().slice(0, 10);
+    const today = dateStr || getLocalDateString();
 
     const bookingsSummary = dbService.queryOne<any>(`
       SELECT 
         COALESCE(SUM(total_gross), 0) AS total_gross,
         COALESCE(SUM(total_net), 0) AS total_net,
         COALESCE(SUM(total_cgst + total_sgst), 0) AS total_gst,
-        (SELECT COUNT(*) FROM booking_seats bs JOIN bookings b2 ON bs.booking_id = b2.id WHERE (b2.booking_date = ? OR date(b2.created_at) = ?) AND b2.status = 'BOOKED') AS total_tickets
+        (SELECT COUNT(*) FROM booking_seats bs JOIN bookings b2 ON bs.booking_id = b2.id WHERE b2.booking_date = ? AND b2.status = 'BOOKED') AS total_tickets
       FROM bookings
-      WHERE (booking_date = ? OR date(created_at) = ?) AND status = 'BOOKED'
-    `, [today, today, today, today]);
+      WHERE booking_date = ? AND status = 'BOOKED'
+    `, [today, today]);
 
     const cancelledCount = dbService.queryOne<any>(`
       SELECT COUNT(*) AS cancelled_count
       FROM bookings
-      WHERE (booking_date = ? OR date(created_at) = ?) AND status = 'CANCELLED'
-    `, [today, today])?.cancelled_count || 0;
+      WHERE booking_date = ? AND status = 'CANCELLED'
+    `, [today])?.cancelled_count || 0;
 
     const shows = dbService.query<any>(`
       SELECT s.*, m.name AS movie_name, m.duration_min AS movie_duration, mt.name AS movie_type_name, sc.name AS screen_name, sc.capacity
@@ -184,9 +214,9 @@ export const reportService = {
       LEFT JOIN movies m ON s.movie_id = m.id
       LEFT JOIN movie_types mt ON m.movie_type_id = mt.id
       LEFT JOIN screens sc ON s.screen_id = sc.id
-      WHERE s.is_active = 1
-      ORDER BY s.start_time ASC
-    `);
+      WHERE s.is_active = 1 AND (s.show_date = ? OR s.id IN (SELECT show_id FROM bookings WHERE booking_date = ?))
+      ORDER BY s.start_time ASC, s.id ASC
+    `, [today, today]);
 
     let totalCapacity = 0;
     let totalSoldSeats = 0;

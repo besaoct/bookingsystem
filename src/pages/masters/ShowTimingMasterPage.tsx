@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CalendarDays, Plus, Trash2, Pencil, Clock } from 'lucide-react';
-import { formatDateIndian } from '@/lib/utils';
+import { formatDateIndian, getLocalDateString } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const ShowTimingMasterPage: React.FC = () => {
@@ -73,7 +73,7 @@ export const ShowTimingMasterPage: React.FC = () => {
         console.error('Failed to load reference data', e);
       }
     }
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     setEditingShow({
       show_name: 'Evening Show',
       start_time: '06:30 PM',

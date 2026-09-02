@@ -80,23 +80,12 @@ export const POSCounterPage: React.FC = () => {
   const currentShows = useMemo(() => {
     if (!shows || shows.length === 0) return [];
 
-    if (selectedMovieId) {
-      const forMovie = shows.filter((s: Show) => s.movie_id === selectedMovieId);
-      if (forMovie.length > 0) {
-        const onDate = selectedDate ? forMovie.filter((s: Show) => s.show_date === selectedDate) : [];
-        return onDate.length > 0 ? onDate : forMovie;
-      }
-    }
-
-    if (selectedDate) {
-      const onDate = shows.filter((s: Show) => s.show_date === selectedDate);
-      if (onDate.length > 0) {
-        const onScreen = selectedScreenId ? onDate.filter((s: Show) => s.screen_id === selectedScreenId) : [];
-        return onScreen.length > 0 ? onScreen : onDate;
-      }
-    }
-
-    return shows;
+    return shows.filter((s: Show) => {
+      const matchDate = selectedDate ? s.show_date === selectedDate : true;
+      const matchMovie = selectedMovieId ? s.movie_id === selectedMovieId : true;
+      const matchScreen = selectedScreenId ? s.screen_id === selectedScreenId : true;
+      return matchDate && matchMovie && (selectedScreenId ? matchScreen : true);
+    });
   }, [shows, selectedDate, selectedMovieId, selectedScreenId]);
 
   const selectedSeatsList = useMemo(() => {
@@ -199,6 +188,7 @@ export const POSCounterPage: React.FC = () => {
               <DatePicker
                 value={selectedDate}
                 onChange={setDate}
+                minDate={new Date()}
                 className="w-36 h-8"
               />
             </div>
@@ -216,10 +206,12 @@ export const POSCounterPage: React.FC = () => {
                 value={String(selectedScreenId || '')}
                 onValueChange={(val) => setScreenId(Number(val))}
               >
-                <SelectTrigger className="h-8 text-xs font-normal min-w-0 truncate">
-                  <div className="flex items-center space-x-1.5 min-w-0 truncate">
+                <SelectTrigger className="h-8 text-xs font-normal min-w-0 overflow-hidden">
+                  <div className="flex items-center space-x-1.5 min-w-0 truncate w-full">
                     <Armchair className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <SelectValue placeholder="Select Auditorium" />
+                    <span className="truncate min-w-0 flex-1 text-left">
+                      <SelectValue placeholder="Select Auditorium" />
+                    </span>
                   </div>
                 </SelectTrigger>
                 <SelectContent>
@@ -227,7 +219,7 @@ export const POSCounterPage: React.FC = () => {
                     <SelectItem key={sc.id} value={String(sc.id)}>
                       <div className="flex items-center justify-between w-full space-x-2 min-w-0 truncate">
                         <span className="font-normal truncate">{sc.name}</span>
-                        <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
+                        <span className="text-[10px] text-muted-foreground group-data-highlighted:text-accent-foreground/80 group-hover:text-accent-foreground/80 group-focus:text-accent-foreground/80 shrink-0">
                           ({sc.capacity} seats)
                         </span>
                       </div>
@@ -250,24 +242,38 @@ export const POSCounterPage: React.FC = () => {
                 value={String(selectedMovieId || '')}
                 onValueChange={(val) => setMovieId(Number(val))}
               >
-                <SelectTrigger className="h-8 text-xs font-normal min-w-0 truncate">
-                  <div className="flex items-center space-x-1.5 min-w-0 truncate">
+                <SelectTrigger className="h-8 text-xs font-normal min-w-0 overflow-hidden">
+                  <div className="flex items-center space-x-1.5 min-w-0 truncate w-full">
                     <Film className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <SelectValue placeholder="Select Movie" />
+                    <span className="truncate min-w-0 flex-1 text-left">
+                      <SelectValue placeholder="Select Movie" />
+                    </span>
                   </div>
                 </SelectTrigger>
                 <SelectContent>
                   {movies.map((m: Movie) => {
                     const meta = [m.language_name, m.movie_type_name].filter(Boolean).join(' • ');
+                    const showsOnDateCount = shows.filter((s: Show) => s.movie_id === m.id && s.show_date === selectedDate).length;
                     return (
                       <SelectItem key={m.id} value={String(m.id)}>
                         <div className="flex items-center justify-between w-full space-x-2 min-w-0 truncate">
                           <span className="font-normal truncate">{m.name}</span>
-                          {meta && (
-                            <span className="text-[10px] text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
-                              ({meta})
-                            </span>
-                          )}
+                          <div className="flex items-center space-x-1.5 shrink-0">
+                            {meta && (
+                              <span className="text-[10px] text-muted-foreground group-data-highlighted:text-accent-foreground/80 group-hover:text-accent-foreground/80 group-focus:text-accent-foreground/80 truncate max-w-28">
+                                ({meta})
+                              </span>
+                            )}
+                            {showsOnDateCount > 0 ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-xs transition-colors bg-primary/15 text-primary group-data-highlighted:bg-accent-foreground/20 group-data-highlighted:text-accent-foreground group-hover:bg-accent-foreground/20 group-hover:text-accent-foreground group-focus:bg-accent-foreground/20 group-focus:text-accent-foreground shrink-0">
+                                {showsOnDateCount} {showsOnDateCount === 1 ? 'show' : 'shows'}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground group-data-highlighted:text-accent-foreground/70 group-hover:text-accent-foreground/70 group-focus:text-accent-foreground/70 shrink-0">
+                                (No shows)
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </SelectItem>
                     );
@@ -290,10 +296,12 @@ export const POSCounterPage: React.FC = () => {
                 onValueChange={(val) => setShowId(Number(val))}
                 disabled={currentShows.length === 0}
               >
-                <SelectTrigger className="h-8 text-xs font-normal min-w-0 truncate">
-                  <div className="flex items-center space-x-1.5 min-w-0 truncate">
+                <SelectTrigger className="h-8 text-xs font-normal min-w-0 overflow-hidden">
+                  <div className="flex items-center space-x-1.5 min-w-0 truncate w-full">
                     <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <SelectValue placeholder={currentShows.length === 0 ? "No active shows" : "Select Show Time"} />
+                    <span className="truncate min-w-0 flex-1 text-left">
+                      <SelectValue placeholder={currentShows.length === 0 ? "No active shows" : "Select Show Time"} />
+                    </span>
                   </div>
                 </SelectTrigger>
                 <SelectContent>
@@ -301,7 +309,7 @@ export const POSCounterPage: React.FC = () => {
                     <SelectItem key={s.id} value={String(s.id)}>
                       <div className="flex items-center space-x-1.5 min-w-0 truncate">
                         <span className="font-normal truncate">{s.show_name}</span>
-                        <span className="text-xs text-muted-foreground group-hover:text-inherit group-focus:text-inherit group-data-highlighted:text-inherit shrink-0">
+                        <span className="text-xs text-muted-foreground group-data-highlighted:text-accent-foreground/80 group-hover:text-accent-foreground/80 group-focus:text-accent-foreground/80 shrink-0">
                           ({s.start_time})
                         </span>
                       </div>
@@ -327,6 +335,14 @@ export const POSCounterPage: React.FC = () => {
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs font-medium bg-card border border-border rounded-xs shadow-xs">
               <RefreshCw className="w-5 h-5 animate-spin mr-2 text-primary" />
               Loading Screen Layout &amp; Seats...
+            </div>
+          ) : currentShows.length === 0 || !selectedShowId ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground text-xs font-medium bg-card border border-border rounded-xs shadow-xs p-6 space-y-2 text-center">
+              <Calendar className="w-10 h-10 text-muted-foreground/60 mb-1" />
+              <div className="text-sm font-bold text-foreground">No Shows Scheduled on {selectedDate}</div>
+              <p className="max-w-md text-xs text-muted-foreground">
+                There are no active show schedules matching your selection for this date. Please select another date from the quick pills or schedule a show in Show Timing Master.
+              </p>
             </div>
           ) : (
             <SeatMap

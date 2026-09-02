@@ -93,23 +93,38 @@ export function generateDCRHtml({
     })
     .join('');
 
+  // Payment Modes Table HTML
+  const paymentRowsHtml = (reportData.payment_summaries || [])
+    .map(
+      (pm) => `
+      <tr>
+        <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: 600;">${pm.payment_mode_name}</td>
+        <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center;">${pm.total_bookings}</td>
+        <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700; color: #047857;">₹${pm.total_amount.toFixed(2)}</td>
+      </tr>`
+    )
+    .join('');
+
+  const cancellationHtml = reportData.cancellation_summary && reportData.cancellation_summary.cancelled_tickets > 0
+    ? `<div style="margin-top: 10px; padding: 6px 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 2px; font-size: 10.5px; color: #991b1b; display: flex; justify-content: space-between;">
+        <span><strong>Cancellations Recorded Today:</strong> ${reportData.cancellation_summary.cancelled_tickets} Ticket(s)</span>
+        <span><strong>Refunded Gross:</strong> ₹${reportData.cancellation_summary.refunded_gross.toFixed(2)}</span>
+       </div>`
+    : '';
+
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>${cinemaTitle} - DCR Report ${dateStr}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
     @page {
       size: ${pageSize} ${orientation};
       margin: 8mm 10mm;
     }
     * {
       box-sizing: border-box;
-      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
       -webkit-font-smoothing: antialiased;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -121,11 +136,11 @@ export function generateDCRHtml({
       color: #0f172a;
       font-size: 11px;
       line-height: 1.35;
-      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
     table {
       page-break-inside: auto;
-      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
     tr {
       page-break-inside: avoid;
@@ -194,6 +209,32 @@ export function generateDCRHtml({
       </tbody>
     </table>
   </div>
+
+  ${
+    paymentRowsHtml
+      ? `
+  <!-- Payment Mode Summary -->
+  <div style="margin-top: 14px; page-break-inside: avoid; width: 50%;">
+    <div style="background: #0f172a; color: #ffffff; padding: 5px 10px; font-weight: 700; font-size: 10.5px; text-transform: uppercase;">
+      PAYMENT MODE BREAKDOWN
+    </div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+      <thead>
+        <tr style="background: #f8fafc; font-weight: 600; color: #475569;">
+          <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: left;">Mode</th>
+          <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">Bookings</th>
+          <th style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${paymentRowsHtml}
+      </tbody>
+    </table>
+  </div>`
+      : ''
+  }
+
+  ${cancellationHtml}
 
   <!-- Statutory Disclaimer Footer -->
   <div style="margin-top: 24px; padding-top: 10px; border-top: 1px dashed #94a3b8; text-align: center;">

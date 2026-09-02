@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { IndianRupee, Plus, Trash2, Pencil } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { getLocalDateString } from '@/lib/utils';
 
 export const PricingMasterPage: React.FC = () => {
   const { hasPermission, user } = useAuthStore();
@@ -69,7 +70,7 @@ export const PricingMasterPage: React.FC = () => {
       service_charge: 12,
       cgst_pct: 9,
       sgst_pct: 9,
-      effective_from: new Date().toISOString().slice(0, 10),
+      effective_from: getLocalDateString(),
       effective_to: '2099-12-31',
       is_active: true,
     });
@@ -96,7 +97,7 @@ export const PricingMasterPage: React.FC = () => {
       service_charge: Number(editingPricing.service_charge ?? 12),
       cgst_pct: Number(editingPricing.cgst_pct ?? 9),
       sgst_pct: Number(editingPricing.sgst_pct ?? 9),
-      effective_from: editingPricing.effective_from || new Date().toISOString().slice(0, 10),
+      effective_from: editingPricing.effective_from || getLocalDateString(),
       effective_to: editingPricing.effective_to || '2099-12-31',
     };
 

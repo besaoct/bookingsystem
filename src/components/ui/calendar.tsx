@@ -15,6 +15,8 @@ import {
   isValid,
   setYear,
   setMonth,
+  startOfDay,
+  endOfDay,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -80,6 +82,9 @@ export const Calendar: React.FC<CalendarProps> = ({
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  const startOfMin = minDate ? startOfDay(minDate) : undefined;
+  const endOfMax = maxDate ? endOfDay(maxDate) : undefined;
 
   return (
     <div className={cn('p-3 bg-popover text-popover-foreground rounded-xs select-none w-64', className)}>
@@ -149,8 +154,9 @@ export const Calendar: React.FC<CalendarProps> = ({
           const isCurrentMonth = isSameMonth(day, monthStart);
           const isTodayDate = isToday(day);
 
-          const isBeforeMin = minDate ? day < minDate : false;
-          const isAfterMax = maxDate ? day > maxDate : false;
+          const dayStart = startOfDay(day);
+          const isBeforeMin = startOfMin ? dayStart < startOfMin : false;
+          const isAfterMax = endOfMax ? dayStart > endOfMax : false;
           const isDisabled = isBeforeMin || isAfterMax;
 
           return (
@@ -160,12 +166,12 @@ export const Calendar: React.FC<CalendarProps> = ({
               disabled={isDisabled}
               onClick={() => onSelect?.(day)}
               className={cn(
-                'h-7 w-full rounded-xs text-xs font-medium flex items-center justify-center transition-all cursor-pointer',
-                !isCurrentMonth && 'text-muted-foreground/40',
-                isCurrentMonth && !isSelected && 'text-foreground hover:bg-muted',
-                isTodayDate && !isSelected && 'border border-primary/50 font-bold text-primary',
-                isSelected && 'bg-primary text-primary-foreground font-bold shadow-xs hover:bg-primary/90',
-                isDisabled && 'opacity-30 cursor-not-allowed hover:bg-transparent'
+                'h-7 w-full rounded-xs text-xs font-medium flex items-center justify-center transition-colors cursor-pointer select-none',
+                !isCurrentMonth && 'text-muted-foreground/30',
+                isCurrentMonth && !isSelected && !isDisabled && 'text-foreground hover:bg-accent hover:text-accent-foreground',
+                isTodayDate && !isSelected && !isDisabled && 'border border-primary/60 font-bold text-primary bg-primary/5 hover:bg-primary hover:text-primary-foreground',
+                isSelected && 'bg-primary text-primary-foreground font-bold shadow-xs hover:bg-primary/90 hover:text-primary-foreground',
+                isDisabled && 'opacity-25 cursor-not-allowed pointer-events-none'
               )}
             >
               {format(day, 'd')}
@@ -175,15 +181,16 @@ export const Calendar: React.FC<CalendarProps> = ({
       </div>
 
       {/* Today Quick Select Footer */}
-      <div className="pt-2 mt-2 border-t border-border flex items-center justify-between">
+      <div className="pt-2 mt-2 border-t border-border/60 flex items-center justify-between">
         <button
           type="button"
+          disabled={startOfMin ? startOfDay(new Date()) < startOfMin : false}
           onClick={() => {
             const today = new Date();
             setCurrentMonth(today);
             onSelect?.(today);
           }}
-          className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+          className="text-[11px] font-semibold text-primary hover:underline hover:text-primary/80 cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
         >
           Select Today ({format(new Date(), 'dd MMM')})
         </button>

@@ -133,6 +133,8 @@ export interface SeatRow {
   display_order: number;
 }
 
+export type SeatStatus = 'AVAILABLE' | 'SELECTED' | 'BOOKED' | 'BLOCKED' | 'AISLE';
+
 export interface Seat {
   id: number;
   row_id: number;
@@ -147,8 +149,8 @@ export interface Seat {
   pos_x: number;
   pos_y: number;
   
-  // Dynamic runtime status
-  status?: 'AVAILABLE' | 'SELECTED' | 'BOOKED' | 'BLOCKED' | 'AISLE';
+  // Dynamic runtime status (single source of truth)
+  status?: SeatStatus;
   price?: number;
 }
 
@@ -311,11 +313,26 @@ export interface DCRShowGroup {
   };
 }
 
+export interface DCRPaymentSummary {
+  payment_mode_id: number;
+  payment_mode_name: string;
+  total_bookings: number;
+  total_amount: number;
+}
+
+export interface DCRCancellationSummary {
+  cancelled_tickets: number;
+  refunded_gross: number;
+  refunded_net: number;
+}
+
 export interface DailyCollectionReport {
   date: string;
   day_name: string;
   cinema_name: string;
   show_groups: DCRShowGroup[];
+  payment_summaries?: DCRPaymentSummary[];
+  cancellation_summary?: DCRCancellationSummary;
   grand_total: {
     total_sold: number;
     net_amount: number;

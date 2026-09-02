@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { DCRReportData, DCRShowGroup, DCRRow } from '@/types';
+import { DCRReportData, DCRShowGroup, DCRRow, DCRPaymentSummary } from '@/types';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { reportService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DatePicker } from '@/components/ui/date-picker';
 import { generateDCRHtml } from '@/lib/dcr-html';
-import { FileSpreadsheet, Printer, Download, Loader2 } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  Printer,
+  Download,
+  Loader2,
+  Calendar,
+  CreditCard,
+  Ban,
+  Receipt,
+  TrendingUp,
+} from 'lucide-react';
+import { cn, getLocalDateString } from '@/lib/utils';
 
 export const DCRReportPage: React.FC = () => {
   const { cinema, fetchSettings } = useSettingsStore();
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
   const [reportData, setReportData] = useState<DCRReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -90,6 +101,14 @@ export const DCRReportPage: React.FC = () => {
       });
     });
 
+    if (reportData.payment_summaries && reportData.payment_summaries.length > 0) {
+      csv += '\nPAYMENT BREAKDOWN\n';
+      csv += 'Mode,Bookings,Total Amount\n';
+      reportData.payment_summaries.forEach((pm) => {
+        csv += `"${pm.payment_mode_name}",${pm.total_bookings},${pm.total_amount.toFixed(2)}\n`;
+      });
+    }
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -100,7 +119,8 @@ export const DCRReportPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-4 gap-4 bg-muted/40 select-none">
+    <div className="flex flex-col h-full overflow-hidden p-4 gap-4 bg-muted/40 select-none font-sans">
+      {/* Top Controls Bar */}
       <div className="bg-card border border-border rounded-xs p-3 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-xs print:hidden">
         <div className="flex items-center space-x-2">
           <FileSpreadsheet className="w-4 h-4 text-primary" />
@@ -112,16 +132,16 @@ export const DCRReportPage: React.FC = () => {
           </Badge>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="w-44">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-36">
             <DatePicker
               value={selectedDate}
               onChange={setSelectedDate}
+              className="h-8"
             />
           </div>
 
-
-          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || !reportData}>
+          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || !reportData} className="cursor-pointer">
             <Download className="w-3.5 h-3.5 mr-1" />
             CSV Export
           </Button>
@@ -131,7 +151,7 @@ export const DCRReportPage: React.FC = () => {
             size="sm"
             onClick={handlePrint}
             disabled={isLoading || isPrinting || !reportData}
-            className="font-bold"
+            className="font-bold cursor-pointer"
           >
             {isPrinting ? (
               <>
@@ -141,14 +161,16 @@ export const DCRReportPage: React.FC = () => {
             ) : (
               <>
                 <Printer className="w-3.5 h-3.5 mr-1" />
-                Print Report
+                Print DCR
               </>
             )}
           </Button>
         </div>
       </div>
 
+      {/* DCR Report Sheet Container */}
       <div className="flex-1 bg-card border border-border rounded-xs p-5 overflow-y-auto print:border-none print:p-0 print:overflow-visible print:shadow-none shadow-xs dcr-report-sheet">
+        {/* Report Header */}
         <div className="text-center pb-4 border-b border-border mb-4 space-y-1">
           <h1 className="text-base font-extrabold tracking-widest text-foreground uppercase">
             {(cinema?.name || reportData?.cinema_name) ? `${String(cinema?.name || reportData?.cinema_name).toUpperCase()} — ` : ''}DAILY COLLECTION REPORT
@@ -170,9 +192,39 @@ export const DCRReportPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Top Summary Stat KPI Cards */}
+        {reportData && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-5 print:hidden">
+            <div className="p-2.5 bg-muted/30 border border-border rounded-xs">
+              <div className="text-[10px] uppercase font-semibold text-muted-foreground">Total Tickets</div>
+              <div className="text-base font-black text-primary mt-0.5">{reportData.grand_total.total_sold}</div>
+            </div>
+            <div className="p-2.5 bg-muted/30 border border-border rounded-xs">
+              <div className="text-[10px] uppercase font-semibold text-muted-foreground">Net ADM Receipts</div>
+              <div className="text-base font-black text-foreground mt-0.5">₹{reportData.grand_total.net_amount.toFixed(2)}</div>
+            </div>
+            <div className="p-2.5 bg-muted/30 border border-border rounded-xs">
+              <div className="text-[10px] uppercase font-semibold text-muted-foreground">GST Collected (18%)</div>
+              <div className="text-base font-black text-destructive mt-0.5">₹{reportData.grand_total.total_tax.toFixed(2)}</div>
+            </div>
+            <div className="p-2.5 bg-muted/30 border border-border rounded-xs">
+              <div className="text-[10px] uppercase font-semibold text-muted-foreground">Service Charge</div>
+              <div className="text-base font-black text-foreground mt-0.5">₹{reportData.grand_total.service_charge.toFixed(2)}</div>
+            </div>
+            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xs">
+              <div className="text-[10px] uppercase font-semibold text-emerald-600 dark:text-emerald-400">Grand Total Gross</div>
+              <div className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5">₹{reportData.grand_total.gross_receipts.toFixed(2)}</div>
+            </div>
+          </div>
+        )}
+
         {reportData?.show_groups.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground text-xs font-medium">
-            No ticket sales or active bookings found for {selectedDate}.
+          <div className="py-12 flex flex-col items-center justify-center text-center text-muted-foreground text-xs font-medium space-y-2">
+            <Calendar className="w-8 h-8 text-muted-foreground/60 mb-1" />
+            <div className="text-sm font-bold text-foreground">No Ticket Sales for {selectedDate}</div>
+            <p className="max-w-md text-xs text-muted-foreground">
+              No shows had tickets issued or confirmed for this show date.
+            </p>
           </div>
         ) : (
           <div className="space-y-5">
@@ -214,8 +266,8 @@ export const DCRReportPage: React.FC = () => {
                           <td className="px-3 py-2 font-semibold text-foreground">
                             {row.seat_class_name}
                           </td>
-                          <td className="px-3 py-2 text-center text-muted-foreground font-semibold">{row.opening_no}</td>
-                          <td className="px-3 py-2 text-center text-muted-foreground font-semibold">{row.closing_no}</td>
+                          <td className="px-3 py-2 text-center text-muted-foreground font-semibold font-mono">{row.opening_no}</td>
+                          <td className="px-3 py-2 text-center text-muted-foreground font-semibold font-mono">{row.closing_no}</td>
                           <td className="px-3 py-2 text-right font-medium">₹{row.rate.toFixed(2)}</td>
                           <td className="px-3 py-2 text-center font-bold text-primary">{row.total_sold}</td>
                           <td className="px-3 py-2 text-right text-muted-foreground font-medium">{row.net_amount.toFixed(2)}</td>
@@ -239,7 +291,7 @@ export const DCRReportPage: React.FC = () => {
                         <td className="px-3 py-2.5 text-right">{group.subtotal.cgst_amount.toFixed(2)}</td>
                         <td className="px-3 py-2.5 text-right">{group.subtotal.sgst_amount.toFixed(2)}</td>
                         <td className="px-3 py-2.5 text-right">{group.subtotal.total_tax.toFixed(2)}</td>
-                        <td className="px-3 py-2.5 text-right text-primary font-extrabold">₹{group.subtotal.gross_receipts.toFixed(2)}</td>
+                        <td className="px-3 py-2.5 text-right text-emerald-600 dark:text-emerald-400 font-extrabold">₹{group.subtotal.gross_receipts.toFixed(2)}</td>
                         <td className="px-3 py-2.5 text-right">{group.subtotal.service_charge.toFixed(2)}</td>
                         <td className="px-3 py-2.5 text-right">0.00</td>
                         <td className="px-3 py-2.5 text-right pr-3">0.00</td>
@@ -283,7 +335,7 @@ export const DCRReportPage: React.FC = () => {
                       <td className="px-3 py-3 text-right">₹{reportData.grand_total.cgst_amount.toFixed(2)}</td>
                       <td className="px-3 py-3 text-right">₹{reportData.grand_total.sgst_amount.toFixed(2)}</td>
                       <td className="px-3 py-3 text-right text-destructive font-bold">₹{reportData.grand_total.total_tax.toFixed(2)}</td>
-                      <td className="px-3 py-3 text-right text-success font-bold text-sm">
+                      <td className="px-3 py-3 text-right text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                         ₹{reportData.grand_total.gross_receipts.toFixed(2)}
                       </td>
                       <td className="px-3 py-3 text-right">₹{reportData.grand_total.service_charge.toFixed(2)}</td>
@@ -293,6 +345,61 @@ export const DCRReportPage: React.FC = () => {
                 </table>
               </div>
             )}
+
+            {/* Bottom Breakdown: Payment Modes & Cancellations */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+              {/* Payment Mode Breakdown */}
+              {reportData && reportData.payment_summaries && reportData.payment_summaries.length > 0 && (
+                <div className="border border-border rounded-xs overflow-hidden shadow-xs">
+                  <div className="bg-muted/60 px-3 py-2 text-xs font-bold uppercase text-foreground flex items-center space-x-1.5 border-b border-border">
+                    <CreditCard className="w-3.5 h-3.5 text-primary" />
+                    <span>Payment Mode Breakdown</span>
+                  </div>
+                  <table className="w-full text-xs text-left bg-card">
+                    <thead className="bg-muted/30 border-b border-border text-[10px] uppercase font-semibold text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2">Payment Mode</th>
+                        <th className="px-3 py-2 text-center">Transactions</th>
+                        <th className="px-3 py-2 text-right">Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {reportData.payment_summaries.map((pm: DCRPaymentSummary) => (
+                        <tr key={pm.payment_mode_id}>
+                          <td className="px-3 py-2 font-semibold text-foreground">{pm.payment_mode_name}</td>
+                          <td className="px-3 py-2 text-center text-muted-foreground font-medium">{pm.total_bookings}</td>
+                          <td className="px-3 py-2 text-right font-bold text-emerald-600 dark:text-emerald-400">₹{pm.total_amount.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Cancellation & Refund Summary */}
+              {reportData && reportData.cancellation_summary && (
+                <div className="border border-border rounded-xs overflow-hidden shadow-xs">
+                  <div className="bg-muted/60 px-3 py-2 text-xs font-bold uppercase text-foreground flex items-center space-x-1.5 border-b border-border">
+                    <Ban className="w-3.5 h-3.5 text-destructive" />
+                    <span>Cancellation &amp; Refund Audit</span>
+                  </div>
+                  <div className="p-3 bg-card space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Cancelled Tickets Today:</span>
+                      <span className="font-bold text-destructive">{reportData.cancellation_summary.cancelled_tickets} Ticket(s)</span>
+                    </div>
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Refunded Net Amount:</span>
+                      <span className="font-medium text-foreground">₹{reportData.cancellation_summary.refunded_net.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-muted-foreground border-t border-border pt-1.5">
+                      <span className="font-semibold text-foreground">Total Refunded Gross:</span>
+                      <span className="font-bold text-destructive text-xs">₹{reportData.cancellation_summary.refunded_gross.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

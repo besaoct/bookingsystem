@@ -4,7 +4,6 @@ import { SeatRow, SeatClass } from '@/types';
 import { cn } from '@/lib/utils';
 import { Check, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SeatMapProps {
@@ -308,9 +307,9 @@ export const SeatMap: React.FC<SeatMapProps> = ({
                   <div className="flex items-center space-x-1.5">
                     {rowSeats.map((seat) => {
                       const isSelected = selectedSeatIds.includes(seat.id);
-                      const isBooked = seat.is_booked;
-                      const isBlocked = seat.is_blocked;
-                      const isAisle = seat.is_aisle;
+                      const isBooked = seat.status === 'BOOKED';
+                      const isBlocked = seat.status === 'BLOCKED' || Boolean(seat.is_blocked);
+                      const isAisle = seat.status === 'AISLE' || Boolean(seat.is_aisle);
 
                       return (
                         <React.Fragment key={seat.id}>

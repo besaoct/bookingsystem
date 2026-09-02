@@ -20,12 +20,13 @@ import {
 } from '@/components/ui/tooltip';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Ban, Search, RefreshCw, Ticket, CheckCircle, Trash2 } from 'lucide-react';
+import { getLocalDateString } from '@/lib/utils';
 
 export const TicketCancellationPage: React.FC = () => {
   const { user, hasPermission } = useAuthStore();
   const canCancel = user?.role === 'SYSTEM_ADMIN' || hasPermission('cancellation', 'can_create') || hasPermission('cancellation', 'can_delete');
   const canDelete = user?.role === 'SYSTEM_ADMIN' || hasPermission('cancellation', 'can_delete') || hasPermission('booking', 'can_delete');
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'CANCELLED'>('ALL');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -141,9 +142,9 @@ export const TicketCancellationPage: React.FC = () => {
 
           <Button
             type="button"
-            variant={selectedDate === new Date().toISOString().slice(0, 10) ? 'default' : 'outline'}
+            variant={selectedDate === getLocalDateString() ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSelectedDate(new Date().toISOString().slice(0, 10))}
+            onClick={() => setSelectedDate(getLocalDateString())}
             className="h-8 text-xs font-bold shrink-0 cursor-pointer"
           >
             Today

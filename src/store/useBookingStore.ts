@@ -5,9 +5,8 @@ import {
   Show,
   SeatRow,
   Seat,
+  SeatStatus,
   Booking,
-  BookingSeat,
-  Ticket,
   TaxConfig,
   Pricing,
 } from '@/types';
@@ -18,16 +17,16 @@ import {
   pricingService,
   bookingService,
 } from '@/services';
+import { getLocalDateString } from '@/lib/utils';
 
 export interface EnrichedSeat extends Seat {
   row_name: string;
   row_order: number;
   class_name: string;
   class_color: string;
-  is_booked: boolean;
   base_price: number;
   service_charge: number;
-  status: 'AVAILABLE' | 'SELECTED' | 'BOOKED' | 'BLOCKED' | 'AISLE';
+  status: SeatStatus;
 }
 
 interface BookingState {
@@ -62,11 +61,11 @@ interface BookingState {
   setScreenId: (screenId: number | null) => void;
   setSelectedShowId: (showId: number | null) => void;
   setShowId: (showId: number | null) => void;
-  toggleSeatSelection: (seatId: number) => void;
   setApplyGst: (apply: boolean) => void;
   toggleApplyGst: () => void;
-  setSelectedPaymentModeId: (modeId: number) => void;
-  setPaymentModeId: (modeId: number) => void;
+  setSelectedPaymentModeId: (paymentModeId: number) => void;
+  setPaymentModeId: (paymentModeId: number) => void;
+  toggleSeatSelection: (seatId: number) => void;
   clearSeatSelection: () => void;
 
   fetchInitialData: () => Promise<void>;
@@ -75,7 +74,7 @@ interface BookingState {
 }
 
 export const useBookingStore = create<BookingState>((set, get) => ({
-  selectedDate: new Date().toISOString().slice(0, 10),
+  selectedDate: getLocalDateString(),
   selectedMovieId: null,
   selectedScreenId: null,
   selectedShowId: null,
@@ -95,17 +94,19 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   isBookingProcessing: false,
 
   setSelectedDate: (date: string) => {
+    const today = getLocalDateString();
+    const validDate = date && date < today ? today : (date || today);
     const shows = get().shows;
     const movieId = get().selectedMovieId;
-    const dateShows = shows.filter((s) => s.show_date === date);
+    const dateShows = shows.filter((s) => s.show_date === validDate);
     const matchMovie = movieId ? dateShows.find((s) => s.movie_id === movieId) : null;
     const targetShow = matchMovie || dateShows[0] || null;
 
     set({
-      selectedDate: date,
-      selectedShowId: targetShow ? targetShow.id : get().selectedShowId,
-      selectedMovieId: targetShow ? targetShow.movie_id : get().selectedMovieId,
-      selectedScreenId: targetShow ? targetShow.screen_id : get().selectedScreenId,
+      selectedDate: validDate,
+      selectedShowId: targetShow ? targetShow.id : null,
+      selectedMovieId: targetShow ? targetShow.movie_id : (dateShows.length > 0 ? dateShows[0].movie_id : null),
+      selectedScreenId: targetShow ? targetShow.screen_id : (get().selectedScreenId || 1),
       selectedSeatIds: [],
     });
     get().fetchShowsAndSeats();
@@ -117,15 +118,13 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   setSelectedMovieId: (movieId: number | null) => {
     const shows = get().shows;
     const date = get().selectedDate;
-    const movieShowsOnDate = shows.filter((s) => s.movie_id === movieId && (!date || s.show_date === date));
-    const allMovieShows = shows.filter((s) => s.movie_id === movieId);
-    const targetShow = movieShowsOnDate[0] || allMovieShows[0] || null;
+    const movieShowsOnDate = movieId ? shows.filter((s) => s.movie_id === movieId && s.show_date === date) : [];
+    const targetShow = movieShowsOnDate[0] || null;
 
     set({
       selectedMovieId: movieId,
       selectedShowId: targetShow ? targetShow.id : null,
       selectedScreenId: targetShow ? targetShow.screen_id : get().selectedScreenId,
-      selectedDate: targetShow?.show_date || get().selectedDate,
       selectedSeatIds: [],
     });
     get().fetchShowsAndSeats();
@@ -136,16 +135,16 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
   setSelectedScreenId: (screenId: number | null) => {
     const shows = get().shows;
+    const date = get().selectedDate;
     const movieId = get().selectedMovieId;
-    const screenShows = shows.filter((s) => s.screen_id === screenId);
-    const matchMovie = movieId ? screenShows.find((s) => s.movie_id === movieId) : null;
-    const targetShow = matchMovie || screenShows[0] || null;
+    const screenShowsOnDate = screenId ? shows.filter((s) => s.screen_id === screenId && s.show_date === date) : [];
+    const matchMovie = movieId ? screenShowsOnDate.find((s) => s.movie_id === movieId) : null;
+    const targetShow = matchMovie || screenShowsOnDate[0] || null;
 
     set({
       selectedScreenId: screenId,
-      selectedShowId: targetShow ? targetShow.id : get().selectedShowId,
+      selectedShowId: targetShow ? targetShow.id : null,
       selectedMovieId: targetShow ? targetShow.movie_id : get().selectedMovieId,
-      selectedDate: targetShow?.show_date || get().selectedDate,
       selectedSeatIds: [],
     });
     get().fetchShowsAndSeats();
@@ -155,12 +154,12 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   setSelectedShowId: (showId: number | null) => {
-    const show = get().shows.find((s) => s.id === showId);
+    const shows = get().shows;
+    const show = shows.find((s) => s.id === showId);
     set({
       selectedShowId: showId,
       selectedMovieId: show ? show.movie_id : get().selectedMovieId,
       selectedScreenId: show ? show.screen_id : get().selectedScreenId,
-      selectedDate: show?.show_date || get().selectedDate,
       selectedSeatIds: [],
     });
     get().fetchShowsAndSeats();
@@ -169,16 +168,25 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     get().setSelectedShowId(showId);
   },
 
-  setApplyGst: (apply: boolean) => set({ applyGst: apply }),
-  toggleApplyGst: () => set((state) => ({ applyGst: !state.applyGst })),
+  setApplyGst: (apply: boolean) => {
+    set({ applyGst: apply });
+  },
+  toggleApplyGst: () => {
+    set((state) => ({ applyGst: !state.applyGst }));
+  },
 
-  setSelectedPaymentModeId: (modeId: number) => set({ selectedPaymentModeId: modeId }),
-  setPaymentModeId: (modeId: number) => set({ selectedPaymentModeId: modeId }),
+  setSelectedPaymentModeId: (paymentModeId: number) => {
+    set({ selectedPaymentModeId: paymentModeId });
+  },
+  setPaymentModeId: (paymentModeId: number) => {
+    get().setSelectedPaymentModeId(paymentModeId);
+  },
 
   toggleSeatSelection: (seatId: number) => {
-    const { seats, selectedSeatIds } = get();
+    const { selectedSeatIds, seats } = get();
     const seat = seats.find((s) => s.id === seatId);
-    if (!seat || seat.is_booked || seat.is_blocked || seat.is_aisle) {
+
+    if (!seat || seat.status === 'BOOKED' || seat.status === 'BLOCKED' || seat.status === 'AISLE') {
       return;
     }
 
@@ -186,7 +194,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       set({ selectedSeatIds: selectedSeatIds.filter((id) => id !== seatId) });
     } else {
       if (selectedSeatIds.length >= 10) {
-        alert('Maximum 10 seats allowed per booking transaction.');
+        alert('Maximum 10 seats allowed per single counter transaction.');
         return;
       }
       set({ selectedSeatIds: [...selectedSeatIds, seatId] });
@@ -204,19 +212,22 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const movies = await movieService.getMovies();
       const shows = await showService.getShows({ activeOnly: true });
 
-      const initialShow = shows[0] || null;
+      const today = getLocalDateString();
+      const todayShows = shows.filter((s) => s.show_date === today);
+      const futureShows = shows.filter((s) => s.show_date >= today);
+      const initialShow = todayShows[0] || futureShows[0] || null;
+      const initialDate = initialShow ? initialShow.show_date : today;
       const initialMovieId = initialShow ? initialShow.movie_id : (movies[0]?.id || null);
       const initialScreenId = initialShow ? initialShow.screen_id : (screens[0]?.id || 1);
-      const initialDate = initialShow ? initialShow.show_date : new Date().toISOString().slice(0, 10);
 
       set({
         screens,
         movies,
         shows,
+        selectedDate: initialDate,
         selectedShowId: initialShow?.id || null,
         selectedMovieId: initialMovieId,
         selectedScreenId: initialScreenId,
-        selectedDate: initialDate,
       });
 
       await get().fetchShowsAndSeats();
@@ -232,26 +243,23 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
     try {
       const shows = await showService.getShows({ activeOnly: true });
+      const showsOnDate = selectedDate ? shows.filter((s) => s.show_date === selectedDate) : shows;
 
-      // Determine active show
-      let activeShowId = selectedShowId;
-      if (activeShowId && !shows.some((s) => s.id === activeShowId)) {
-        activeShowId = null;
+      // Determine active show strictly within the selected date (if specified)
+      let activeShow = showsOnDate.find((s) => s.id === selectedShowId);
+
+      if (!activeShow && showsOnDate.length > 0) {
+        if (selectedMovieId) {
+          activeShow = showsOnDate.find((s) => s.movie_id === selectedMovieId);
+        }
+        if (!activeShow) {
+          activeShow = showsOnDate[0];
+        }
       }
 
-      if (!activeShowId && shows.length > 0) {
-        const match = shows.find((s) => 
-          (selectedMovieId ? s.movie_id === selectedMovieId : true) &&
-          (selectedDate ? s.show_date === selectedDate : true) &&
-          (selectedScreenId ? s.screen_id === selectedScreenId : true)
-        ) || shows.find((s) => selectedMovieId ? s.movie_id === selectedMovieId : true) || shows[0];
-
-        activeShowId = match ? match.id : null;
-      }
-
-      const activeShow = shows.find((s) => s.id === activeShowId);
+      const activeShowId = activeShow ? activeShow.id : null;
       const effectiveScreenId = activeShow ? activeShow.screen_id : (selectedScreenId || 1);
-      const effectiveMovieId = activeShow ? activeShow.movie_id : selectedMovieId;
+      const effectiveMovieId = activeShow ? activeShow.movie_id : (showsOnDate.length > 0 ? showsOnDate[0].movie_id : null);
 
       // Fetch rows for this screen
       const rows = await screenService.getScreenSeatRows(effectiveScreenId);
@@ -270,7 +278,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
       // Attach pricing & booked status to each seat
       const enrichedSeats: EnrichedSeat[] = rawSeats.map((seat: any) => {
-        const isBooked = bookedSeatIds.includes(seat.id);
+        const isBooked = activeShowId ? bookedSeatIds.includes(seat.id) : false;
 
         const showPriceObj = activeShowId
           ? pricingList.find((p: any) => p.seat_class_id === seat.seat_class_id && p.show_id === activeShowId)
@@ -280,6 +288,10 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         );
         const priceObj = showPriceObj || basePriceObj;
 
+        const seatStatus: SeatStatus = isBooked
+          ? 'BOOKED'
+          : (seat.is_blocked ? 'BLOCKED' : (seat.is_aisle ? 'AISLE' : 'AVAILABLE'));
+
         return {
           ...seat,
           class_name: seat.class_name || seat.seat_class_name || '',
@@ -287,10 +299,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           is_aisle: Boolean(seat.is_aisle),
           is_blocked: Boolean(seat.is_blocked),
           is_wheelchair: Boolean(seat.is_wheelchair),
-          is_booked: isBooked,
           base_price: priceObj ? (priceObj.base_price ?? (priceObj as any).base_rate ?? 0) : 0,
           service_charge: priceObj?.service_charge ?? 0,
-          status: isBooked ? 'BOOKED' : (seat.is_blocked ? 'BLOCKED' : (seat.is_aisle ? 'AISLE' : 'AVAILABLE')),
+          status: seatStatus,
         };
       });
 
@@ -309,7 +320,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   confirmBooking: async (bookedByUserId: number, taxConfig: TaxConfig) => {
-    const { selectedShowId, selectedSeatIds, seats, applyGst, selectedPaymentModeId, shows, movies, screens } = get();
+    const { selectedShowId, selectedSeatIds, seats, applyGst, selectedPaymentModeId, shows, movies, screens, selectedDate } = get();
     if (!selectedShowId || selectedSeatIds.length === 0) return null;
 
     set({ isBookingProcessing: true });
@@ -319,10 +330,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const show = shows.find((s) => s.id === selectedShowId);
       const movie = show ? movies.find((m) => m.id === show.movie_id) : null;
       const screen = show ? screens.find((sc) => sc.id === show.screen_id) : null;
+      const bookingShowDate = show?.show_date || selectedDate || getLocalDateString();
 
       const completeBooking = await bookingService.createBooking({
         showId: selectedShowId,
-        showDate: get().selectedDate || show?.show_date || new Date().toISOString().slice(0, 10),
+        showDate: bookingShowDate,
         selectedSeats: selectedSeats.map((s) => ({
           id: s.id,
           row_name: s.row_name,

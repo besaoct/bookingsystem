@@ -250,20 +250,20 @@ INSERT OR IGNORE INTO seats (id, row_id, seat_number, seat_class_id, is_aisle, i
 
 -- 6. Movie Catalog
 INSERT OR IGNORE INTO movies (id, name, distributor_id, language_id, movie_type_id, category_id, rating, star_cast, duration_min, start_date, end_date, run, week, no_of_shows, inr_tax_pct, ms_tax_pct, is_tax_free, tax_loss_pct, rebate_cgst, rebate_sgst, is_active) VALUES
-(1, 'Spider-Man : Brand New Day 3D', 1, 2, 2, 2, 'UA', 'Tom Holland, Zendaya, Jacob Batalon', 150, date('now','-10 days'), date('now','+60 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
-(2, 'Kalki 2898 AD 3D', 2, 1, 2, 2, 'UA', 'Prabhas, Deepika Padukone, Amitabh Bachchan, Kamal Haasan', 180, date('now','-10 days'), date('now','+60 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
-(3, 'Stree 2', 6, 1, 1, 2, 'UA', 'Rajkummar Rao, Shraddha Kapoor, Pankaj Tripathi', 147, date('now','-5 days'), date('now','+60 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
-(4, 'Devara : Part 1 2D', 4, 6, 1, 2, 'UA', 'NTR Jr, Janhvi Kapoor, Saif Ali Khan', 178, date('now','-3 days'), date('now','+90 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
-(5, 'Pushpa 2 : The Rule 2D', 3, 6, 1, 2, 'UA', 'Allu Arjun, Rashmika Mandanna, Fahadh Faasil', 190, date('now','-3 days'), date('now','+90 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1);
+(1, 'Spider-Man : Brand New Day 3D', 1, 2, 2, 2, 'UA', 'Tom Holland, Zendaya, Jacob Batalon', 150, date('now', 'localtime', '-10 days'), date('now', 'localtime', '+60 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
+(2, 'Kalki 2898 AD 3D', 2, 1, 2, 2, 'UA', 'Prabhas, Deepika Padukone, Amitabh Bachchan, Kamal Haasan', 180, date('now', 'localtime', '-10 days'), date('now', 'localtime', '+60 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
+(3, 'Stree 2', 6, 1, 1, 2, 'UA', 'Rajkummar Rao, Shraddha Kapoor, Pankaj Tripathi', 147, date('now', 'localtime', '-5 days'), date('now', 'localtime', '+60 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
+(4, 'Devara : Part 1 2D', 4, 6, 1, 2, 'UA', 'NTR Jr, Janhvi Kapoor, Saif Ali Khan', 178, date('now', 'localtime', '-3 days'), date('now', 'localtime', '+90 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1),
+(5, 'Pushpa 2 : The Rule 2D', 3, 6, 1, 2, 'UA', 'Allu Arjun, Rashmika Mandanna, Fahadh Faasil', 190, date('now', 'localtime', '-3 days'), date('now', 'localtime', '+90 days'), 1, 1, 4, 0, 0, 0, 0, 0, 0, 1);
 
 -- 7. Show Timings
 INSERT OR IGNORE INTO shows (id, movie_id, screen_id, show_name, start_time, duration_min, show_date, is_active) VALUES
-(1, 1, 1, 'Morning', '11:30 AM', 150, date('now'), 1),
-(2, 1, 1, 'Matinee', '02:45 PM', 150, date('now'), 1),
-(3, 2, 1, 'Evening', '06:15 PM', 180, date('now'), 1),
-(4, 3, 1, 'Night', '09:30 PM', 147, date('now'), 1),
-(5, 4, 1, 'Late Matinee', '05:00 PM', 178, date('now','+1 day'), 1),
-(6, 5, 1, 'Late Night', '08:30 PM', 190, date('now','+1 day'), 1);
+(1, 1, 1, 'Morning', '11:30 AM', 150, date('now', 'localtime'), 1),
+(2, 1, 1, 'Matinee', '02:45 PM', 150, date('now', 'localtime'), 1),
+(3, 2, 1, 'Evening', '06:15 PM', 180, date('now', 'localtime'), 1),
+(4, 3, 1, 'Night', '09:30 PM', 147, date('now', 'localtime'), 1),
+(5, 4, 1, 'Late Matinee', '05:00 PM', 178, date('now', 'localtime', '+1 day'), 1),
+(6, 5, 1, 'Late Night', '08:30 PM', 190, date('now', 'localtime', '+1 day'), 1);
 
 -- 8. Dynamic Pricing Master
 INSERT OR IGNORE INTO pricing (id, seat_class_id, show_id, base_price, service_charge, cgst_pct, sgst_pct, effective_from, effective_to, is_active) VALUES

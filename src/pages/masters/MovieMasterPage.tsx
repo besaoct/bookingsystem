@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Film, Plus, Trash2, Pencil } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { getLocalDateString } from '@/lib/utils';
 
 export const MovieMasterPage: React.FC = () => {
   const { hasPermission, user } = useAuthStore();
@@ -68,7 +69,7 @@ export const MovieMasterPage: React.FC = () => {
   }, []);
 
   const handleOpenCreate = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     setEditingMovie({
       name: '',
       distributor_id: distributors[0]?.id || 1,
