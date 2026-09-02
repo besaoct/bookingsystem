@@ -4,16 +4,22 @@ import { Cinema, TaxConfig, TicketCopyConfig, PaymentMode } from '@/types';
 export const settingsService = {
   async getCinema(): Promise<Cinema | null> {
     await dbService.init();
-    return dbService.queryOne<Cinema>("SELECT * FROM cinemas ORDER BY id ASC LIMIT 1");
+    const res = dbService.queryOne<any>("SELECT * FROM cinemas ORDER BY id ASC LIMIT 1");
+    if (!res) return null;
+    return {
+      ...res,
+      show_gstin_on_ticket: Boolean(res.show_gstin_on_ticket),
+    };
   },
 
   async saveCinema(cinema: Partial<Cinema>): Promise<void> {
     await dbService.init();
     const existing = dbService.queryOne<Cinema>("SELECT id FROM cinemas ORDER BY id ASC LIMIT 1");
+    const showGstin = cinema.show_gstin_on_ticket ? 1 : 0;
     if (existing) {
       dbService.run(
         `UPDATE cinemas 
-         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ? 
+         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ?, show_gstin_on_ticket = ? 
          WHERE id = ?`,
         [
           cinema.name ?? '',
@@ -22,13 +28,14 @@ export const settingsService = {
           cinema.cin ?? '',
           cinema.contact_numbers ?? '',
           cinema.header_text ?? '',
+          showGstin,
           existing.id,
         ]
       );
     } else {
       dbService.run(
-        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text, show_gstin_on_ticket)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           cinema.name ?? '',
           cinema.address ?? '',
@@ -36,6 +43,7 @@ export const settingsService = {
           cinema.cin ?? '',
           cinema.contact_numbers ?? '',
           cinema.header_text ?? '',
+          showGstin,
         ]
       );
     }

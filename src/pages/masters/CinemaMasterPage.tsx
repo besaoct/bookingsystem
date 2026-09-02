@@ -223,6 +223,26 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                       placeholder="Printed at top of thermal ticket"
                     />
                   </div>
+
+                  {/* GSTIN on Ticket Toggle */}
+                  <div className="space-y-1 pt-1 border-t border-border/60">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="showGstinOnTicketToggle"
+                        checked={Boolean(formData.show_gstin_on_ticket)}
+                        onChange={(e) => setFormData({ ...formData, show_gstin_on_ticket: e.target.checked })}
+                        className="rounded-xs text-primary h-4 w-4 cursor-pointer align-middle"
+                        disabled={!canUpdate}
+                      />
+                      <label htmlFor="showGstinOnTicketToggle" className="text-xs font-semibold text-foreground cursor-pointer select-none">
+                        Show GSTIN on Printed Tickets
+                      </label>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      By default, GSTIN is hidden on ticket slips. Check this box if your cinema requires GSTIN printed on customer and office slips.
+                    </p>
+                  </div>
                 </div>
 
                 {canUpdate && (
@@ -329,8 +349,8 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                 {/* Footer Section: Tax IDs & Audit Tracking */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6.5px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
                   <div>
-                    {formData.gstin && <div>GSTIN: {formData.gstin}</div>}
-                    {formData.cin && <div>CIN: {formData.cin}</div>}
+                    {formData.show_gstin_on_ticket && formData.gstin ? <div>GSTIN: {formData.gstin}</div> : null}
+                    {formData.cin ? <div>CIN: {formData.cin}</div> : null}
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div>Ticket No: 009571&nbsp;&nbsp;L.No. Transaction No: A000001-71W</div>

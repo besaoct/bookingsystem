@@ -31,6 +31,7 @@ export interface Cinema {
   logo_path?: string;
   header_text?: string;
   contact_numbers?: string;
+  show_gstin_on_ticket?: boolean;
 }
 
 export interface Distributor {

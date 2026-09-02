@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS cinemas (
   cin TEXT,
   logo_path TEXT,
   header_text TEXT,
-  contact_numbers TEXT
+  contact_numbers TEXT,
+  show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0
 );
 
 -- Masters
@@ -363,6 +364,7 @@ class SQLiteService {
             "ALTER TABLE languages ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE movie_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE categories ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+            "ALTER TABLE cinemas ADD COLUMN show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0",
           ];
           for (const m of columnMigrations) {
             try { this.db!.run(m); } catch (_) { /* column already exists, skip */ }

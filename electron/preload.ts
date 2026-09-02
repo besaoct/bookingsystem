@@ -16,6 +16,7 @@ export interface IElectronAPI {
       fontWeight?: string;
       autoCut?: boolean;
       feedLines?: number;
+      layoutMode?: 'side-by-side' | 'vertical-continuous' | 'sequential';
     }
   ) => Promise<boolean>;
   getPrinters: () => Promise<Array<{ name: string; isDefault: boolean }>>;

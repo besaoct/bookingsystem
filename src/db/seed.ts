@@ -32,8 +32,8 @@ INSERT OR IGNORE INTO role_permissions (id, role, module, can_create, can_read, 
 (26, 'OPERATOR', 'system_settings', 0, 0, 0, 0);
 
 -- 2. Blank Cinema Master Skeleton
-INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers) VALUES
-(1, 'CINEMA THEATRE', 'Main Road, City Center', '', '', 'CINEMA TICKET', '');
+INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers, show_gstin_on_ticket) VALUES
+(1, 'CINEMA THEATRE', 'Main Road, City Center', '', '', 'CINEMA TICKET', '', 0);
 
 -- 3. Core Standard System Lookups
 INSERT OR IGNORE INTO languages (id, name, is_active) VALUES
@@ -115,6 +115,7 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 
 -- 9. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
+('ticket_layout_mode', 'side-by-side', 'printer'),
 ('ticket_width_cm', '10.2', 'printer'),
 ('ticket_height_cm', '3.5', 'printer'),
 ('ticket_orientation', 'landscape', 'printer'),
@@ -171,8 +172,8 @@ INSERT OR IGNORE INTO role_permissions (id, role, module, can_create, can_read, 
 (26, 'OPERATOR', 'system_settings', 0, 0, 0, 0);
 
 -- 3. Cinema Details
-INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers) VALUES
-(1, 'BOOKING SYSTEM CINEMAS', 'Main Road, City Center - 787001', '18AJVPD0031E3Z1', 'U92100AS2018PTC018500', 'BOOKING SYSTEM CINEMAS', '03752-245678 / +91 9876543210');
+INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers, show_gstin_on_ticket) VALUES
+(1, 'BOOKING SYSTEM CINEMAS', 'Main Road, City Center - 787001', '18AJVPD0031E3Z1', 'U92100AS2018PTC018500', 'BOOKING SYSTEM CINEMAS', '03752-245678 / +91 9876543210', 0);
 
 -- 4. Core Masters & Catalogs
 INSERT OR IGNORE INTO languages (id, name, is_active) VALUES
@@ -337,6 +338,7 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 
 -- 14. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
+('ticket_layout_mode', 'side-by-side', 'printer'),
 ('ticket_width_cm', '10.2', 'printer'),
 ('ticket_height_cm', '3.5', 'printer'),
 ('ticket_orientation', 'landscape', 'printer'),

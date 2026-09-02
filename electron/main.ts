@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, nativeTheme, shell, Menu, MenuItemConstructorOptions } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog,  shell, Menu, MenuItemConstructorOptions } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -231,6 +231,7 @@ ipcMain.handle(
       fontWeight?: string;
       autoCut?: boolean;
       feedLines?: number;
+      layoutMode?: 'side-by-side' | 'vertical-continuous' | 'sequential';
     }
   ) => {
     try {
@@ -244,6 +245,7 @@ ipcMain.handle(
       const fontWeight = options?.fontWeight ? String(options.fontWeight) : '600';
       const autoCut = options?.autoCut !== false;
       const feedLines = Number(options?.feedLines) || 0;
+      const layoutMode = options?.layoutMode || 'side-by-side';
 
       const FONT_MAP: Record<string, string> = {
         'system-sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -310,10 +312,33 @@ ipcMain.handle(
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
+            .ticket-page-grid {
+              display: flex;
+              flex-direction: row;
+              width: fit-content;
+              box-sizing: border-box;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              page-break-after: auto;
+              break-after: auto;
+              padding: 0;
+            }
+            .ticket-vertical-strip {
+              display: flex;
+              flex-direction: column;
+              width: ${widthCm}cm;
+              box-sizing: border-box;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              page-break-after: auto;
+              break-after: auto;
+              padding: 0;
+            }
             .ticket-slip {
               width: ${widthCm}cm;
               min-height: ${heightCm}cm;
-              ${autoCut ? 'page-break-after: always; break-after: page;' : ''}
+              height: ${heightCm}cm;
+              ${autoCut && layoutMode === 'sequential' ? 'page-break-after: always; break-after: page;' : 'page-break-after: avoid; break-after: avoid;'}
               page-break-inside: avoid;
               break-inside: avoid;
               box-sizing: border-box;

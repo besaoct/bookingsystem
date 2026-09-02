@@ -3,6 +3,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { TicketCopyConfig } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import {
@@ -106,6 +107,7 @@ export const PrinterSettingsPage: React.FC = () => {
   const canUpdate = isSystemAdmin || hasPermission('settings', 'can_update');
 
   const {
+    cinema,
     ticketCopies,
     updateTicketCopies,
     addTicketCopy,
@@ -120,6 +122,7 @@ export const PrinterSettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Printer settings local form
+  const [ticketLayoutMode, setTicketLayoutMode] = useState<'side-by-side' | 'vertical-continuous' | 'sequential'>('side-by-side');
   const [ticketWidth, setTicketWidth] = useState('10.2');
   const [ticketHeight, setTicketHeight] = useState('3.5');
   const [ticketOrientation, setTicketOrientation] = useState<'landscape' | 'portrait'>('landscape');
@@ -181,6 +184,7 @@ export const PrinterSettingsPage: React.FC = () => {
       setNewPrintOrder(maxOrder + 1);
     }
     if (systemSettings) {
+      setTicketLayoutMode((systemSettings['ticket_layout_mode'] as 'side-by-side' | 'vertical-continuous' | 'sequential') || 'side-by-side');
       setTicketWidth(systemSettings['ticket_width_cm'] || '10.2');
       setTicketHeight(systemSettings['ticket_height_cm'] || '3.5');
       setTicketOrientation((systemSettings['ticket_orientation'] as 'portrait' | 'landscape') || 'landscape');
@@ -271,6 +275,7 @@ export const PrinterSettingsPage: React.FC = () => {
 
   const handleSaveAll = async () => {
     await updateTicketCopies(copies);
+    await updateSystemSetting('ticket_layout_mode', ticketLayoutMode);
     await updateSystemSetting('ticket_width_cm', ticketWidth);
     await updateSystemSetting('ticket_height_cm', ticketHeight);
     await updateSystemSetting('ticket_orientation', ticketOrientation);
@@ -445,70 +450,331 @@ export const PrinterSettingsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Real-time Interactive Mini Slip Preview Card */}
+          {/* Real-time Interactive Ticket Preview Card */}
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-3 bg-muted/40 border-b border-border">
-              <CardTitle className="text-xs uppercase tracking-wider font-semibold text-foreground flex items-center justify-between">
-                <span className="flex items-center space-x-1.5">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs uppercase tracking-wider font-semibold text-foreground flex items-center space-x-1.5">
                   <Eye className="w-3.5 h-3.5 text-primary" />
                   <span>Ticket Preview</span>
-                </span>
+                </CardTitle>
                 <span className="text-[10px] text-muted-foreground font-mono font-medium">
-                  {ticketWidth}cm × {ticketHeight}cm
+                  {ticketWidth}cm × {ticketHeight}cm ({ticketOrientation.toUpperCase()})
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 flex flex-col items-center justify-center bg-slate-200/80 dark:bg-slate-900/80 rounded-b-xs">
-              <div
-                className="bg-white text-black shadow-md select-none rounded-xs flex flex-col justify-between transition-all overflow-hidden"
-                style={{
-                  width: ticketOrientation === 'landscape' ? '250px' : '175px',
-                  minHeight: ticketOrientation === 'landscape' ? '86px' : '124px',
-                  padding: `${Math.max(2, Number(ticketMarginMm) || 2) * 1.8}px`,
-                  fontFamily: resolvedFontFamily,
-                  fontWeight: ticketFontWeight,
-                  fontSize: `${(Number(ticketFontSizePt) * (Number(ticketFontScale) / 100) * 0.95).toFixed(1)}px`,
-                  lineHeight: 1.15,
-                }}
-              >
-                {/* Mini Slip Header */}
-                <div className="flex justify-between items-start border-b border-black pb-0.5 mb-1 leading-tight">
-                  <div className="overflow-hidden">
-                    <div className="font-black text-[8.5px] uppercase truncate">Grand Galaxy Cinema</div>
-                    <div className="font-bold text-[7.5px] truncate text-slate-900">AVATAR: FIRE AND ASH (3D)</div>
-                  </div>
-                  <div className="border border-black px-1 py-0.2 text-[8px] font-black shrink-0 ml-1 rounded-xs">
-                    S
-                  </div>
-                </div>
-
-                {/* Mini 3 Columns */}
-                <div className="grid grid-cols-3 gap-1 text-[7px] border-b border-black pb-1 mb-0.5 leading-tight">
-                  <div className="border-r border-black pr-0.5">
-                    <div>ADM: 230.24</div>
-                    <div>GST: 41.44</div>
-                    <div className="font-black text-[7.5px] mt-0.5">Tot: ₹300</div>
-                  </div>
-                  <div className="border-r border-black px-0.5">
-                    <div className="font-bold">Today</div>
-                    <div className="font-bold">06:30 PM</div>
-                    <div className="text-[6px] text-slate-700">SAC 997321</div>
-                  </div>
-                  <div className="pl-0.5">
-                    <div className="font-bold">AUDI 1</div>
-                    <div className="font-black text-[8px]">C-1, C-2</div>
-                    <div className="font-bold text-[6.5px]">GOLD PLUS</div>
-                  </div>
-                </div>
-
-                {/* Mini Footer */}
-                <div className="flex justify-between items-end text-[6px] text-slate-700 leading-none pt-0.5">
-                  <div>GSTIN: 33AAAAA0000A1Z5</div>
-                  <div className="text-right">TKT #0008602 | {invoiceSeries}/0001</div>
-                </div>
               </div>
+            </CardHeader>
+            <CardContent className="p-0 bg-slate-900 rounded-b-xs">
+              {ticketLayoutMode === 'side-by-side' ? (
+                /* Horizontally scrollable single-sheet 3-panel stationery where each copy panel has full unshrinked dimension */
+                <div className="w-full overflow-x-auto p-4">
+                  <div
+                    className="bg-white text-black shadow-2xl select-text rounded-xs flex flex-row items-stretch border border-black shrink-0 transition-all w-fit"
+                    style={{
+                      fontFamily: resolvedFontFamily,
+                      fontWeight: ticketFontWeight,
+                      fontSize: `${Number(ticketFontSizePt) || 8}pt`,
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    {(copies.filter((c) => c.is_enabled).length > 0
+                      ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
+                      : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }]
+                    ).map((c, idx) => (
+                      <div
+                        key={c.id || idx}
+                        className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                        style={{
+                          width: `${ticketWidth}cm`,
+                          minWidth: `${ticketWidth}cm`,
+                          height: `${ticketHeight}cm`,
+                          minHeight: `${ticketHeight}cm`,
+                          padding: `${Math.max(2, Number(ticketMarginMm) || 2)}mm`,
+                          boxSizing: 'border-box',
+                          borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                        }}
+                      >
+                        {/* Top Header: Copy Code Badge + Cinema Name + Quantity Circle */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '13px', height: '13px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: (c.header_label || 'C').length > 2 ? '6.5px' : '8px', borderRadius: '2px', flexShrink: 0 }}>
+                              {c.header_label || 'C'}
+                            </span>
+                            <span style={{ fontWeight: 900, fontSize: '8.5px', letterSpacing: '0.1px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {cinema?.header_text || cinema?.name || 'Grand Galaxy Cinema'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '8px', flexShrink: 0, marginLeft: '2px' }}>
+                            2
+                          </div>
+                        </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 w-full">
+                        {/* Movie Title */}
+                        <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          AVATAR : FIRE &amp; ASH 3D
+                        </div>
+
+                        {/* Middle 3 Columns */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', marginTop: '1px', fontSize: '7.5px' }}>
+                          {/* Col 1: Financials */}
+                          <div style={{ borderRight: '1px solid #000', paddingRight: '3px', lineHeight: 1.15 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>ADM</span>
+                              <span style={{ fontWeight: 700 }}>240.00</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>CGST</span>
+                              <span style={{ fontWeight: 700 }}>21.60</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>SGST</span>
+                              <span style={{ fontWeight: 700 }}>21.60</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>S.CH</span>
+                              <span style={{ fontWeight: 700 }}>24.00</span>
+                            </div>
+                            <div style={{ fontWeight: 900, fontSize: '8px', marginTop: '1px' }}>
+                              Total: 307.20
+                            </div>
+                          </div>
+
+                          {/* Col 2: Date & Time */}
+                          <div style={{ borderRight: '1px solid #000', padding: '0 3px', lineHeight: 1.2 }}>
+                            <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap' }}>Tue, 25-08-26</div>
+                            <div style={{ fontWeight: 800, fontSize: '8.5px', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>06:30 PM</div>
+                            <div style={{ fontWeight: 700, fontSize: '7px', marginTop: '1px' }}>SAC 997321</div>
+                          </div>
+
+                          {/* Col 3: Audi & Seat */}
+                          <div style={{ paddingLeft: '3px', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
+                            <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AUDI 1</div>
+                            <div style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>A-1, A-2</div>
+                            <div style={{ fontWeight: 900, fontSize: '8px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD PLUS</div>
+                          </div>
+                        </div>
+
+                        {/* Footer Section */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
+                          <div>
+                            {cinema?.show_gstin_on_ticket && cinema?.gstin ? (
+                              <div style={{ fontWeight: 700 }}>GSTIN: {cinema.gstin}</div>
+                            ) : null}
+                            {cinema?.cin ? <div>CIN: {cinema.cin}</div> : null}
+                          </div>
+                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <div>Tkt: 009571&nbsp;&nbsp;Txn: A000001-71W</div>
+                            <div>INV: {invoiceSeries}/000001</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : ticketLayoutMode === 'vertical-continuous' ? (
+                /* Vertically scrollable continuous uncut strip with horizontal tear lines */
+                <div className="w-full overflow-y-auto max-h-[480px] p-4 flex flex-col items-center">
+                  <div
+                    className="bg-white text-black shadow-2xl select-text rounded-xs flex flex-col border border-black shrink-0 transition-all w-fit"
+                    style={{
+                      fontFamily: resolvedFontFamily,
+                      fontWeight: ticketFontWeight,
+                      fontSize: `${Number(ticketFontSizePt) || 8}pt`,
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    {(copies.filter((c) => c.is_enabled).length > 0
+                      ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
+                      : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }]
+                    ).map((c, idx) => (
+                      <div
+                        key={c.id || idx}
+                        className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                        style={{
+                          width: `${ticketWidth}cm`,
+                          minWidth: `${ticketWidth}cm`,
+                          height: `${ticketHeight}cm`,
+                          minHeight: `${ticketHeight}cm`,
+                          padding: `${Math.max(2, Number(ticketMarginMm) || 2)}mm`,
+                          boxSizing: 'border-box',
+                          borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                        }}
+                      >
+                        {/* Top Header: Copy Code Badge + Cinema Name + Quantity Circle */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '13px', height: '13px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: (c.header_label || 'C').length > 2 ? '6.5px' : '8px', borderRadius: '2px', flexShrink: 0 }}>
+                              {c.header_label || 'C'}
+                            </span>
+                            <span style={{ fontWeight: 900, fontSize: '8.5px', letterSpacing: '0.1px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {cinema?.header_text || cinema?.name || 'Grand Galaxy Cinema'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '8px', flexShrink: 0, marginLeft: '2px' }}>
+                            2
+                          </div>
+                        </div>
+
+                        {/* Movie Title */}
+                        <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          AVATAR : FIRE &amp; ASH 3D
+                        </div>
+
+                        {/* Middle 3 Columns */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', marginTop: '1px', fontSize: '7.5px' }}>
+                          {/* Col 1: Financials */}
+                          <div style={{ borderRight: '1px solid #000', paddingRight: '3px', lineHeight: 1.15 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>ADM</span>
+                              <span style={{ fontWeight: 700 }}>240.00</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>CGST</span>
+                              <span style={{ fontWeight: 700 }}>21.60</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>SGST</span>
+                              <span style={{ fontWeight: 700 }}>21.60</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>S.CH</span>
+                              <span style={{ fontWeight: 700 }}>24.00</span>
+                            </div>
+                            <div style={{ fontWeight: 900, fontSize: '8px', marginTop: '1px' }}>
+                              Total: 307.20
+                            </div>
+                          </div>
+
+                          {/* Col 2: Date & Time */}
+                          <div style={{ borderRight: '1px solid #000', padding: '0 3px', lineHeight: 1.2 }}>
+                            <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap' }}>Tue, 25-08-26</div>
+                            <div style={{ fontWeight: 800, fontSize: '8.5px', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>06:30 PM</div>
+                            <div style={{ fontWeight: 700, fontSize: '7px', marginTop: '1px' }}>SAC 997321</div>
+                          </div>
+
+                          {/* Col 3: Audi & Seat */}
+                          <div style={{ paddingLeft: '3px', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
+                            <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AUDI 1</div>
+                            <div style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>A-1, A-2</div>
+                            <div style={{ fontWeight: 900, fontSize: '8px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD PLUS</div>
+                          </div>
+                        </div>
+
+                        {/* Footer Section */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
+                          <div>
+                            {cinema?.show_gstin_on_ticket && cinema?.gstin ? (
+                              <div style={{ fontWeight: 700 }}>GSTIN: {cinema.gstin}</div>
+                            ) : null}
+                            {cinema?.cin ? <div>CIN: {cinema.cin}</div> : null}
+                          </div>
+                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <div>Tkt: 009571&nbsp;&nbsp;Txn: A000001-71W</div>
+                            <div>INV: {invoiceSeries}/000001</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Vertically scrollable sequential separated cut copies */
+                <div className="w-full overflow-y-auto max-h-[480px] p-4 flex flex-col items-center gap-4">
+                  {(copies.filter((c) => c.is_enabled).length > 0
+                    ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
+                    : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }]
+                  ).map((c, idx) => (
+                    <div
+                      key={c.id || idx}
+                      className="bg-white text-black shadow-2xl select-text rounded-xs flex flex-col justify-between border border-black shrink-0 transition-all"
+                      style={{
+                        width: `${ticketWidth}cm`,
+                        minHeight: `${ticketHeight}cm`,
+                        height: `${ticketHeight}cm`,
+                        padding: `${Math.max(2, Number(ticketMarginMm) || 2)}mm`,
+                        boxSizing: 'border-box',
+                        fontFamily: resolvedFontFamily,
+                        fontWeight: ticketFontWeight,
+                        fontSize: `${Number(ticketFontSizePt) || 8}pt`,
+                        lineHeight: 1.15,
+                      }}
+                    >
+                      {/* Top Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '14px', height: '14px', padding: '0 2px', border: '1.5px solid #000', fontWeight: 900, fontSize: (c.header_label || 'C').length > 2 ? '7px' : '8.5px', borderRadius: '2px', flexShrink: 0 }}>
+                            {c.header_label || 'C'}
+                          </span>
+                          <span style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.1px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {cinema?.header_text || cinema?.name || 'Grand Galaxy Cinema'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '15px', height: '15px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '8.5px', flexShrink: 0, marginLeft: '2px' }}>
+                          2
+                        </div>
+                      </div>
+
+                      {/* Movie Title */}
+                      <div style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        AVATAR : FIRE &amp; ASH 3D
+                      </div>
+
+                      {/* Middle 3 Columns */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', marginTop: '1px', fontSize: '7.5px' }}>
+                        <div style={{ borderRight: '1px solid #000', paddingRight: '3px', lineHeight: 1.15 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>ADM</span>
+                            <span style={{ fontWeight: 700 }}>240.00</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>CGST</span>
+                            <span style={{ fontWeight: 700 }}>21.60</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>SGST</span>
+                            <span style={{ fontWeight: 700 }}>21.60</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>S.CH</span>
+                            <span style={{ fontWeight: 700 }}>24.00</span>
+                          </div>
+                          <div style={{ fontWeight: 900, fontSize: '8px', marginTop: '1px' }}>
+                            Total: 307.20
+                          </div>
+                        </div>
+
+                        <div style={{ borderRight: '1px solid #000', padding: '0 3px', lineHeight: 1.2 }}>
+                          <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap' }}>Tue, 25-08-26</div>
+                          <div style={{ fontWeight: 800, fontSize: '8.5px', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>06:30 PM</div>
+                          <div style={{ fontWeight: 700, fontSize: '7px', marginTop: '1px' }}>SAC 997321</div>
+                        </div>
+
+                        <div style={{ paddingLeft: '3px', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
+                          <div style={{ fontWeight: 800, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AUDI 1</div>
+                          <div style={{ fontWeight: 900, fontSize: '9px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>A-1, A-2</div>
+                          <div style={{ fontWeight: 900, fontSize: '8px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD PLUS</div>
+                        </div>
+                      </div>
+
+                      {/* Footer Section */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
+                        <div>
+                          {cinema?.show_gstin_on_ticket && cinema?.gstin ? (
+                            <div style={{ fontWeight: 700 }}>GSTIN: {cinema.gstin}</div>
+                          ) : null}
+                          {cinema?.cin ? <div>CIN: {cinema.cin}</div> : null}
+                        </div>
+                        <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div>Tkt: 009571&nbsp;&nbsp;Txn: A000001-71W</div>
+                          <div>INV: {invoiceSeries}/000001</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Typography & Dimension Quick Badges */}
+              <div className="p-3 bg-muted/40 border-t border-border flex flex-wrap items-center justify-center gap-1.5 w-full">
                 <span className="px-2 py-0.5 rounded-xs bg-card border border-border text-foreground text-xs font-medium shadow-2xs">
                   Font: <strong className="text-primary font-bold">{TICKET_FONT_FAMILIES.find((f) => f.id === ticketFontFamily)?.name || ticketFontFamily}</strong>
                 </span>
@@ -607,7 +873,7 @@ export const PrinterSettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Orientation Preference */}
+              {/* Printing Orientation */}
               <div className="space-y-1.5 pt-1">
                 <label className="text-xs font-semibold text-foreground flex items-center space-x-1">
                   <Compass className="w-3.5 h-3.5 text-primary mr-1" />
@@ -649,6 +915,72 @@ export const PrinterSettingsPage: React.FC = () => {
                     </div>
                     <p className="text-[10px] mt-0.5 opacity-80">
                       Ideal for standard POS roll receipt format (58mm / 80mm)
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Ticket Copy Layout Mode (Horizontal Side-by-Side vs Vertical Strip vs Sequential) */}
+              <div className="space-y-1.5 pt-1 border-t border-border">
+                <label className="text-xs font-semibold text-foreground flex items-center space-x-1">
+                  <Layers className="w-3.5 h-3.5 text-primary mr-1" />
+                  <span>Ticket Copies Layout &amp; Feed Mode</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTicketLayoutMode('side-by-side')}
+                    disabled={!canUpdate}
+                    className={`p-2.5 rounded-xs border text-left cursor-pointer transition-all ${
+                      ticketLayoutMode === 'side-by-side'
+                        ? 'bg-primary text-primary-foreground border-primary font-semibold shadow-xs'
+                        : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-xs">Horizontal (3-Part Sheet)</span>
+                      {ticketLayoutMode === 'side-by-side' && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                    <p className="text-[10px] mt-0.5 opacity-80">
+                      Prints active copies horizontally across 1 wide perforated sheet in 1 pass.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTicketLayoutMode('vertical-continuous')}
+                    disabled={!canUpdate}
+                    className={`p-2.5 rounded-xs border text-left cursor-pointer transition-all ${
+                      ticketLayoutMode === 'vertical-continuous'
+                        ? 'bg-primary text-primary-foreground border-primary font-semibold shadow-xs'
+                        : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-xs">Vertical Strip (Uncut Roll)</span>
+                      {ticketLayoutMode === 'vertical-continuous' && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                    <p className="text-[10px] mt-0.5 opacity-80">
+                      Stacks all copies vertically on 1 uncut roll with tear lines and 1 cut at end.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTicketLayoutMode('sequential')}
+                    disabled={!canUpdate}
+                    className={`p-2.5 rounded-xs border text-left cursor-pointer transition-all ${
+                      ticketLayoutMode === 'sequential'
+                        ? 'bg-primary text-primary-foreground border-primary font-semibold shadow-xs'
+                        : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-xs">Sequential (Cut Each Copy)</span>
+                      {ticketLayoutMode === 'sequential' && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                    <p className="text-[10px] mt-0.5 opacity-80">
+                      Sends auto-cut commands between each copy for continuous roll POS printers.
                     </p>
                   </button>
                 </div>
