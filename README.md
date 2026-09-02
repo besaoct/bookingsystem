@@ -28,6 +28,7 @@
 - **Per-Show Overrides & Class Fallbacks**: Real-time pricing lookup prioritizing custom show-rate rules with global seat class fallbacks.
 
 ### 🖨️ 2. ESC/POS & Thermal Ticket Printing Engine
+- **Live Ticket Preview & Customization**: Real-time interactive ticket preview with configurable font size, line spacing, margins, and paper orientation.
 - **Configurable Simultaneous Copies**: Print Office (`[O]`), Security (`[S]`), and Customer (`[C]`) tickets in single-run queued sequences.
 - **Standard 10.2 cm × 3.5 cm Receipt Dimension**: Pre-formatted layout featuring dynamic header titles, SAC codes (997321), cinema GSTIN/CIN, ticket serials, transaction hash, and timestamp.
 - **Thermal Hardware Support**: Direct integration with standard 80mm POS thermal printers (Citizen, Epson, TVS-E, POS-80).
@@ -42,9 +43,11 @@
 - **Flexible Tax Calculation Modes**: Support for **Inclusive** (Gross encompasses taxes) and **Exclusive** (Taxes added atop base rate) tax methodologies.
 - **Rounding Rules**: Configurable Normal (`Math.round`), Floor, or Ceiling rounding logic.
 
-### 📊 5. Daily Collection Report (DCR) & Audit Trail
+### 📊 5. Daily Collection Report (DCR) & Reconciliation
 - **Class-wise & Show-wise DCR**: Auto-aggregates opening/closing ticket sequences, gross intake, GST breakup, and statutory summary with computer-generated report certification.
-- **Export & Print**: Instant print view and CSV export for daily box-office reconciliation.
+- **Payment & Cancellation Breakdown**: Real-time aggregation of collections by payment mode (Cash, UPI/QR, Cards) and cancellation reconciliation.
+- **Strict Exhibition Date Accounting**: Statutorily accounts for show exhibition dates without cross-day leakage.
+- **Export & Print**: Instant 100% offline print view and CSV export for daily box-office reconciliation.
 - **Complete Audit Trail**: Immutable logging of all user activities (logins, bookings, cancellations, role modifications).
 
 ### 🔐 6. Role-Based Access Control (RBAC) & Security
@@ -68,6 +71,7 @@
 | **Frontend Framework** | [React 18](https://reactjs.org/) + [TypeScript](https://www.typescriptlang.org/) |
 | **Build Tool** | [Vite 6](https://vitejs.dev/) |
 | **Styling & Design System** | [Tailwind CSS v4](https://tailwindcss.com/) + Radix UI Primitives + Lucide Icons |
+| **Date & Time Engine** | [date-fns](https://date-fns.org/) (Modular & Timezone-Safe) |
 | **State Management** | [Zustand](https://github.com/pmndrs/zustand) |
 | **Embedded Database** | [sql.js (SQLite WebAssembly)](https://sql.js.org/) with native IPC disk loading & `localStorage` snapshotting |
 | **Desktop Shell** | [Electron 34](https://www.electronjs.org/) + [electron-builder](https://www.electron.build/) |
@@ -251,6 +255,7 @@ bookingsystem/
 │   │   ├── DashboardPage.tsx
 │   │   ├── DCRReportPage.tsx
 │   │   ├── POSCounterPage.tsx
+│   │   ├── PrinterSettingsPage.tsx # ESC/POS Thermal printer calibration & live preview
 │   │   ├── SystemSettingsPage.tsx # System preferences & software license card
 │   │   ├── TicketCancellationPage.tsx
 │   │   └── UsersPermissionsPage.tsx
