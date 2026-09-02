@@ -10,6 +10,14 @@ declare global {
           printerName?: string;
           widthCm?: number | string;
           heightCm?: number | string;
+          orientation?: 'portrait' | 'landscape';
+          marginMm?: number | string;
+          fontScale?: number | string;
+          fontFamily?: string;
+          fontSizePt?: number | string;
+          fontWeight?: string;
+          autoCut?: boolean;
+          feedLines?: number;
         }
       ) => Promise<boolean>;
       getPrinters: () => Promise<Array<{ name: string; isDefault: boolean }>>;
@@ -54,7 +62,26 @@ export interface TicketPrintData {
   ticketHeightCm?: number | string;
   printerName?: string;
   invoiceSeries?: string;
+  orientation?: 'portrait' | 'landscape';
+  marginMm?: number | string;
+  fontScale?: number | string;
+  fontFamily?: string;
+  fontSizePt?: number | string;
+  fontWeight?: string;
+  autoCut?: boolean;
+  feedLines?: number;
 }
+
+export const OFFLINE_FONT_MAP: Record<string, string> = {
+  'system-sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  'arial': 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+  'verdana': 'Verdana, Geneva, sans-serif',
+  'tahoma': 'Tahoma, Verdana, Segoe, sans-serif',
+  'trebuchet': '"Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode", sans-serif',
+  'consolas': 'Consolas, "Courier New", "Lucida Console", Monaco, monospace',
+  'courier': '"Courier New", Courier, monospace',
+  'impact': 'Impact, "Arial Black", sans-serif',
+};
 
 export function generateThermalTicketHTML(data: TicketPrintData): string {
   const { cinema, booking, copyConfigs, invoiceSeries } = data;
@@ -200,6 +227,21 @@ export async function printTickets(data: TicketPrintData, silent = false): Promi
   const html = generateThermalTicketHTML(data);
   const widthCm = data.ticketWidthCm || '10.2';
   const heightCm = data.ticketHeightCm || '3.5';
+  const orientation = data.orientation || 'landscape';
+  const marginMm = data.marginMm !== undefined ? data.marginMm : 2;
+  const fontScale = data.fontScale !== undefined ? data.fontScale : 100;
+  const fontFamily = data.fontFamily || 'system-sans';
+  const fontSizePt = data.fontSizePt !== undefined ? data.fontSizePt : 8.0;
+  const fontWeight = data.fontWeight || '600';
+  const autoCut = data.autoCut !== false;
+  const feedLines = data.feedLines || 0;
+
+  const resolvedFontFamily =
+    OFFLINE_FONT_MAP[fontFamily] ||
+    fontFamily ||
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+  const effectiveFontSize = ((Number(fontSizePt) * Number(fontScale)) / 100).toFixed(1);
 
   if (window.electronAPI) {
     return window.electronAPI.printThermalTickets(html, {
@@ -207,9 +249,17 @@ export async function printTickets(data: TicketPrintData, silent = false): Promi
       printerName: data.printerName,
       widthCm,
       heightCm,
+      orientation,
+      marginMm,
+      fontScale,
+      fontFamily,
+      fontSizePt,
+      fontWeight,
+      autoCut,
+      feedLines,
     });
   } else {
-    // Browser fallback
+    // Browser fallback (100% offline, zero network font requests)
     const printFrame = document.createElement('iframe');
     printFrame.style.position = 'fixed';
     printFrame.style.right = '0';
@@ -224,20 +274,15 @@ export async function printTickets(data: TicketPrintData, silent = false): Promi
 <head>
   <meta charset="utf-8">
   <title>Ticket Print</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
-    
     * {
       box-sizing: border-box;
-      font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-family: ${resolvedFontFamily} !important;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     @page {
-      size: ${widthCm}cm ${heightCm}cm;
+      size: ${widthCm}cm ${heightCm}cm ${orientation};
       margin: 0;
     }
     html, body {
@@ -245,16 +290,23 @@ export async function printTickets(data: TicketPrintData, silent = false): Promi
       padding: 0;
       background: #fff;
       color: #000;
-      font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-size: ${effectiveFontSize}pt;
+      font-weight: ${fontWeight};
+      font-family: ${resolvedFontFamily} !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .ticket-slip {
       width: ${widthCm}cm;
-      height: ${heightCm}cm;
-      max-height: ${heightCm}cm;
+      min-height: ${heightCm}cm;
+      padding: ${marginMm}mm;
       box-sizing: border-box;
-      page-break-after: always;
-      break-after: page;
-      font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+      ${autoCut ? 'page-break-after: always; break-after: page;' : ''}
+      page-break-inside: avoid;
+      break-inside: avoid;
+      font-family: ${resolvedFontFamily} !important;
+      font-weight: ${fontWeight};
+      overflow: hidden;
     }
     .ticket-slip:last-child {
       page-break-after: auto;

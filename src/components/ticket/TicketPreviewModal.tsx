@@ -4,7 +4,8 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Printer, CheckCircle, Copy, FileText } from 'lucide-react';
-import { printTickets } from '@/lib/thermal-printer';
+import { printTickets, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 interface TicketPreviewModalProps {
   isOpen: boolean;
@@ -23,8 +24,10 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   cinema,
   copyConfigs,
   taxConfig,
-  systemSettings,
+  systemSettings: propSystemSettings,
 }) => {
+  const { systemSettings: storeSystemSettings } = useSettingsStore();
+  const systemSettings = propSystemSettings || storeSystemSettings;
   const [isPrinting, setIsPrinting] = useState(false);
   const [printSuccess, setPrintSuccess] = useState(false);
   const [selectedCopyTab, setSelectedCopyTab] = useState<string>('ALL');
@@ -34,6 +37,21 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const ticketWidth = systemSettings?.['ticket_width_cm'] || '10.2';
   const ticketHeight = systemSettings?.['ticket_height_cm'] || '3.5';
   const printerName = systemSettings?.['thermal_printer_name'];
+  const orientation = (systemSettings?.['ticket_orientation'] as 'portrait' | 'landscape') || 'landscape';
+  const marginMm = systemSettings?.['ticket_margin_mm'] !== undefined ? Number(systemSettings['ticket_margin_mm']) : 2;
+  const fontScale = systemSettings?.['ticket_font_scale'] !== undefined ? Number(systemSettings['ticket_font_scale']) : 100;
+  const fontFamily = systemSettings?.['ticket_font_family'] || 'system-sans';
+  const fontSizePt = systemSettings?.['ticket_font_size_pt'] !== undefined ? Number(systemSettings['ticket_font_size_pt']) : 8.0;
+  const fontWeight = systemSettings?.['ticket_font_weight'] || '600';
+  const autoCut = systemSettings?.['ticket_auto_cut'] !== 'false';
+  const feedLines = systemSettings?.['ticket_feed_lines'] !== undefined ? Number(systemSettings['ticket_feed_lines']) : 0;
+
+  const resolvedFontFamily =
+    OFFLINE_FONT_MAP[fontFamily] ||
+    fontFamily ||
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+  const effectiveFontSize = `${(Number(fontSizePt) * (fontScale / 100)).toFixed(1)}pt`;
 
   const activeCopies = copyConfigs
     .filter((c) => c.is_enabled)
@@ -62,11 +80,10 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const threeDNet = is3D ? (40.00 * qty).toFixed(2) : '00.00';
   const admNet = is3D ? Math.max(0, booking.total_net - Number(threeDNet)).toFixed(2) : booking.total_net.toFixed(2);
 
-  let showTimeDisplay = booking.start_time || '';
-  if (booking.show_name && booking.show_name.trim()) {
-    const cleanName = booking.show_name.trim();
-    const isTimeString = /^\d{1,2}:\d{2}/.test(cleanName);
-    if (!isTimeString) {
+  let showTimeDisplay = booking.show_name || '';
+  if (booking.show_name) {
+    const cleanName = booking.show_name.replace(/^(morning|matinee|first|second|night|late|early)\s*(show)?\s*[-–:]*\s*/i, '').trim();
+    if (booking.start_time && !cleanName.includes(booking.start_time)) {
       showTimeDisplay = `${cleanName}, ${booking.start_time || ''}`;
     } else if (!booking.start_time) {
       showTimeDisplay = cleanName;
@@ -92,6 +109,14 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           ticketHeightCm: ticketHeight,
           printerName,
           invoiceSeries,
+          orientation,
+          marginMm,
+          fontScale,
+          fontFamily,
+          fontSizePt,
+          fontWeight,
+          autoCut,
+          feedLines,
         },
         silent
       );
@@ -112,35 +137,32 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Thermal Ticket Issuance & Print Preview"
-      description={`${ticketWidth} cm × ${ticketHeight} cm Thermal Format | Booking Ref: ${booking.booking_no}`}
-      maxWidth="3xl"
+      description={`${ticketWidth} cm × ${ticketHeight} cm Thermal Format (${orientation.toUpperCase()}) | Booking Ref: ${booking.booking_no}`}
+      maxWidth="lg"
     >
-      <div className="space-y-4">
-        {/* Top Controls: Copy Switcher & Quick Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
-          <div className="flex items-center space-x-1.5">
-            <button
+      <div className="flex flex-col space-y-4">
+        {/* Controls Bar: Copy Tabs + Print Button */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              variant={selectedCopyTab === 'ALL' ? 'default' : 'outline'}
+              size="xs"
               onClick={() => setSelectedCopyTab('ALL')}
-              className={`px-2.5 py-1 text-2xs font-extrabold rounded-xs transition-all border cursor-pointer ${
-                selectedCopyTab === 'ALL'
-                  ? 'bg-primary text-primary-foreground border-primary shadow-xs hover:bg-primary/90'
-                  : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
-              }`}
+              className="text-xs font-semibold cursor-pointer"
             >
-              ALL ({activeCopies.length} COPIES)
-            </button>
+              <Copy className="w-3 h-3 mr-1" />
+              All Copies ({activeCopies.length})
+            </Button>
             {activeCopies.map((c) => (
-              <button
+              <Button
                 key={c.id}
+                variant={selectedCopyTab === c.header_label ? 'default' : 'outline'}
+                size="xs"
                 onClick={() => setSelectedCopyTab(c.header_label)}
-                className={`px-2.5 py-1 text-2xs font-extrabold rounded-xs transition-all border cursor-pointer ${
-                  selectedCopyTab === c.header_label
-                    ? 'bg-primary text-primary-foreground border-primary shadow-xs hover:bg-primary/90'
-                    : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
-                }`}
+                className="text-xs font-semibold uppercase cursor-pointer"
               >
                 [{c.header_label}] {c.copy_name}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -174,10 +196,11 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                   width: `${ticketWidth}cm`,
                   minHeight: `${ticketHeight}cm`,
                   boxSizing: 'border-box',
-                  padding: '4px 6px',
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontSize: '8px',
-                  lineHeight: 1.1,
+                  padding: `${marginMm}mm`,
+                  fontFamily: resolvedFontFamily,
+                  fontWeight: fontWeight,
+                  fontSize: effectiveFontSize,
+                  lineHeight: 1.15,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',

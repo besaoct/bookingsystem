@@ -212,117 +212,169 @@ app.on('window-all-closed', () => {
   }
 });
 
-// IPC Handler for Thermal Ticket Printing (10.2 cm x 3.5 cm)
-ipcMain.handle('print-thermal-tickets', async (_event, htmlContent: string, options?: { silent?: boolean; printerName?: string; widthCm?: number | string; heightCm?: number | string }) => {
-  try {
-    const widthCm = Number(options?.widthCm) || 10.2;
-    const heightCm = Number(options?.heightCm) || 3.5;
-    const widthMicrons = Math.round(widthCm * 10000);
-    const heightMicrons = Math.round(heightCm * 10000);
+// IPC Handler for Thermal Ticket Printing with Customizable Preferences
+ipcMain.handle(
+  'print-thermal-tickets',
+  async (
+    _event,
+    htmlContent: string,
+    options?: {
+      silent?: boolean;
+      printerName?: string;
+      widthCm?: number | string;
+      heightCm?: number | string;
+      orientation?: 'portrait' | 'landscape';
+      marginMm?: number | string;
+      fontScale?: number | string;
+      fontFamily?: string;
+      fontSizePt?: number | string;
+      fontWeight?: string;
+      autoCut?: boolean;
+      feedLines?: number;
+    }
+  ) => {
+    try {
+      const isLandscape = options?.orientation !== 'portrait';
+      const widthCm = Number(options?.widthCm) || 10.2;
+      const heightCm = Number(options?.heightCm) || 3.5;
+      const marginMm = options?.marginMm !== undefined ? Number(options.marginMm) : 2;
+      const fontScale = Number(options?.fontScale) || 100;
+      const baseFontSize = Number(options?.fontSizePt) || 8.0;
+      const effectiveFontSize = ((baseFontSize * fontScale) / 100).toFixed(1);
+      const fontWeight = options?.fontWeight ? String(options.fontWeight) : '600';
+      const autoCut = options?.autoCut !== false;
+      const feedLines = Number(options?.feedLines) || 0;
 
-    const printWindow = new BrowserWindow({
-      show: false,
-      width: 800,
-      height: 600,
-      title: 'Ticket Print',
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        javascript: true,
-      },
-    });
+      const FONT_MAP: Record<string, string> = {
+        'system-sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        'arial': 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+        'verdana': 'Verdana, Geneva, sans-serif',
+        'tahoma': 'Tahoma, Verdana, Segoe, sans-serif',
+        'trebuchet': '"Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode", sans-serif',
+        'consolas': 'Consolas, "Courier New", "Lucida Console", Monaco, monospace',
+        'courier': '"Courier New", Courier, monospace',
+        'impact': 'Impact, "Arial Black", sans-serif',
+      };
 
-    const fullHtml = `<!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
-          * {
-            box-sizing: border-box;
-            font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-          }
-          @page {
-            size: ${widthCm}cm ${heightCm}cm;
-            margin: 0;
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
-            font-size: 8pt;
-            line-height: 1.15;
-            background: #fff;
-            color: #000;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .ticket-slip {
-            width: ${widthCm}cm;
-            min-height: ${heightCm}cm;
-            page-break-after: always;
-            page-break-inside: avoid;
-            break-after: page;
-            break-inside: avoid;
-            box-sizing: border-box;
-            padding: 2mm 3mm;
-            font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
-            overflow: hidden;
-          }
-          .ticket-slip:last-child {
-            page-break-after: auto;
-            break-after: auto;
-          }
-        </style>
-      </head>
-      <body>
-        ${htmlContent}
-      </body>
-      </html>`;
+      const fontFamilyKey = options?.fontFamily || 'system-sans';
+      const resolvedFontFamily =
+        FONT_MAP[fontFamilyKey] ||
+        fontFamilyKey ||
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-    await printWindow.loadURL('about:blank');
-    await printWindow.webContents.executeJavaScript(
-      `document.open(); document.write(${JSON.stringify(fullHtml)}); document.close();`
-    );
+      const widthMicrons = Math.round(widthCm * 10000);
+      const heightMicrons = Math.round(heightCm * 10000);
 
-    // Give fonts/layout a moment to settle before printing
-    await new Promise((r) => setTimeout(r, 600));
-
-    // Validate the printer name if specified
-    const availablePrinters = await printWindow.webContents.getPrintersAsync();
-    const printerNames = availablePrinters.map((p) => p.name);
-    const hasValidPrinter =
-      !!options?.printerName && printerNames.includes(options.printerName);
-
-    // Silent print only when explicitly requested AND a matching printer is connected
-    const isSilent = Boolean(options?.silent && hasValidPrinter);
-
-    return new Promise((resolve) => {
-      printWindow.webContents.print(
-        {
-          silent: isSilent,
-          deviceName: hasValidPrinter ? options!.printerName! : undefined,
-          margins: { marginType: 'none' },
-          pageSize: { width: widthMicrons, height: heightMicrons },
+      const printWindow = new BrowserWindow({
+        show: false,
+        width: 800,
+        height: 600,
+        title: 'Ticket Print',
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          javascript: true,
         },
-        (success, failureReason) => {
-          try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
-          if (!success && failureReason !== 'cancelled') {
-            console.error('Ticket print failed:', failureReason);
-          }
-          resolve(success);
-        }
+      });
+
+      const feedHtml =
+        feedLines > 0
+          ? Array.from({ length: feedLines })
+              .map(() => '<div style="height: 4mm; line-height: 4mm;">&nbsp;</div>')
+              .join('')
+          : '';
+
+      const fullHtml = `<!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            * {
+              box-sizing: border-box;
+              font-family: ${resolvedFontFamily} !important;
+              -webkit-font-smoothing: antialiased;
+            }
+            @page {
+              size: ${widthCm}cm ${heightCm}cm;
+              margin: 0;
+            }
+            html, body {
+              margin: 0;
+              padding: 0;
+              font-family: ${resolvedFontFamily} !important;
+              font-size: ${effectiveFontSize}pt;
+              font-weight: ${fontWeight};
+              line-height: 1.15;
+              background: #fff;
+              color: #000;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .ticket-slip {
+              width: ${widthCm}cm;
+              min-height: ${heightCm}cm;
+              ${autoCut ? 'page-break-after: always; break-after: page;' : ''}
+              page-break-inside: avoid;
+              break-inside: avoid;
+              box-sizing: border-box;
+              padding: ${marginMm}mm;
+              font-family: ${resolvedFontFamily} !important;
+              font-weight: ${fontWeight};
+              overflow: hidden;
+            }
+            .ticket-slip:last-child {
+              page-break-after: auto;
+              break-after: auto;
+            }
+          </style>
+        </head>
+        <body>
+          ${htmlContent}
+          ${feedHtml}
+        </body>
+        </html>`;
+
+      await printWindow.loadURL('about:blank');
+      await printWindow.webContents.executeJavaScript(
+        `document.open(); document.write(${JSON.stringify(fullHtml)}); document.close();`
       );
-    });
-  } catch (err) {
-    console.error('Error in print-thermal-tickets handler:', err);
-    return false;
+
+      // Give fonts/layout a moment to settle before printing
+      await new Promise((r) => setTimeout(r, 600));
+
+      // Validate the printer name if specified
+      const availablePrinters = await printWindow.webContents.getPrintersAsync();
+      const printerNames = availablePrinters.map((p) => p.name);
+      const hasValidPrinter =
+        !!options?.printerName && printerNames.includes(options.printerName);
+
+      // Silent print only when explicitly requested AND a matching printer is connected
+      const isSilent = Boolean(options?.silent && hasValidPrinter);
+
+      return new Promise((resolve) => {
+        printWindow.webContents.print(
+          {
+            silent: isSilent,
+            deviceName: hasValidPrinter ? options!.printerName! : undefined,
+            landscape: isLandscape,
+            margins: { marginType: 'none' },
+            pageSize: { width: widthMicrons, height: heightMicrons },
+          },
+          (success, failureReason) => {
+            try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
+            if (!success && failureReason !== 'cancelled') {
+              console.error('Ticket print failed:', failureReason);
+            }
+            resolve(success);
+          }
+        );
+      });
+    } catch (err) {
+      console.error('Error in print-thermal-tickets handler:', err);
+      return false;
+    }
   }
-});
+);
 
 // Window control IPC handlers
 ipcMain.on('win:minimize', () => mainWindow?.minimize());

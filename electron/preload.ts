@@ -8,6 +8,14 @@ export interface IElectronAPI {
       printerName?: string;
       widthCm?: number | string;
       heightCm?: number | string;
+      orientation?: 'portrait' | 'landscape';
+      marginMm?: number | string;
+      fontScale?: number | string;
+      fontFamily?: string;
+      fontSizePt?: number | string;
+      fontWeight?: string;
+      autoCut?: boolean;
+      feedLines?: number;
     }
   ) => Promise<boolean>;
   getPrinters: () => Promise<Array<{ name: string; isDefault: boolean }>>;
