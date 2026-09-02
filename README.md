@@ -28,10 +28,14 @@
 - **Per-Show Overrides & Class Fallbacks**: Real-time pricing lookup prioritizing custom show-rate rules with global seat class fallbacks.
 
 ### 🖨️ 2. ESC/POS & Thermal Ticket Printing Engine
-- **Live Ticket Preview & Customization**: Real-time interactive ticket preview with configurable font size, line spacing, margins, and paper orientation.
-- **Configurable Simultaneous Copies**: Print Office (`[O]`), Security (`[S]`), and Customer (`[C]`) tickets in single-run queued sequences.
-- **Standard 10.2 cm × 3.5 cm Receipt Dimension**: Pre-formatted layout featuring dynamic header titles, SAC codes (997321), cinema GSTIN/CIN, ticket serials, transaction hash, and timestamp.
-- **Thermal Hardware Support**: Direct integration with standard 80mm POS thermal printers (Citizen, Epson, TVS-E, POS-80).
+- **3 Printing Layout & Feed Modes**:
+  - **Horizontal (3-Part Sheet)**: Prints Accounts (`[A]`), Distributor (`[D]`), and Patron (`[P]`) side-by-side in 1 pass on perforated stationery.
+  - **Vertical Strip (Uncut Roll)**: Stacks active copies vertically on a single continuous uncut roll with dashed tear lines and 1 cut at the bottom.
+  - **Sequential (Cut Each Copy)**: Prints each copy as a separate slip with auto-cut between copies.
+- **Live Ticket Preview & Customization**: True-to-life dimension-accurate live previews with horizontal/vertical scrolling, offline system typography stack, font size, margins, and paper orientation.
+- **Configurable Simultaneous Copies**: Print Accounts (`[A]`), Distributor (`[D]`), and Patron (`[P]`) or custom copies in configurable print orders and purpose tags.
+- **Cinema GSTIN Visibility Toggle**: Configurable toggle in Cinema Profile to conditionally display or hide GSTIN numbers on printed tickets.
+- **Thermal Hardware Support**: Direct native integration with standard 80mm and wide-format POS thermal printers (Citizen, Epson, TVS-E, POS-80).
 
 ### 🪑 3. Dynamic Screen & Seat Layout Designer
 - **Visual Auditorium Builder**: Add and arrange custom rows (A, B, C...) with variable seat counts, aisle gaps, blocked seats, and wheelchair accessibility.
