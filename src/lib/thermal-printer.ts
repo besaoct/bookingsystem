@@ -205,14 +205,7 @@ export function fitTicketContent(root: Document | HTMLElement | null, minScale =
  * window and the browser-print iframe both fit exactly the way the on-screen preview does.
  */
 function ticketAutoFitScriptTag(): string {
-  return (
-    '<script>(function(){var fit=' +
-    fitTicketContent.toString() +
-    ';function run(){fit(document);}run();' +
-    "if(document.readyState!=='complete'){window.addEventListener('load',run);}" +
-    'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(run);}})();</' +
-    'script>'
-  );
+  return '';
 }
 
 export function generateThermalTicketHTML(data: TicketPrintData): string {
@@ -278,7 +271,13 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const semiWeight = Math.min(900, baseWeight + 100);
   const normalWeight = baseWeight;
 
-  const baseFontSize = Number(data.fontSizePt) || 8.0;
+  const isSideBySideX = layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x';
+  const isSideBySideY = layoutMode === 'side-by-side-y';
+  const isContinuous = layoutMode === 'vertical-continuous';
+
+  const baseFontSize = isSideBySideY
+    ? (data.fontSizePt ? Math.min(Number(data.fontSizePt), 7.5) : 7.2)
+    : (Number(data.fontSizePt) || 8.0);
   const fontScale = Number(data.fontScale) || 100;
   const effectiveFontSizePt = ((baseFontSize * fontScale) / 100).toFixed(1);
 
@@ -289,8 +288,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
   const marginMm = data.marginMm !== undefined ? Number(data.marginMm) : 2;
-  const padV = Math.max(1, Math.min(marginMm, 3));
-  const padH = Math.max(2, Math.min(marginMm * 1.5, 5));
+  const padV = isSideBySideY ? 1.0 : Math.max(1, Math.min(marginMm, 3));
+  const padH = isSideBySideY ? 2.5 : Math.max(2, Math.min(marginMm * 1.5, 5));
 
   const rawMovieName = booking.movie_name || (booking as any).movieTitle || '';
   const rawMovieType = booking.movie_type_name || '';
@@ -299,10 +298,6 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const fullMovieName = displayMovieType && !displayMovieTitle.includes(displayMovieType)
     ? `${displayMovieTitle} ${displayMovieType}`
     : displayMovieTitle;
-
-  const isSideBySideX = layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x';
-  const isSideBySideY = layoutMode === 'side-by-side-y';
-  const isContinuous = layoutMode === 'vertical-continuous';
 
   // Standard continuous roll stock has 3 fixed parts/columns (e.g. 10.5 cm / 3 = 3.5 cm each).
   // Ticket width and height are fixed to 1 part so single-ticket prints never stretch across the roll.
@@ -318,10 +313,14 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     ? Number((Number(heightCm) / effectivePartsY).toFixed(4))
     : Number(heightCm);
 
-  // Each individual ticket block is vertical if its height > width or explicitly portrait
+  // In side-by-side-y, each ticket is horizontal (blockWidthCm > blockHeightCm). It must NOT be rotated.
+  // In side-by-side-x, each ticket is vertical (blockHeightCm > blockWidthCm). It is rotated 90deg.
   const isVertical =
-    data.orientation === 'portrait' ||
-    Number(blockHeightCm) > Number(blockWidthCm);
+    isSideBySideX
+      ? true
+      : isSideBySideY
+      ? false
+      : (data.orientation === 'portrait' && Number(blockHeightCm) > Number(blockWidthCm));
 
   const slipsHtml = copiesToPrint
     .map((copy, idx) => {
@@ -337,26 +336,26 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
       // Landscape content — used for landscape slips directly, rotated 90° inside portrait slips
       const contentHtml = `
         <!-- Header Top: Copy Code Badge + Cinema Name + Quantity Circle -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #000; padding-bottom: 0.2em; min-width: 0; flex-shrink: 0 !important;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 1px; min-width: 0; flex-shrink: 0 !important;">
           <div style="display: flex; align-items: center; gap: 0.3em; min-width: 0; overflow: hidden; flex: 1;">
             <span style="display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; border: 1.5px solid #000; font-weight: ${boldWeight}; font-size: ${badgeFontSize}; border-radius: 2px; flex-shrink: 0;">${esc(copyBadge)}</span>
-            <span style="font-weight: ${boldWeight}; font-size: 1.15em; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(cinema.header_text || cinema.name)}</span>
+            <span style="font-weight: ${boldWeight}; font-size: 1.1em; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(cinema.header_text || cinema.name)}</span>
           </div>
           <div style="display: inline-flex; align-items: center; justify-content: center; width: 1.6em; height: 1.6em; border: 1.5px solid #000; border-radius: 50%; font-weight: ${boldWeight}; font-size: 1.0em; flex-shrink: 0; margin-left: 0.2em;">
             ${qty}
           </div>
         </div>
 
-        <!-- Movie Title Line - Guaranteed visible after headline line with flex-shrink: 0 and min-height -->
-        <div style="font-weight: ${semiWeight}; font-size: 1.05em; text-transform: uppercase; margin: 0.1em 0; line-height: 1.25; min-height: 1.25em; flex-shrink: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <!-- Movie Title Line -->
+        <div style="font-weight: ${semiWeight}; font-size: 1.05em; text-transform: uppercase; margin: 1px 0; line-height: 1.18; min-height: 1.18em; flex-shrink: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
           ${esc(fullMovieName)}
         </div>
 
         <!-- Middle 3-Column Section -->
-        <div style="display: grid; grid-template-columns: 1.4fr 1.1fr 1fr; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 0.2em 0; font-size: 0.9em; flex-shrink: 0 !important;">
+        <div style="display: grid; grid-template-columns: 1.35fr 1.15fr 1fr; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 0; font-size: 0.9em; line-height: 1.12; flex-shrink: 0 !important;">
           
           <!-- Column 1: Financial & Tax Breakup -->
-          <div style="border-right: 1px solid #000; padding-right: 0.3em; line-height: 1.18; overflow: hidden;">
+          <div style="border-right: 1px solid #000; padding-right: 0.3em; line-height: 1.12; overflow: hidden;">
             <div style="display: flex; justify-content: space-between;">
               <span style="font-weight: ${normalWeight};">ADM</span>
               <span style="font-weight: ${semiWeight};">${admNet}</span>
@@ -374,47 +373,47 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
               <span style="font-weight: ${normalWeight};">S.CH</span>
               <span style="font-weight: ${semiWeight};">${booking.total_service_charge.toFixed(2)}</span>
             </div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.05em; margin-top: 0.1em; border-top: 0.5px solid #000;">
+            <div style="font-weight: ${boldWeight}; font-size: 1.05em; margin-top: 1px; border-top: 0.5px solid #000;">
               Total: ${booking.total_gross.toFixed(2)}
             </div>
           </div>
 
           <!-- Column 2: Date, Showtime & SAC Code -->
-          <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.2; overflow: hidden;">
+          <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.15; overflow: hidden;">
             <div style="font-weight: ${semiWeight}; font-size: 1.0em; white-space: nowrap;">${esc(formattedDate)}</div>
-            <div style="font-weight: ${semiWeight}; font-size: 1.05em; margin-top: 0.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(showTimeDisplay)}</div>
-            <div style="font-weight: ${semiWeight}; font-size: 0.88em; margin-top: 0.15em;">SAC 997321</div>
+            <div style="font-weight: ${semiWeight}; font-size: 1.05em; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(showTimeDisplay)}</div>
+            <div style="font-weight: ${semiWeight}; font-size: 0.85em; margin-top: 1px;">SAC 997321</div>
           </div>
 
           <!-- Column 3: Auditorium, Seat Numbers & Class -->
-          <div style="padding-left: 0.3em; line-height: 1.2; text-align: left; overflow: hidden;">
+          <div style="padding-left: 0.3em; line-height: 1.15; text-align: left; overflow: hidden;">
             <div style="font-weight: ${semiWeight}; font-size: 1.0em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(booking.screen_name)}</div>
             <div style="font-weight: ${boldWeight}; font-size: 1.15em; letter-spacing: 0.03em; word-break: break-all;">${esc(seatLabels)}</div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.05em; text-transform: uppercase; margin-top: 0.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(seatClass)}</div>
+            <div style="font-weight: ${boldWeight}; font-size: 1.05em; text-transform: uppercase; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(seatClass)}</div>
           </div>
         </div>
 
         <!-- Footer Section: Tax IDs and Audit Tracking -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.78em; line-height: 1.15; padding-top: 0.15em; font-weight: ${normalWeight}; flex-shrink: 0 !important;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.75em; line-height: 1.1; padding-top: 1px; font-weight: ${normalWeight}; flex-shrink: 0 !important;">
           <div style="overflow: hidden; max-width: 50%;">
             ${cinema.show_gstin_on_ticket && cinema.gstin ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">GSTIN: ${esc(cinema.gstin)}</div>` : ''}
             ${cinema.cin ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CIN: ${esc(cinema.cin)}</div>` : ''}
           </div>
           <div style="text-align: right; white-space: nowrap;">
-            <div>Ticket No: ${esc(firstTicketNo)}&nbsp;&nbsp;L.No. Transaction No: ${esc(txnNo)}</div>
-            <div>INV No. : ${esc(invNo)}&nbsp;&nbsp;Issued on: ${esc(issuedOn)}</div>
+            <div>Ticket No: ${esc(firstTicketNo)}&nbsp;&nbsp;L.No. Txn: ${esc(txnNo)}</div>
+            <div>INV No. : ${esc(invNo)}&nbsp;&nbsp;${esc(issuedOn)}</div>
           </div>
         </div>
         `;
 
-      // For portrait/vertical slips: rotate content 90° so text reads along the long edge
+      // For portrait/vertical slips (Side-by-Side X): rotate content 90° so text reads along the long edge
       if (isVertical) {
         const wCm = blockWidthCm;
         const hCm = blockHeightCm;
         return `
-        <div class="ticket-slip" style="${slipWidthStyle} box-sizing: border-box; padding: 0; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; position: relative; overflow: visible; clip-path: inset(0);">
-          <div data-ticket-box="1" style="position: absolute; left: 0; top: 0; width: ${hCm}cm; height: ${wCm}cm; transform: translate(0, ${hCm}cm) rotate(-90deg); transform-origin: 0 0; padding: ${padV}mm ${padH}mm; box-sizing: border-box; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; overflow: hidden;">
-            <div data-ticket-scale="1" style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; transform-origin: top left;">
+        <div class="ticket-slip" style="${slipWidthStyle} box-sizing: border-box; padding: 0; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; position: relative; overflow: hidden; clip-path: inset(0);">
+          <div style="position: absolute; left: 0; top: 0; width: ${hCm}cm; height: ${wCm}cm; transform: translate(0, ${hCm}cm) rotate(-90deg); transform-origin: 0 0; padding: ${padV}mm ${padH}mm; box-sizing: border-box; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; overflow: hidden;">
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
               ${contentHtml}
             </div>
           </div>
@@ -422,11 +421,10 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         `;
       }
 
-      // The slip is the fixed frame at exactly the configured stock size; the inner wrapper holds the
-      // content and is what fitTicketContent() scales down to fit inside that frame.
+      // Horizontal slips (Side-by-Side Y): printed directly left-to-right without rotation
       return `
-      <div class="ticket-slip" data-ticket-box="1" style="${slipWidthStyle} box-sizing: border-box; padding: ${padV}mm ${padH}mm; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; overflow: hidden;">
-        <div data-ticket-scale="1" style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; transform-origin: top left;">
+      <div class="ticket-slip" style="${slipWidthStyle} box-sizing: border-box; padding: ${padV}mm ${padH}mm; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; overflow: hidden;">
+        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
           ${contentHtml}
         </div>
       </div>

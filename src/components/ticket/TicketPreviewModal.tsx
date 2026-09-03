@@ -35,11 +35,6 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [selectedCopyTab, setSelectedCopyTab] = useState<string>('ALL');
   const previewRef = React.useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (previewRef.current) {
-      fitTicketContent(previewRef.current);
-    }
-  });
 
   if (!isOpen || !booking || !cinema || !taxConfig) return null;
 
@@ -172,14 +167,17 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     const baseWeight = Number(fontWeight) || 600;
     const boldWeight = Math.min(900, baseWeight + 200);
     const semiWeight = Math.min(900, baseWeight + 100);
-    const normalWeight = baseWeight;
-
-    const padV = Math.max(1, Math.min(marginMm, 3));
-    const padH = Math.max(2, Math.min(marginMm * 1.5, 5));
+    const normalWeight = baseWeight;    const isSideBySideY = layoutMode === 'side-by-side-y';
+    const padV = isSideBySideY ? 1.0 : Math.max(1, Math.min(marginMm, 3));
+    const padH = isSideBySideY ? 2.5 : Math.max(2, Math.min(marginMm * 1.5, 5));
 
     const wCm = blockW !== undefined ? blockW : Number(ticketWidth);
     const hCm = blockH !== undefined ? blockH : Number(ticketHeight);
-    const isSlipVertical = orientation === 'portrait' || hCm > wCm;
+    const isSlipVertical = (layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x')
+      ? true
+      : isSideBySideY
+      ? false
+      : (orientation === 'portrait' && hCm > wCm);
 
     const rawMovieName = booking.movie_name || (booking as any).movieTitle || '';
     const rawMovieType = booking.movie_type_name || '';
@@ -191,14 +189,14 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
 
     // Landscape content — used directly for landscape slips, rotated inside portrait slips
     const landscapeContent = (
-      <div data-ticket-scale="1" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transformOrigin: 'top left', fontFamily: resolvedFontFamily, fontSize: effectiveFontSize, fontWeight: normalWeight }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden', fontFamily: resolvedFontFamily, fontSize: effectiveFontSize, fontWeight: normalWeight }}>
         {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '0.2em', minWidth: 0, flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #000', paddingBottom: '1px', minWidth: 0, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3em', minWidth: 0, overflow: 'hidden', flex: 1 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5em', height: '1.5em', border: '1.5px solid #000', fontWeight: boldWeight, fontSize: badgeFontSize, borderRadius: '2px', flexShrink: 0 }}>
               {copyBadge}
             </span>
-            <span style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontWeight: boldWeight, fontSize: '1.1em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {cinemaName}
             </span>
           </div>
@@ -207,15 +205,15 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Movie Title Line - Guaranteed visible after headline line */}
-        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.1em 0', lineHeight: 1.25, minHeight: '1.25em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {/* Movie Title Line */}
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.18, minHeight: '1.18em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {fullMovieName}
         </div>
 
         {/* Middle 3 Columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.1fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '0.2em 0', fontSize: '0.9em', flexShrink: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '1px 0', fontSize: '0.9em', lineHeight: 1.12, flexShrink: 0 }}>
           {/* Column 1: Financials */}
-          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.18, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontWeight: normalWeight }}>ADM</span>
               <span style={{ fontWeight: semiWeight }}>{admNet}</span>
@@ -238,35 +236,35 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
               <span style={{ fontWeight: normalWeight }}>S.CH</span>
               <span style={{ fontWeight: semiWeight }}>{booking.total_service_charge.toFixed(2)}</span>
             </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '0.1em', borderTop: '0.5px solid #000' }}>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '1px', borderTop: '0.5px solid #000' }}>
               Total: {booking.total_gross.toFixed(2)}
             </div>
           </div>
 
           {/* Column 2: Date & Time */}
-          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.2, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap' }}>{formattedDate}</div>
-            <div style={{ fontWeight: semiWeight, fontSize: '1.05em', margin: '0.1em 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.88em', marginTop: '0.15em' }}>SAC 997321</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '1.05em', margin: '1px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.85em', marginTop: '1px' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Screen & Seat */}
-          <div style={{ paddingLeft: '0.3em', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
+          <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.1em 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
           </div>
         </div>
 
         {/* Footer Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.78em', lineHeight: 1.15, paddingTop: '0.15em', fontWeight: normalWeight, flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.75em', lineHeight: 1.1, paddingTop: '1px', fontWeight: normalWeight, flexShrink: 0 }}>
           <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
             {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
             {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
           </div>
           <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-            <div>Ticket No: {firstTicketNo}&nbsp;&nbsp;L.No. Transaction No: {txnNo}</div>
-            <div>INV No. : {invNo}&nbsp;&nbsp;Issued on: {issuedOn}</div>
+            <div>Ticket No: {firstTicketNo}&nbsp;&nbsp;L.No. Txn: {txnNo}</div>
+            <div>INV No. : {invNo}&nbsp;&nbsp;{issuedOn}</div>
           </div>
         </div>
       </div>
@@ -276,7 +274,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     if (isSlipVertical) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '100%', clipPath: 'inset(0)' }}>
-          <div data-ticket-box="1" style={{
+          <div style={{
             position: 'absolute',
             left: 0,
             top: 0,
@@ -429,7 +427,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                   const effectivePartsY = Math.max(TOTAL_PARTS_Y, activeCopies.length);
                   const blockW = Number(ticketWidth);
                   const blockH = Number((Number(ticketHeight) / effectivePartsY).toFixed(4));
-                  const isSlipVert = orientation === 'portrait' || blockH > blockW;
+                  const isSlipVert = false;
                   return (
                     <div
                       className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all overflow-hidden"
@@ -449,7 +447,6 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                       {activeCopies.map((copy, idx) => (
                         <div
                           key={copy.id}
-                          data-ticket-box={!isSlipVert ? '1' : undefined}
                           className="flex flex-col justify-between overflow-hidden relative shrink-0"
                           style={{
                             width: `${blockW}cm`,

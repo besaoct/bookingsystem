@@ -346,6 +346,8 @@ ipcMain.handle(
               print-color-adjust: exact;
               overflow: hidden !important;
               position: relative;
+              page-break-before: avoid !important;
+              break-before: avoid !important;
             }
             .ticket-sheet-wrapper {
               position: absolute;
@@ -359,10 +361,12 @@ ipcMain.handle(
               margin: 0;
               padding: 0;
               overflow: hidden;
-              page-break-inside: avoid;
-              break-inside: avoid;
-              page-break-after: avoid;
-              break-after: avoid;
+              page-break-before: avoid !important;
+              break-before: avoid !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              page-break-after: avoid !important;
+              break-after: avoid !important;
               ${sheetTransform}
             }
             .ticket-page-grid {

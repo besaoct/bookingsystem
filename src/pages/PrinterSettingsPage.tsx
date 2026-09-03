@@ -23,7 +23,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { printTickets, fitTicketContent, TicketPrintData, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
+import { printTickets,  TicketPrintData, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
 
 export const TICKET_FONT_FAMILIES = [
   {
@@ -116,8 +116,8 @@ export const PrinterSettingsPage: React.FC = () => {
   // Printer settings local form
   const [ticketLayoutMode, setTicketLayoutMode] = useState<
     'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential'
-  >('side-by-side');
-  const [ticketWidth, setTicketWidth] = useState('10.5');
+  >('side-by-side-y');
+  const [ticketWidth, setTicketWidth] = useState('10.2');
   const [ticketHeight, setTicketHeight] = useState('10.2');
   const [ticketOrientation, setTicketOrientation] = useState<'landscape' | 'portrait'>('portrait');
   const [ticketRotation, setTicketRotation] = useState<'0' | '90' | '180' | '270'>('0');
@@ -140,9 +140,6 @@ export const PrinterSettingsPage: React.FC = () => {
   // Detected Hardware Printers
   const [detectedPrinters, setDetectedPrinters] = useState<Array<{ name: string; isDefault: boolean }>>([]);
   const [isScanningPrinters, setIsScanningPrinters] = useState(false);
-
-  // Preview Mode: 'slip' (handheld readable horizontal) vs 'roll' (continuous roll feed)
-  const [previewViewMode, setPreviewViewMode] = useState<'slip' | 'roll'>('slip');
 
   // Add Copy Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -186,11 +183,11 @@ export const PrinterSettingsPage: React.FC = () => {
       setNewPrintOrder(maxOrder + 1);
     }
     if (systemSettings) {
-      setTicketLayoutMode((systemSettings['ticket_layout_mode'] as 'side-by-side' | 'vertical-continuous' | 'sequential') || 'side-by-side');
-      setTicketWidth(systemSettings['ticket_width_cm'] || '10.5');
+      setTicketLayoutMode((systemSettings['ticket_layout_mode'] as any) || 'side-by-side-y');
+      setTicketWidth(systemSettings['ticket_width_cm'] || '10.2');
       setTicketHeight(systemSettings['ticket_height_cm'] || '10.2');
-      setTicketOrientation((systemSettings['ticket_orientation'] as 'portrait' | 'landscape') || 'portrait');
-      setTicketRotation((systemSettings['ticket_rotation'] as '0' | '90' | '180' | '270') || '0');
+      setTicketOrientation((systemSettings['ticket_orientation'] as any) || 'portrait');
+      setTicketRotation((systemSettings['ticket_rotation'] as any) || '0');
       setTicketMarginMm(systemSettings['ticket_margin_mm'] || '2');
       setTicketFontScale(systemSettings['ticket_font_scale'] || '100');
       setTicketFontFamily(systemSettings['ticket_font_family'] || 'system-sans');
@@ -457,16 +454,10 @@ export const PrinterSettingsPage: React.FC = () => {
     ticketOrientation === 'portrait' ||
     Number(ticketHeight) > Number(ticketWidth);
 
-  // Same auto-fit the printed page applies to itself, so this preview shows the real printed result.
-  const previewRef = React.useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    fitTicketContent(previewRef.current);
-  });
-
   const padV = Math.max(1, Math.min(Number(ticketMarginMm) || 2, 3));
   const padH = Math.max(2, Math.min((Number(ticketMarginMm) || 2) * 1.5, 5));
 
-  const renderTicketInnerContent = (c: TicketCopyConfig, blockW?: number, blockH?: number, forceHorizontal?: boolean) => {
+  const renderTicketInnerContent = (c: TicketCopyConfig, blockW?: number, blockH?: number) => {
     const copyBadge = c.header_label ? c.header_label.trim() : 'C';
     const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
     const cinemaName = cinema?.header_text || cinema?.name || 'GRAND MULTIPLEX CINEMAS';
@@ -478,32 +469,36 @@ export const PrinterSettingsPage: React.FC = () => {
     const semiWeight = Math.min(900, baseWeight + 100);
     const normalWeight = baseWeight;
 
-    const padV = Math.max(1, Math.min(Number(ticketMarginMm) || 2, 3));
-    const padH = Math.max(2, Math.min((Number(ticketMarginMm) || 2) * 1.5, 5));
+    const isSideBySideY = ticketLayoutMode === 'side-by-side-y';
+    const padV = isSideBySideY ? 1.0 : Math.max(1, Math.min(Number(ticketMarginMm) || 2, 3));
+    const padH = isSideBySideY ? 2.5 : Math.max(2, Math.min((Number(ticketMarginMm) || 2) * 1.5, 5));
 
     const wCm = blockW !== undefined ? blockW : Number(ticketWidth);
     const hCm = blockH !== undefined ? blockH : Number(ticketHeight);
-    const isSlipVertical = !forceHorizontal && (ticketOrientation === 'portrait' || hCm > wCm);
+    const isSlipVertical = (ticketLayoutMode === 'side-by-side' || ticketLayoutMode === 'side-by-side-x')
+      ? true
+      : isSideBySideY
+      ? false
+      : (ticketOrientation === 'portrait' && hCm > wCm);
 
     const landscapeContent = (
       <div
-        data-ticket-scale="1"
         style={{
           width: '100%',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          transformOrigin: 'top left',
+          overflow: 'hidden',
         }}
       >
         {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '0.2em', minWidth: 0, flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #000', paddingBottom: '1px', minWidth: 0, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3em', minWidth: 0, overflow: 'hidden', flex: 1 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5em', height: '1.5em', border: '1.5px solid #000', fontWeight: boldWeight, fontSize: badgeFontSize, borderRadius: 2, flexShrink: 0 }}>
               {copyBadge}
             </span>
-            <span style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontWeight: boldWeight, fontSize: '1.1em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {cinemaName}
             </span>
           </div>
@@ -513,46 +508,46 @@ export const PrinterSettingsPage: React.FC = () => {
         </div>
 
         {/* Movie Title Line */}
-        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.1em 0', lineHeight: 1.25, minHeight: '1.25em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.18, minHeight: '1.18em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           AVATAR : FIRE AND ASH 3D
         </div>
 
         {/* Middle 3-Column Section */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.1fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '0.2em 0', fontSize: '0.9em', flexShrink: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '1px 0', fontSize: '0.9em', lineHeight: 1.12, flexShrink: 0 }}>
           {/* Column 1: Financial & Tax Breakup */}
-          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.18, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>ADM</span><span style={{ fontWeight: semiWeight }}>160.00</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>3D</span><span style={{ fontWeight: semiWeight }}>80.00</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>CGST</span><span style={{ fontWeight: semiWeight }}>21.60</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>SGST</span><span style={{ fontWeight: semiWeight }}>21.60</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>S.CH</span><span style={{ fontWeight: semiWeight }}>24.00</span></div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '0.1em', borderTop: '0.5px solid #000' }}>Total: 307.20</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '1px', borderTop: '0.5px solid #000' }}>Total: 307.20</div>
           </div>
 
           {/* Column 2: Date, Showtime & SAC Code */}
-          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.2, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap' }}>Tue, 25-08-2026</div>
-            <div style={{ fontWeight: semiWeight, fontSize: '1.05em', marginTop: '0.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Evening, 06:30 PM</div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.88em', marginTop: '0.15em' }}>SAC 997321</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '1.05em', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Evening, 06:30 PM</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.85em', marginTop: '1px' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Auditorium, Seat Numbers & Class */}
-          <div style={{ paddingLeft: '0.3em', lineHeight: 1.2, textAlign: 'left', overflow: 'hidden' }}>
+          <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AUDI 1</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>A-1, A-2</div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', marginTop: '0.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD</div>
           </div>
         </div>
 
         {/* Footer Section: Tax IDs and Audit Tracking */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.78em', lineHeight: 1.15, paddingTop: '0.15em', fontWeight: normalWeight, flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.75em', lineHeight: 1.1, paddingTop: '1px', fontWeight: normalWeight, flexShrink: 0 }}>
           <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
             {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
             {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
           </div>
           <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-            <div>Ticket No: 009571&nbsp;&nbsp;L.No. Transaction No: A000001-71W</div>
-            <div>INV No. : {invoiceSeries}/000001&nbsp;&nbsp;Issued on: 25-Aug-26 06:30:15 PM</div>
+            <div>Ticket No: 009571&nbsp;&nbsp;L.No. Txn: A000001-71W</div>
+            <div>INV No. : {invoiceSeries}/000001&nbsp;&nbsp;25-Aug-26 06:30 PM</div>
           </div>
         </div>
       </div>
@@ -562,7 +557,7 @@ export const PrinterSettingsPage: React.FC = () => {
     if (isSlipVertical) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '100%', clipPath: 'inset(0)' }}>
-          <div data-ticket-box="1" style={{
+          <div style={{
             position: 'absolute',
             left: 0,
             top: 0,
@@ -755,37 +750,10 @@ export const PrinterSettingsPage: React.FC = () => {
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-3 bg-muted/40 border-b border-border">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-xs uppercase tracking-wider font-semibold text-foreground flex items-center space-x-1.5">
-                    <Eye className="w-3.5 h-3.5 text-primary" />
-                    <span>Ticket Preview</span>
-                  </CardTitle>
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center bg-muted rounded-xs p-0.5 border border-border text-[10px]">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewViewMode('slip')}
-                      className={`px-2 py-0.5 rounded-2xs font-medium cursor-pointer transition-all ${
-                        previewViewMode === 'slip'
-                          ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      Slip View (Readable)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewViewMode('roll')}
-                      className={`px-2 py-0.5 rounded-2xs font-medium cursor-pointer transition-all ${
-                        previewViewMode === 'roll'
-                          ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      Roll View (As Printed)
-                    </button>
-                  </div>
-                </div>
+                <CardTitle className="text-xs uppercase tracking-wider font-semibold text-foreground flex items-center space-x-1.5">
+                  <Eye className="w-3.5 h-3.5 text-primary" />
+                  <span>Ticket Print Preview</span>
+                </CardTitle>
                 <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
                   <span className="px-1.5 py-0.5 rounded-xs bg-muted border border-border font-medium">
                     {ticketWidth}cm × {ticketHeight}cm
@@ -801,7 +769,7 @@ export const PrinterSettingsPage: React.FC = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent ref={previewRef} className="p-6 bg-muted/20 overflow-auto min-h-[360px] max-h-[620px] rounded-b-xs select-text flex">
+            <CardContent className="p-6 bg-muted/20 overflow-auto min-h-[360px] max-h-[620px] rounded-b-xs select-text flex">
               {/* Safe auto-margin scroll container prevents left/top clipping */}
               <div className="m-auto flex items-center justify-center shrink-0">
                 <div
@@ -811,36 +779,67 @@ export const PrinterSettingsPage: React.FC = () => {
                     transformOrigin: 'center center',
                   }}
                 >
-                  {previewViewMode === 'slip' ? (
-                    /* Readable Handheld Slip View (Horizontal, right-side up, exactly like torn ticket) */
+                  {ticketLayoutMode === 'side-by-side-y' ? (
+                    /* Single sheet multi-copy along Feed - Y (3 horizontal slips across 10.2cm sheet) */
                     (() => {
                       const activeList = copies.filter((c) => c.is_enabled).length > 0
                         ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
                         : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }];
-                      const slipW = Number(ticketHeight || 10.2);
-                      const slipH = Number(((Number(ticketWidth || 10.5)) / 3).toFixed(4));
+                      const TOTAL_PARTS_Y = 3;
+                      const effectivePartsY = Math.max(TOTAL_PARTS_Y, activeList.length);
+                      const blockW = Number(ticketWidth || 10.2);
+                      const blockH = Number((Number(ticketHeight || 10.2) / effectivePartsY).toFixed(4));
                       return (
-                        <div className="flex flex-col gap-2.5">
+                        <div
+                          className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all overflow-hidden"
+                          style={{
+                            width: `${blockW}cm`,
+                            minWidth: `${blockW}cm`,
+                            maxWidth: `${blockW}cm`,
+                            height: `${ticketHeight}cm`,
+                            minHeight: `${ticketHeight}cm`,
+                            maxHeight: `${ticketHeight}cm`,
+                            fontFamily: resolvedFontFamily,
+                            fontWeight: ticketFontWeight,
+                            fontSize: `${((Number(ticketFontSizePt) || 8) * (Number(ticketFontScale) || 100)) / 100}pt`,
+                            lineHeight: 1.15,
+                          }}
+                        >
                           {activeList.map((c, idx) => (
                             <div
                               key={c.id || idx}
-                              className="bg-white text-black shadow-md select-text rounded-xs flex flex-col justify-between border border-neutral-800 shrink-0 transition-all overflow-hidden relative"
+                              className="flex flex-col justify-between overflow-hidden relative shrink-0"
                               style={{
-                                width: `${slipW}cm`,
-                                minWidth: `${slipW}cm`,
-                                maxWidth: `${slipW}cm`,
-                                height: `${slipH}cm`,
-                                minHeight: `${slipH}cm`,
-                                maxHeight: `${slipH}cm`,
+                                width: `${blockW}cm`,
+                                minWidth: `${blockW}cm`,
+                                maxWidth: `${blockW}cm`,
+                                height: `${blockH}cm`,
+                                minHeight: `${blockH}cm`,
+                                maxHeight: `${blockH}cm`,
                                 padding: `${padV}mm ${padH}mm`,
                                 boxSizing: 'border-box',
-                                fontFamily: resolvedFontFamily,
-                                fontWeight: ticketFontWeight,
-                                fontSize: `${((Number(ticketFontSizePt) || 8) * (Number(ticketFontScale) || 100)) / 100}pt`,
-                                lineHeight: 1.15,
+                                borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
                               }}
                             >
-                              {renderTicketInnerContent(c, slipW, slipH, true)}
+                              {renderTicketInnerContent(c, blockW, blockH)}
+                            </div>
+                          ))}
+                          {Array.from({ length: effectivePartsY - activeList.length }).map((_, bIdx) => (
+                            <div
+                              key={`blank-y-${bIdx}`}
+                              className="flex flex-col items-center justify-center overflow-hidden relative shrink-0 bg-neutral-50/70 text-neutral-400 text-[10px] select-none italic"
+                              style={{
+                                width: `${blockW}cm`,
+                                minWidth: `${blockW}cm`,
+                                maxWidth: `${blockW}cm`,
+                                height: `${blockH}cm`,
+                                minHeight: `${blockH}cm`,
+                                maxHeight: `${blockH}cm`,
+                                boxSizing: 'border-box',
+                                borderTop: '1.5px dashed #64748b',
+                              }}
+                            >
+                              <span>Part {activeList.length + bIdx + 1} (Blank / Unprinted)</span>
                             </div>
                           ))}
                         </div>
@@ -877,7 +876,6 @@ export const PrinterSettingsPage: React.FC = () => {
                           {activeList.map((c, idx) => (
                             <div
                               key={c.id || idx}
-                              data-ticket-box={!isSlipVert ? '1' : undefined}
                               className="flex flex-col justify-between overflow-hidden relative shrink-0"
                               style={{
                                 width: `${blockW}cm`,
@@ -912,74 +910,6 @@ export const PrinterSettingsPage: React.FC = () => {
                             >
                               <span>Part {activeList.length + bIdx + 1}</span>
                               <span className="text-[9px] opacity-70">(Blank / Unprinted)</span>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()
-                  ) : ticketLayoutMode === 'side-by-side-y' ? (
-                    /* Single sheet multi-copy side-by-side along Y with fixed slots */
-                    (() => {
-                      const activeList = copies.filter((c) => c.is_enabled).length > 0
-                        ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
-                        : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }];
-                      const TOTAL_PARTS_Y = 3;
-                      const effectivePartsY = Math.max(TOTAL_PARTS_Y, activeList.length);
-                      const blockW = Number(ticketWidth || 10.5);
-                      const blockH = Number((Number(ticketHeight || 10.2) / effectivePartsY).toFixed(4));
-                      const isSlipVert = ticketOrientation === 'portrait' || blockH > blockW;
-                      return (
-                        <div
-                          className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all overflow-hidden"
-                          style={{
-                            width: `${blockW}cm`,
-                            minWidth: `${blockW}cm`,
-                            maxWidth: `${blockW}cm`,
-                            height: `${ticketHeight}cm`,
-                            minHeight: `${ticketHeight}cm`,
-                            maxHeight: `${ticketHeight}cm`,
-                            fontFamily: resolvedFontFamily,
-                            fontWeight: ticketFontWeight,
-                            fontSize: `${((Number(ticketFontSizePt) || 8) * (Number(ticketFontScale) || 100)) / 100}pt`,
-                            lineHeight: 1.15,
-                          }}
-                        >
-                          {activeList.map((c, idx) => (
-                            <div
-                              key={c.id || idx}
-                              data-ticket-box={!isSlipVert ? '1' : undefined}
-                              className="flex flex-col justify-between overflow-hidden relative shrink-0"
-                              style={{
-                                width: `${blockW}cm`,
-                                minWidth: `${blockW}cm`,
-                                maxWidth: `${blockW}cm`,
-                                height: `${blockH}cm`,
-                                minHeight: `${blockH}cm`,
-                                maxHeight: `${blockH}cm`,
-                                padding: isSlipVert ? 0 : `${padV}mm ${padH}mm`,
-                                boxSizing: 'border-box',
-                                borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
-                              }}
-                            >
-                              {renderTicketInnerContent(c, blockW, blockH)}
-                            </div>
-                          ))}
-                          {Array.from({ length: effectivePartsY - activeList.length }).map((_, bIdx) => (
-                            <div
-                              key={`blank-y-${bIdx}`}
-                              className="flex flex-col items-center justify-center overflow-hidden relative shrink-0 bg-neutral-50/70 text-neutral-400 text-[10px] select-none italic"
-                              style={{
-                                width: `${blockW}cm`,
-                                minWidth: `${blockW}cm`,
-                                maxWidth: `${blockW}cm`,
-                                height: `${blockH}cm`,
-                                minHeight: `${blockH}cm`,
-                                maxHeight: `${blockH}cm`,
-                                boxSizing: 'border-box',
-                                borderTop: '1.5px dashed #64748b',
-                              }}
-                            >
-                              <span>Part {activeList.length + bIdx + 1} (Blank)</span>
                             </div>
                           ))}
                         </div>
@@ -1092,41 +1022,41 @@ export const PrinterSettingsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setTicketWidth('10.5');
+                      setTicketWidth('10.2');
                       setTicketHeight('10.2');
-                      setTicketLayoutMode('side-by-side');
+                      setTicketLayoutMode('side-by-side-y');
                       setTicketOrientation('portrait');
                       setTicketRotation('0');
                     }}
                     disabled={!canUpdate}
                     className={`p-2 rounded-xs border text-left cursor-pointer transition-all ${
-                      ticketWidth === '10.5' && ticketHeight === '10.2' && (ticketLayoutMode === 'side-by-side' || ticketLayoutMode === 'side-by-side-x')
+                      ticketWidth === '10.2' && ticketHeight === '10.2' && ticketLayoutMode === 'side-by-side-y'
                         ? 'bg-primary/15 text-foreground border-primary font-semibold ring-1 ring-primary'
                         : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
                     }`}
                   >
-                    <div className="font-bold text-xs">Standard 3-Part Roll</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">10.5 cm × 10.2 cm (3 × 3.5 cm)</div>
+                    <div className="font-bold text-xs">Standard 3-Part Roll (Recommended)</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">10.2 cm × 10.2 cm (Along Feed - Y)</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
-                      setTicketWidth('10.2');
+                      setTicketWidth('10.5');
                       setTicketHeight('10.2');
-                      setTicketLayoutMode('side-by-side');
+                      setTicketLayoutMode('side-by-side-y');
                       setTicketOrientation('portrait');
                       setTicketRotation('0');
                     }}
                     disabled={!canUpdate}
                     className={`p-2 rounded-xs border text-left cursor-pointer transition-all ${
-                      ticketWidth === '10.2' && ticketHeight === '10.2' && (ticketLayoutMode === 'side-by-side' || ticketLayoutMode === 'side-by-side-x')
+                      ticketWidth === '10.5' && ticketHeight === '10.2' && ticketLayoutMode === 'side-by-side-y'
                         ? 'bg-primary/15 text-foreground border-primary font-semibold ring-1 ring-primary'
                         : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
                     }`}
                   >
-                    <div className="font-bold text-xs">Compact 3-Part Roll</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">10.2 cm × 10.2 cm (3 × 3.4 cm)</div>
+                    <div className="font-bold text-xs">Wide 3-Part Roll</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">10.5 cm × 10.2 cm (Along Feed - Y)</div>
                   </button>
 
                   <button
