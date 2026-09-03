@@ -162,7 +162,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     Number(ticketHeight) > Number(ticketWidth);
 
 
-  const renderModalTicketContent = (copy: TicketCopyConfig) => {
+  const renderModalTicketContent = (copy: TicketCopyConfig, blockW?: number, blockH?: number) => {
     const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
     const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
     const cinemaName = cinema.header_text || cinema.name || '';
@@ -176,6 +176,10 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
 
     const padV = Math.max(1, Math.min(marginMm, 3));
     const padH = Math.max(2, Math.min(marginMm * 1.5, 5));
+
+    const wCm = blockW !== undefined ? blockW : Number(ticketWidth);
+    const hCm = blockH !== undefined ? blockH : Number(ticketHeight);
+    const isSlipVertical = orientation === 'portrait' || hCm > wCm;
 
     const rawMovieName = booking.movie_name || (booking as any).movieTitle || '';
     const rawMovieType = booking.movie_type_name || '';
@@ -269,9 +273,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     );
 
     // For portrait/vertical slips: rotate the landscape content 90° so text reads along the long edge
-    if (isVertical) {
-      const wCm = Number(ticketWidth);
-      const hCm = Number(ticketHeight);
+    if (isSlipVertical) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '100%', clipPath: 'inset(0)' }}>
           <div data-ticket-box="1" style={{
@@ -356,68 +358,94 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
             >
               {(layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') && selectedCopyTab === 'ALL' ? (
                 /* Multi-Column Single Perforated Sheet across X */
-                <div
-                  className="bg-white text-black shadow-md select-text rounded-xs flex flex-row items-stretch border border-neutral-800 shrink-0 transition-all"
-                  style={{
-                    fontFamily: resolvedFontFamily,
-                    fontWeight: fontWeight,
-                    fontSize: effectiveFontSize,
-                    lineHeight: 1.15,
-                  }}
-                >
-                  {activeCopies.map((copy, idx) => (
+                (() => {
+                  const blockW = Number((Number(ticketWidth) / activeCopies.length).toFixed(4));
+                  const blockH = Number(ticketHeight);
+                  const isSlipVert = orientation === 'portrait' || blockH > blockW;
+                  return (
                     <div
-                      key={copy.id}
-                      data-ticket-box={!isVertical ? '1' : undefined}
-                      className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                      className="bg-white text-black shadow-md select-text rounded-xs flex flex-row items-stretch border border-neutral-800 shrink-0 transition-all overflow-hidden"
                       style={{
                         width: `${ticketWidth}cm`,
                         minWidth: `${ticketWidth}cm`,
                         maxWidth: `${ticketWidth}cm`,
-                        height: `${ticketHeight}cm`,
-                        minHeight: `${ticketHeight}cm`,
-                        maxHeight: `${ticketHeight}cm`,
-                        padding: isVertical ? 0 : `${padV}mm ${padH}mm`,
-                        boxSizing: 'border-box',
-                        borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                        height: `${blockH}cm`,
+                        minHeight: `${blockH}cm`,
+                        maxHeight: `${blockH}cm`,
+                        fontFamily: resolvedFontFamily,
+                        fontWeight: fontWeight,
+                        fontSize: effectiveFontSize,
+                        lineHeight: 1.15,
                       }}
                     >
-                      {renderModalTicketContent(copy)}
+                      {activeCopies.map((copy, idx) => (
+                        <div
+                          key={copy.id}
+                          data-ticket-box={!isSlipVert ? '1' : undefined}
+                          className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                          style={{
+                            width: `${blockW}cm`,
+                            minWidth: `${blockW}cm`,
+                            maxWidth: `${blockW}cm`,
+                            height: `${blockH}cm`,
+                            minHeight: `${blockH}cm`,
+                            maxHeight: `${blockH}cm`,
+                            padding: isSlipVert ? 0 : `${padV}mm ${padH}mm`,
+                            boxSizing: 'border-box',
+                            borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                          }}
+                        >
+                          {renderModalTicketContent(copy, blockW, blockH)}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               ) : layoutMode === 'side-by-side-y' && selectedCopyTab === 'ALL' ? (
                 /* Multi-Copy Single Perforated Sheet along Y */
-                <div
-                  className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all"
-                  style={{
-                    fontFamily: resolvedFontFamily,
-                    fontWeight: fontWeight,
-                    fontSize: effectiveFontSize,
-                    lineHeight: 1.15,
-                  }}
-                >
-                  {activeCopies.map((copy, idx) => (
+                (() => {
+                  const blockW = Number(ticketWidth);
+                  const blockH = Number((Number(ticketHeight) / activeCopies.length).toFixed(4));
+                  const isSlipVert = orientation === 'portrait' || blockH > blockW;
+                  return (
                     <div
-                      key={copy.id}
-                      data-ticket-box={!isVertical ? '1' : undefined}
-                      className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                      className="bg-white text-black shadow-md select-text rounded-xs flex flex-col border border-neutral-800 shrink-0 transition-all overflow-hidden"
                       style={{
-                        width: `${ticketWidth}cm`,
-                        minWidth: `${ticketWidth}cm`,
-                        maxWidth: `${ticketWidth}cm`,
+                        width: `${blockW}cm`,
+                        minWidth: `${blockW}cm`,
+                        maxWidth: `${blockW}cm`,
                         height: `${ticketHeight}cm`,
                         minHeight: `${ticketHeight}cm`,
                         maxHeight: `${ticketHeight}cm`,
-                        padding: isVertical ? 0 : `${padV}mm ${padH}mm`,
-                        boxSizing: 'border-box',
-                        borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                        fontFamily: resolvedFontFamily,
+                        fontWeight: fontWeight,
+                        fontSize: effectiveFontSize,
+                        lineHeight: 1.15,
                       }}
                     >
-                      {renderModalTicketContent(copy)}
+                      {activeCopies.map((copy, idx) => (
+                        <div
+                          key={copy.id}
+                          data-ticket-box={!isSlipVert ? '1' : undefined}
+                          className="flex flex-col justify-between overflow-hidden relative shrink-0"
+                          style={{
+                            width: `${blockW}cm`,
+                            minWidth: `${blockW}cm`,
+                            maxWidth: `${blockW}cm`,
+                            height: `${blockH}cm`,
+                            minHeight: `${blockH}cm`,
+                            maxHeight: `${blockH}cm`,
+                            padding: isSlipVert ? 0 : `${padV}mm ${padH}mm`,
+                            boxSizing: 'border-box',
+                            borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                          }}
+                        >
+                          {renderModalTicketContent(copy, blockW, blockH)}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               ) : layoutMode === 'vertical-continuous' && selectedCopyTab === 'ALL' ? (
                 /* Multi-Copy Continuous Uncut Strip */
                 <div
@@ -488,7 +516,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
         {/* Footer info & Confirmation */}
         <div className="flex items-center justify-between pt-2">
           <div className="text-2xs text-muted-foreground font-mono">
-            Sheet: <strong className="text-foreground">{layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x' ? `${(Number(ticketWidth) * activeCopies.length).toFixed(1)} cm (X) × ${ticketHeight} cm (Y)` : layoutMode === 'side-by-side-y' || layoutMode === 'vertical-continuous' ? `${ticketWidth} cm (X) × ${(Number(ticketHeight) * activeCopies.length).toFixed(1)} cm (Y)` : `${ticketWidth} cm (X) × ${ticketHeight} cm (Y)`}</strong> ({orientation.toUpperCase()}{rotation !== '0' ? `, ${rotation}°` : ''})
+            Sheet: <strong className="text-foreground">{layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x' ? `${ticketWidth} cm (X) × ${ticketHeight} cm (Y) (${activeCopies.length} × ${(Number(ticketWidth) / (activeCopies.length || 1)).toFixed(1)} cm)` : layoutMode === 'side-by-side-y' || layoutMode === 'vertical-continuous' ? `${ticketWidth} cm (X) × ${ticketHeight} cm (Y)` : `${ticketWidth} cm (X) × ${ticketHeight} cm (Y)`}</strong> ({orientation.toUpperCase()}{rotation !== '0' ? `, ${rotation}°` : ''})
           </div>
           <div className="flex items-center space-x-2">
             {isConfirmed ? (

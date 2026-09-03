@@ -94,9 +94,9 @@ export const OFFLINE_FONT_MAP: Record<string, string> = {
   'impact': "Impact, 'Arial Black', sans-serif",
 };
 
-/** Single source of truth for the ticket stock. Default stock is 10.2 cm across x 3.5 cm feed. */
-export const DEFAULT_TICKET_WIDTH_CM = 10.2;
-export const DEFAULT_TICKET_HEIGHT_CM = 3.5;
+/** Single source of truth for the ticket stock. Default continuous 3-part roll liner is 10.5 cm across x 10.2 cm feed. */
+export const DEFAULT_TICKET_WIDTH_CM = 10.5;
+export const DEFAULT_TICKET_HEIGHT_CM = 10.2;
 
 /**
  * Resolves the configured ticket dimensions to positive numbers in cm.
@@ -300,23 +300,35 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     ? `${displayMovieTitle} ${displayMovieType}`
     : displayMovieTitle;
 
+  const isSideBySideX = layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x';
+  const isSideBySideY = layoutMode === 'side-by-side-y';
+  const isContinuous = layoutMode === 'vertical-continuous';
+
+  // In multi-copy side-by-side across roll X:
+  // widthCm is the TOTAL roll/liner page width (e.g. 10.5 cm).
+  // Each ticket copy block occupies an equal partition across the roll width:
+  const blockWidthCm = isSideBySideX
+    ? Number((Number(widthCm) / copiesToPrint.length).toFixed(4))
+    : Number(widthCm);
+  const blockHeightCm = isSideBySideY
+    ? Number((Number(heightCm) / copiesToPrint.length).toFixed(4))
+    : Number(heightCm);
+
+  // Each individual ticket block is vertical if its height > width or explicitly portrait
   const isVertical =
     data.orientation === 'portrait' ||
-    Number(heightCm) > Number(widthCm);
+    Number(blockHeightCm) > Number(blockWidthCm);
 
   const slipsHtml = copiesToPrint
     .map((copy, idx) => {
       const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
       const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
-      const isSideBySideX = layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x';
-      const isSideBySideY = layoutMode === 'side-by-side-y';
-      const isContinuous = layoutMode === 'vertical-continuous';
 
       const slipWidthStyle = isSideBySideX
-        ? `width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; page-break-after: avoid; border: 1px solid #000; border-left: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};`
+        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; border: 1px solid #000; border-left: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};`
         : isSideBySideY || isContinuous
-        ? `width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; page-break-after: avoid; page-break-inside: avoid; border: 1px solid #000; border-top: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};`
-        : `width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; page-break-after: always; border: 1px solid #000;`;
+        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; border: 1px solid #000; border-top: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};`
+        : `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: always; border: 1px solid #000;`;
 
       // Landscape content — used for landscape slips directly, rotated 90° inside portrait slips
       const contentHtml = `
@@ -393,8 +405,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
 
       // For portrait/vertical slips: rotate content 90° so text reads along the long edge
       if (isVertical) {
-        const wCm = Number(widthCm);
-        const hCm = Number(heightCm);
+        const wCm = blockWidthCm;
+        const hCm = blockHeightCm;
         return `
         <div class="ticket-slip" style="${slipWidthStyle} box-sizing: border-box; padding: 0; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; position: relative; overflow: visible; clip-path: inset(0);">
           <div data-ticket-box="1" style="position: absolute; left: 0; top: 0; width: ${hCm}cm; height: ${wCm}cm; transform: translate(0, ${hCm}cm) rotate(-90deg); transform-origin: 0 0; padding: ${padV}mm ${padH}mm; box-sizing: border-box; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; overflow: hidden;">
@@ -421,16 +433,14 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const autoFitScript = ticketAutoFitScriptTag();
 
   if (layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') {
-    const totalWidth = Number((Number(widthCm) * copiesToPrint.length).toFixed(2));
     return `
-    <div class="ticket-page-grid" style="width: ${totalWidth}cm; min-width: ${totalWidth}cm; max-width: ${totalWidth}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: row; background: #fff; margin: 0; padding: 0;">
+    <div class="ticket-page-grid" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: row; flex-wrap: nowrap; background: #fff; margin: 0; padding: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid;">
       ${slipsHtml}
     </div>
     ${autoFitScript}`;
   } else if (layoutMode === 'side-by-side-y') {
-    const totalHeight = Number((Number(heightCm) * copiesToPrint.length).toFixed(2));
     return `
-    <div class="ticket-page-grid-y" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${totalHeight}cm; min-height: ${totalHeight}cm; max-height: ${totalHeight}cm; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; margin: 0; padding: 0;">
+    <div class="ticket-page-grid-y" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: column; flex-wrap: nowrap; background: #fff; margin: 0; padding: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid;">
       ${slipsHtml}
     </div>
     ${autoFitScript}`;
@@ -448,9 +458,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
 
 export async function printTickets(data: TicketPrintData, silent = false): Promise<boolean> {
   const html = generateThermalTicketHTML(data);
-  const widthCm = data.ticketWidthCm || (data.orientation === 'portrait' ? '3.5' : '10.2');
-  const heightCm = data.ticketHeightCm || (data.orientation === 'portrait' ? '10.2' : '3.5');
-  const orientation = data.orientation || 'landscape';
+  const { widthCm, heightCm } = resolveTicketDimensions(data);
+  const orientation = data.orientation || 'portrait';
   const marginMm = data.marginMm !== undefined ? data.marginMm : 2;
   const fontScale = data.fontScale !== undefined ? data.fontScale : 100;
   const fontFamily = data.fontFamily || 'system-sans';

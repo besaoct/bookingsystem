@@ -116,10 +116,11 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 -- 9. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
 ('ticket_layout_mode', 'side-by-side', 'printer'),
-('ticket_width_cm', '10.2', 'printer'),
-('ticket_height_cm', '3.5', 'printer'),
-('ticket_orientation', 'landscape', 'printer'),
-('ticket_margin_mm', '2', 'printer'),
+('ticket_width_cm', '10.5', 'printer'),
+('ticket_height_cm', '10.2', 'printer'),
+('ticket_orientation', 'portrait', 'printer'),
+('ticket_rotation', '0', 'printer'),
+('ticket_margin_mm', '1.5', 'printer'),
 ('ticket_font_scale', '100', 'printer'),
 ('ticket_auto_cut', 'true', 'printer'),
 ('ticket_font_family', 'system-sans', 'printer'),
@@ -339,10 +340,11 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 -- 14. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
 ('ticket_layout_mode', 'side-by-side', 'printer'),
-('ticket_width_cm', '10.2', 'printer'),
-('ticket_height_cm', '3.5', 'printer'),
-('ticket_orientation', 'landscape', 'printer'),
-('ticket_margin_mm', '2', 'printer'),
+('ticket_width_cm', '10.5', 'printer'),
+('ticket_height_cm', '10.2', 'printer'),
+('ticket_orientation', 'portrait', 'printer'),
+('ticket_rotation', '0', 'printer'),
+('ticket_margin_mm', '1.5', 'printer'),
 ('ticket_font_scale', '100', 'printer'),
 ('ticket_auto_cut', 'true', 'printer'),
 ('ticket_feed_lines', '0', 'printer'),

@@ -239,13 +239,13 @@ ipcMain.handle(
     try {
       const isLandscape = options?.orientation === 'landscape';
       const rotationDeg = Number(options?.rotation) || 0;
-      const DEFAULT_TICKET_WIDTH_CM = 10.2;
-      const DEFAULT_TICKET_HEIGHT_CM = 3.5;
+      const DEFAULT_TICKET_WIDTH_CM = 10.5;
+      const DEFAULT_TICKET_HEIGHT_CM = 10.2;
       const parsedWidth = Number(options?.widthCm);
       const parsedHeight = Number(options?.heightCm);
       const widthCm = Number.isFinite(parsedWidth) && parsedWidth > 0 ? parsedWidth : DEFAULT_TICKET_WIDTH_CM;
       const heightCm = Number.isFinite(parsedHeight) && parsedHeight > 0 ? parsedHeight : DEFAULT_TICKET_HEIGHT_CM;
-      const marginMm = options?.marginMm !== undefined ? Number(options.marginMm) : 2;
+      const marginMm = options?.marginMm !== undefined ? Number(options.marginMm) : 1.5;
       const fontScale = Number(options?.fontScale) || 100;
       const baseFontSize = Number(options?.fontSizePt) || 8.0;
       const effectiveFontSize = ((baseFontSize * fontScale) / 100).toFixed(1);
@@ -255,19 +255,10 @@ ipcMain.handle(
       const layoutMode = options?.layoutMode || 'side-by-side';
       const copiesCount = Math.max(1, Number(options?.copiesCount) || 1);
 
-      let sheetWidthCm = widthCm;
-      let sheetHeightCm = heightCm;
-
-      if (layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') {
-        sheetWidthCm = Number((widthCm * copiesCount).toFixed(2));
-        sheetHeightCm = heightCm;
-      } else if (layoutMode === 'side-by-side-y' || layoutMode === 'vertical-continuous') {
-        sheetWidthCm = widthCm;
-        sheetHeightCm = Number((heightCm * copiesCount).toFixed(2));
-      } else {
-        sheetWidthCm = widthCm;
-        sheetHeightCm = heightCm;
-      }
+      // widthCm represents the TOTAL roll liner page width across all copies (e.g. 10.5 cm).
+      // heightCm represents the continuous feed travel length (e.g. 10.2 cm).
+      const sheetWidthCm = widthCm;
+      const sheetHeightCm = heightCm;
 
       // Rotation bounding box: after rotating W×H by theta, the new extents are:
       //   Wp = |W*cos(t)| + |H*sin(t)|,  Hp = |W*sin(t)| + |H*cos(t)|
@@ -368,6 +359,7 @@ ipcMain.handle(
             .ticket-page-grid {
               display: flex;
               flex-direction: row;
+              flex-wrap: nowrap;
               width: ${sheetWidthCm}cm;
               min-width: ${sheetWidthCm}cm;
               max-width: ${sheetWidthCm}cm;
@@ -377,14 +369,16 @@ ipcMain.handle(
               box-sizing: border-box;
               margin: 0;
               padding: 0;
+              overflow: hidden;
               page-break-inside: avoid;
               break-inside: avoid;
-              page-break-after: auto;
-              break-after: auto;
+              page-break-after: avoid;
+              break-after: avoid;
             }
             .ticket-page-grid-y {
               display: flex;
               flex-direction: column;
+              flex-wrap: nowrap;
               width: ${sheetWidthCm}cm;
               min-width: ${sheetWidthCm}cm;
               max-width: ${sheetWidthCm}cm;
@@ -394,10 +388,11 @@ ipcMain.handle(
               box-sizing: border-box;
               margin: 0;
               padding: 0;
+              overflow: hidden;
               page-break-inside: avoid;
               break-inside: avoid;
-              page-break-after: auto;
-              break-after: auto;
+              page-break-after: avoid;
+              break-after: avoid;
             }
             .ticket-vertical-strip {
               display: flex;
@@ -417,24 +412,12 @@ ipcMain.handle(
               break-after: auto;
             }
             .ticket-slip {
-              width: ${widthCm}cm;
-              min-width: ${widthCm}cm;
-              max-width: ${widthCm}cm;
-              height: ${heightCm}cm;
-              min-height: ${heightCm}cm;
-              max-height: ${heightCm}cm;
               box-sizing: border-box;
-              padding: ${marginMm}mm;
               font-family: ${resolvedFontFamily} !important;
               font-weight: ${fontWeight};
-              overflow: hidden;
               ${autoCut && layoutMode === 'sequential' ? 'page-break-after: always; break-after: page;' : 'page-break-after: avoid; break-after: avoid;'}
               page-break-inside: avoid;
               break-inside: avoid;
-            }
-            .ticket-slip:last-child {
-              page-break-after: auto;
-              break-after: auto;
             }
           </style>
         </head>
