@@ -116,7 +116,7 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 
 -- 9. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
-('ticket_layout_mode', 'side-by-side-y', 'printer'),
+('ticket_layout_mode', 'side-by-side-x', 'printer'),
 ('ticket_width_cm', '10.2', 'printer'),
 ('ticket_height_cm', '10.2', 'printer'),
 ('ticket_orientation', 'portrait', 'printer'),
@@ -339,7 +339,7 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 
 -- 14. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
-('ticket_layout_mode', 'side-by-side-y', 'printer'),
+('ticket_layout_mode', 'side-by-side-x', 'printer'),
 ('ticket_width_cm', '10.2', 'printer'),
 ('ticket_height_cm', '10.2', 'printer'),
 ('ticket_orientation', 'portrait', 'printer'),

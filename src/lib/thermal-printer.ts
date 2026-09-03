@@ -211,7 +211,7 @@ function ticketAutoFitScriptTag(): string {
 export function generateThermalTicketHTML(data: TicketPrintData): string {
   const { cinema, booking, copyConfigs, invoiceSeries } = data;
   const { widthCm, heightCm } = resolveTicketDimensions(data);
-  const layoutMode = data.layoutMode || 'side-by-side-y';
+  const layoutMode = data.layoutMode || 'side-by-side-x';
   const rotation = data.rotation || '0';
   const rotationDeg = Number(rotation) || 0;
 

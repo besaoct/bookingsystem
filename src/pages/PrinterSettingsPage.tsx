@@ -116,7 +116,7 @@ export const PrinterSettingsPage: React.FC = () => {
   // Printer settings local form
   const [ticketLayoutMode, setTicketLayoutMode] = useState<
     'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential'
-  >('side-by-side-y');
+  >('side-by-side-x');
   const [ticketWidth, setTicketWidth] = useState('10.2');
   const [ticketHeight, setTicketHeight] = useState('10.2');
   const [ticketOrientation, setTicketOrientation] = useState<'landscape' | 'portrait'>('portrait');
@@ -183,7 +183,7 @@ export const PrinterSettingsPage: React.FC = () => {
       setNewPrintOrder(maxOrder + 1);
     }
     if (systemSettings) {
-      setTicketLayoutMode((systemSettings['ticket_layout_mode'] as any) || 'side-by-side-y');
+      setTicketLayoutMode((systemSettings['ticket_layout_mode'] as any) || 'side-by-side-x');
       setTicketWidth(systemSettings['ticket_width_cm'] || '10.2');
       setTicketHeight(systemSettings['ticket_height_cm'] || '10.2');
       setTicketOrientation((systemSettings['ticket_orientation'] as any) || 'portrait');
@@ -340,7 +340,7 @@ export const PrinterSettingsPage: React.FC = () => {
         start_time: '06:30 PM',
         movie_name: 'AVATAR : FIRE AND ASH',
         movie_type_name: '3D',
-        screen_name: 'AUDI 1',
+        screen_name: 'Nakshatra',
         seats: [
           {
             id: 1,
@@ -348,8 +348,8 @@ export const PrinterSettingsPage: React.FC = () => {
             seat_id: 1,
             row_name: 'A',
             seat_number: 1,
-            seat_class_id: 1,
-            seat_class_name: 'GOLD',
+            seat_class_id: 7,
+            seat_class_name: 'BOX',
             price_net: 120,
             cgst: 10.8,
             sgst: 10.8,
@@ -362,8 +362,8 @@ export const PrinterSettingsPage: React.FC = () => {
             seat_id: 2,
             row_name: 'A',
             seat_number: 2,
-            seat_class_id: 1,
-            seat_class_name: 'GOLD',
+            seat_class_id: 7,
+            seat_class_name: 'BOX',
             price_net: 120,
             cgst: 10.8,
             sgst: 10.8,
@@ -533,9 +533,9 @@ export const PrinterSettingsPage: React.FC = () => {
 
           {/* Column 3: Auditorium, Seat Numbers & Class */}
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.12, textAlign: 'left', overflow: 'hidden' }}>
-            <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AUDI 1</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>NAKSHATRA</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>A-1, A-2</div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>BOX</div>
           </div>
         </div>
 
@@ -1018,7 +1018,27 @@ export const PrinterSettingsPage: React.FC = () => {
                   <span className="text-xs font-semibold text-foreground">Continuous Roll Stock Presets</span>
                   <span className="text-[10px] text-muted-foreground">Click to auto-configure dimensions</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTicketWidth('10.2');
+                      setTicketHeight('10.2');
+                      setTicketLayoutMode('side-by-side-x');
+                      setTicketOrientation('portrait');
+                      setTicketRotation('0');
+                    }}
+                    disabled={!canUpdate}
+                    className={`p-2 rounded-xs border text-left cursor-pointer transition-all ${
+                      ticketWidth === '10.2' && ticketHeight === '10.2' && ticketLayoutMode === 'side-by-side-x'
+                        ? 'bg-primary/15 text-foreground border-primary font-semibold ring-1 ring-primary'
+                        : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <div className="font-bold text-xs">3-Part Across Roll (X) (Recommended)</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">10.2 cm × 10.2 cm (Across Roll - X)</div>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1035,7 +1055,7 @@ export const PrinterSettingsPage: React.FC = () => {
                         : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted hover:text-foreground'
                     }`}
                   >
-                    <div className="font-bold text-xs">Standard 3-Part Roll (Recommended)</div>
+                    <div className="font-bold text-xs">3-Part Along Feed (Y)</div>
                     <div className="text-[10px] text-muted-foreground mt-0.5">10.2 cm × 10.2 cm (Along Feed - Y)</div>
                   </button>
 

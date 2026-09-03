@@ -100,7 +100,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const now = new Date();
   const issuedOn = `${dStr}-${bookingDateObj.toLocaleString('en-US', { month: 'short' })}-${String(yStr).slice(-2)} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}`;
 
-  const layoutMode = (systemSettings?.['ticket_layout_mode'] as 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential') || 'side-by-side-y';
+  const layoutMode = (systemSettings?.['ticket_layout_mode'] as 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential') || 'side-by-side-x';
   const rotation = (systemSettings?.['ticket_rotation'] as '0' | '90' | '180' | '270') || '0';
   const rotationDeg = Number(rotation) || 0;
 
