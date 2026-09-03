@@ -189,7 +189,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
 
     // Landscape content — used directly for landscape slips, rotated inside portrait slips
     const landscapeContent = (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden', fontFamily: resolvedFontFamily, fontSize: effectiveFontSize, fontWeight: normalWeight }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden', fontFamily: resolvedFontFamily, fontSize: effectiveFontSize, fontWeight: normalWeight, border: '1.5px solid #000', borderRadius: '2px', padding: '1mm 1.5mm', boxSizing: 'border-box' }}>
         {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #000', paddingBottom: '1px', minWidth: 0, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3em', minWidth: 0, overflow: 'hidden', flex: 1 }}>
@@ -213,46 +213,52 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
         {/* Middle 3 Columns */}
         <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '0.5px 0', fontSize: '0.88em', lineHeight: 1.10, flexShrink: 0 }}>
           {/* Column 1: Financials */}
-          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.10, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: normalWeight }}>ADM</span>
-              <span style={{ fontWeight: semiWeight }}>{admNet}</span>
-            </div>
-            {is3D && (
+          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '0.80em', lineHeight: 1.05 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: normalWeight }}>3D</span>
-                <span style={{ fontWeight: semiWeight }}>{threeDNet}</span>
+                <span style={{ fontWeight: normalWeight }}>ADM</span>
+                <span style={{ fontWeight: semiWeight }}>{admNet}</span>
               </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: normalWeight }}>CGST</span>
-              <span style={{ fontWeight: semiWeight }}>{booking.total_cgst.toFixed(2)}</span>
+              {is3D && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: normalWeight }}>3D</span>
+                  <span style={{ fontWeight: semiWeight }}>{threeDNet}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: normalWeight }}>CGST</span>
+                <span style={{ fontWeight: semiWeight }}>{booking.total_cgst.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: normalWeight }}>SGST</span>
+                <span style={{ fontWeight: semiWeight }}>{booking.total_sgst.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: normalWeight }}>S.CH</span>
+                <span style={{ fontWeight: semiWeight }}>{booking.total_service_charge.toFixed(2)}</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: normalWeight }}>SGST</span>
-              <span style={{ fontWeight: semiWeight }}>{booking.total_sgst.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: normalWeight }}>S.CH</span>
-              <span style={{ fontWeight: semiWeight }}>{booking.total_service_charge.toFixed(2)}</span>
-            </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '0.5px', borderTop: '0.5px solid #000' }}>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.25em', marginTop: '1px', borderTop: '0.5px solid #000', whiteSpace: 'nowrap' }}>
               Total: {booking.total_gross.toFixed(2)}
             </div>
           </div>
 
           {/* Column 2: Date & Time */}
-          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
-            <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap' }}>{formattedDate}</div>
-            <div style={{ fontWeight: semiWeight, fontSize: '1.05em', margin: '1px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.85em', marginTop: '1px' }}>SAC 997321</div>
+          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.15em', whiteSpace: 'nowrap' }}>{formattedDate}</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.22em', margin: '1px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
+            </div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Screen & Seat */}
-          <div style={{ paddingLeft: '0.3em', lineHeight: 1.12, textAlign: 'left', overflow: 'hidden' }}>
-            <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
+          <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.22em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
+            </div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
           </div>
         </div>
 

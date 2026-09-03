@@ -331,10 +331,10 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
       const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
 
       const slipWidthStyle = isSideBySideX
-        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; ${showCutLines ? `border: 1px solid #000; border-left: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};` : 'border: none;'}`
+        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; border: none; ${showCutLines && idx > 0 ? 'border-left: 1.5px dashed #000;' : ''}`
         : isSideBySideY || isContinuous
-        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; ${showCutLines ? `border: 1px solid #000; border-top: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};` : 'border: none;'}`
-        : `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; ${showCutLines ? 'page-break-after: always; border: 1px solid #000;' : 'border: none;'}`;
+        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; border: none; ${showCutLines && idx > 0 ? 'border-top: 1.5px dashed #000;' : ''}`
+        : `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; border: none; ${showCutLines ? 'page-break-after: always;' : ''}`;
 
       // Landscape content — used for landscape slips directly, rotated 90° inside portrait slips
       const contentHtml = `
@@ -358,41 +358,47 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         <div style="display: grid; grid-template-columns: 1.35fr 1.15fr 1fr; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 0.5px 0; font-size: 0.88em; line-height: 1.10; flex-shrink: 0 !important;">
           
           <!-- Column 1: Financial & Tax Breakup -->
-          <div style="border-right: 1px solid #000; padding-right: 0.3em; line-height: 1.10; overflow: hidden;">
-            <div style="display: flex; justify-content: space-between;">
-              <span style="font-weight: ${normalWeight};">ADM</span>
-              <span style="font-weight: ${semiWeight};">${admNet}</span>
+          <div style="border-right: 1px solid #000; padding-right: 0.3em; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="font-size: 0.80em; line-height: 1.05;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: ${normalWeight};">ADM</span>
+                <span style="font-weight: ${semiWeight};">${admNet}</span>
+              </div>
+              ${is3D ? `<div style="display: flex; justify-content: space-between;"><span style="font-weight: ${normalWeight};">3D</span><span style="font-weight: ${semiWeight};">${threeDNet}</span></div>` : ''}
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: ${normalWeight};">CGST</span>
+                <span style="font-weight: ${semiWeight};">${booking.total_cgst.toFixed(2)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: ${normalWeight};">SGST</span>
+                <span style="font-weight: ${semiWeight};">${booking.total_sgst.toFixed(2)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: ${normalWeight};">S.CH</span>
+                <span style="font-weight: ${semiWeight};">${booking.total_service_charge.toFixed(2)}</span>
+              </div>
             </div>
-            ${is3D ? `<div style="display: flex; justify-content: space-between;"><span style="font-weight: ${normalWeight};">3D</span><span style="font-weight: ${semiWeight};">${threeDNet}</span></div>` : ''}
-            <div style="display: flex; justify-content: space-between;">
-              <span style="font-weight: ${normalWeight};">CGST</span>
-              <span style="font-weight: ${semiWeight};">${booking.total_cgst.toFixed(2)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="font-weight: ${normalWeight};">SGST</span>
-              <span style="font-weight: ${semiWeight};">${booking.total_sgst.toFixed(2)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="font-weight: ${normalWeight};">S.CH</span>
-              <span style="font-weight: ${semiWeight};">${booking.total_service_charge.toFixed(2)}</span>
-            </div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.05em; margin-top: 0.5px; border-top: 0.5px solid #000;">
+            <div style="font-weight: ${boldWeight}; font-size: 1.25em; margin-top: 1px; border-top: 0.5px solid #000; white-space: nowrap;">
               Total: ${booking.total_gross.toFixed(2)}
             </div>
           </div>
 
           <!-- Column 2: Date, Showtime & SAC Code -->
-          <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.12; overflow: hidden;">
-            <div style="font-weight: ${semiWeight}; font-size: 1.0em; white-space: nowrap;">${esc(formattedDate)}</div>
-            <div style="font-weight: ${semiWeight}; font-size: 1.05em; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(showTimeDisplay)}</div>
-            <div style="font-weight: ${semiWeight}; font-size: 0.85em; margin-top: 1px;">SAC 997321</div>
+          <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.15; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-weight: ${boldWeight}; font-size: 1.15em; white-space: nowrap;">${esc(formattedDate)}</div>
+              <div style="font-weight: ${boldWeight}; font-size: 1.22em; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(showTimeDisplay)}</div>
+            </div>
+            <div style="font-weight: ${semiWeight}; font-size: 0.80em; margin-top: 1px;">SAC 997321</div>
           </div>
 
           <!-- Column 3: Auditorium, Seat Numbers & Class -->
-          <div style="padding-left: 0.3em; line-height: 1.12; text-align: left; overflow: hidden;">
-            <div style="font-weight: ${semiWeight}; font-size: 1.0em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(booking.screen_name)}</div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.15em; letter-spacing: 0.03em; word-break: break-all;">${esc(seatLabels)}</div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.05em; text-transform: uppercase; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(seatClass)}</div>
+          <div style="padding-left: 0.3em; line-height: 1.15; text-align: left; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-weight: ${boldWeight}; font-size: 1.20em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(booking.screen_name)}</div>
+              <div style="font-weight: ${boldWeight}; font-size: 1.22em; letter-spacing: 0.03em; word-break: break-all;">${esc(seatLabels)}</div>
+            </div>
+            <div style="font-weight: ${boldWeight}; font-size: 1.10em; text-transform: uppercase; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(seatClass)}</div>
           </div>
         </div>
 
@@ -416,7 +422,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         return `
         <div class="ticket-slip" style="${slipWidthStyle} box-sizing: border-box; padding: 0; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; position: relative; overflow: hidden; clip-path: inset(0);">
           <div style="position: absolute; left: 0; top: 0; width: ${hCm}cm; height: ${wCm}cm; transform: translate(0, ${hCm}cm) rotate(-90deg); transform-origin: 0 0; padding: ${padV}mm ${padH}mm; box-sizing: border-box; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; overflow: hidden;">
-            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid #000; border-radius: 2px; padding: 1mm 1.5mm; box-sizing: border-box;">
               ${contentHtml}
             </div>
           </div>
@@ -427,7 +433,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
       // Horizontal slips (Side-by-Side Y): printed directly left-to-right without rotation
       return `
       <div class="ticket-slip" style="${slipWidthStyle} box-sizing: border-box; padding: ${padV}mm ${padH}mm; font-family: ${resolvedFontFamily} !important; font-size: ${effectiveFontSizePt}pt; font-weight: ${normalWeight}; line-height: 1.15; background: #fff; color: #000; overflow: hidden;">
-        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid #000; border-radius: 2px; padding: 1mm 1.5mm; box-sizing: border-box;">
           ${contentHtml}
         </div>
       </div>
