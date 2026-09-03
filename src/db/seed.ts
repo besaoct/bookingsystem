@@ -33,7 +33,7 @@ INSERT OR IGNORE INTO role_permissions (id, role, module, can_create, can_read, 
 
 -- 2. Blank Cinema Master Skeleton
 INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers, show_gstin_on_ticket) VALUES
-(1, 'CINEMA THEATRE', 'Main Road, City Center', '', '', 'CINEMA TICKET', '', 0);
+(1, 'Nakshatra Cinemas', 'NT Road, North Lakhimpur, Assam', '18AJVPD0031E3ZI', '0', 'NAKSHATRA CINEMAS - LAKHIMPUR', '6001884647', 1);
 
 -- 3. Core Standard System Lookups
 INSERT OR IGNORE INTO languages (id, name, is_active) VALUES
@@ -70,7 +70,8 @@ INSERT OR IGNORE INTO seat_classes (id, name, color, display_order, is_active) V
 (3, 'Platinum', '#64748b', 3, 1),
 (4, 'Silver', '#94a3b8', 4, 1),
 (5, 'Recliner', '#8b5cf6', 5, 1),
-(6, 'Balcony', '#06b6d4', 6, 1);
+(6, 'Balcony', '#06b6d4', 6, 1),
+(7, 'Box', '#ec4899', 7, 1);
 
 -- 4. Tax / GST Master Configuration
 INSERT OR IGNORE INTO tax_configs (id, cgst_pct, sgst_pct, service_charge_amount, service_charge_is_pct, apply_gst_default, gst_on_service_charge, tax_calculation_method, rounding_rule) VALUES
@@ -115,14 +116,14 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 
 -- 9. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
-('ticket_layout_mode', 'side-by-side', 'printer'),
-('ticket_width_cm', '10.5', 'printer'),
+('ticket_layout_mode', 'side-by-side-y', 'printer'),
+('ticket_width_cm', '10.2', 'printer'),
 ('ticket_height_cm', '10.2', 'printer'),
 ('ticket_orientation', 'portrait', 'printer'),
 ('ticket_rotation', '0', 'printer'),
 ('ticket_margin_mm', '1.5', 'printer'),
 ('ticket_font_scale', '100', 'printer'),
-('ticket_auto_cut', 'true', 'printer'),
+('ticket_auto_cut', 'false', 'printer'),
 ('ticket_font_family', 'system-sans', 'printer'),
 ('ticket_font_size_pt', '8.0', 'printer'),
 ('ticket_font_weight', '600', 'printer'),
@@ -174,7 +175,7 @@ INSERT OR IGNORE INTO role_permissions (id, role, module, can_create, can_read, 
 
 -- 3. Cinema Details
 INSERT OR IGNORE INTO cinemas (id, name, address, gstin, cin, header_text, contact_numbers, show_gstin_on_ticket) VALUES
-(1, 'BOOKING SYSTEM CINEMAS', 'Main Road, City Center - 787001', '18AJVPD0031E3Z1', 'U92100AS2018PTC018500', 'BOOKING SYSTEM CINEMAS', '03752-245678 / +91 9876543210', 0);
+(1, 'Nakshatra Cinemas', 'NT Road, North Lakhimpur, Assam', '18AJVPD0031E3ZI', '0', 'NAKSHATRA CINEMAS - LAKHIMPUR', '6001884647', 1);
 
 -- 4. Core Masters & Catalogs
 INSERT OR IGNORE INTO languages (id, name, is_active) VALUES
@@ -221,34 +222,32 @@ INSERT OR IGNORE INTO seat_classes (id, name, color, display_order, is_active) V
 (3, 'Platinum', '#64748b', 3, 1),
 (4, 'Silver', '#94a3b8', 4, 1),
 (5, 'Recliner', '#8b5cf6', 5, 1),
-(6, 'Balcony', '#06b6d4', 6, 1);
+(6, 'Balcony', '#06b6d4', 6, 1),
+(7, 'Box', '#ec4899', 7, 1);
 
 INSERT OR IGNORE INTO screens (id, name, capacity, is_active) VALUES
 (1, 'Nakshatra', 10, 1);
 
--- 5. Exact 10 Seat Layout for Screen 1
--- Row A: 1 2 3 (Silver)
--- Row B: 1 2 3 (Gold)
--- Row C: 1 2 3 4 (Gold Plus)
+-- 5. Exact 10 Seat Layout for Screen 1 (A BOX 4, B BOX 3, C BOX 3)
 INSERT OR IGNORE INTO seat_rows (id, screen_id, row_name, display_order) VALUES
 (1, 1, 'A', 1),
 (2, 1, 'B', 2),
 (3, 1, 'C', 3);
 
 INSERT OR IGNORE INTO seats (id, row_id, seat_number, seat_class_id, is_aisle, is_blocked, is_wheelchair, pos_x, pos_y) VALUES
--- Row A (3 seats)
-(1, 1, 1, 4, 0, 0, 0, 1, 1),
-(2, 1, 2, 4, 0, 0, 0, 2, 1),
-(3, 1, 3, 4, 0, 0, 0, 3, 1),
--- Row B (3 seats)
-(4, 2, 1, 2, 0, 0, 0, 1, 2),
-(5, 2, 2, 2, 0, 0, 0, 2, 2),
-(6, 2, 3, 2, 0, 0, 0, 3, 2),
--- Row C (4 seats)
-(7, 3, 1, 1, 0, 0, 0, 1, 3),
-(8, 3, 2, 1, 0, 0, 0, 2, 3),
-(9, 3, 3, 1, 0, 0, 0, 3, 3),
-(10, 3, 4, 1, 0, 0, 0, 4, 3);
+-- Row A (4 seats: A BOX 4)
+(1, 1, 1, 7, 0, 0, 0, 1, 1),
+(2, 1, 2, 7, 0, 0, 0, 2, 1),
+(3, 1, 3, 7, 0, 0, 0, 3, 1),
+(4, 1, 4, 7, 0, 0, 0, 4, 1),
+-- Row B (3 seats: B BOX 3)
+(5, 2, 1, 7, 0, 0, 0, 1, 2),
+(6, 2, 2, 7, 0, 0, 0, 2, 2),
+(7, 2, 3, 7, 0, 0, 0, 3, 2),
+-- Row C (3 seats: C BOX 3)
+(8, 3, 1, 7, 0, 0, 0, 1, 3),
+(9, 3, 2, 7, 0, 0, 0, 2, 3),
+(10, 3, 3, 7, 0, 0, 0, 3, 3);
 
 -- 6. Movie Catalog
 INSERT OR IGNORE INTO movies (id, name, distributor_id, language_id, movie_type_id, category_id, rating, star_cast, duration_min, start_date, end_date, run, week, no_of_shows, inr_tax_pct, ms_tax_pct, is_tax_free, tax_loss_pct, rebate_cgst, rebate_sgst, is_active) VALUES
@@ -275,26 +274,27 @@ INSERT OR IGNORE INTO pricing (id, seat_class_id, show_id, base_price, service_c
 (4, 4, NULL, 100.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
 (5, 5, NULL, 250.00, 15.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
 (6, 6, NULL, 160.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(7, 7, NULL, 160.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
 
-(7, 1, 1, 150.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(8, 2, 1, 130.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(9, 3, 1, 140.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(10, 4, 1, 100.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(8, 1, 1, 150.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(9, 2, 1, 130.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(10, 3, 1, 140.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(11, 4, 1, 100.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
 
-(11, 1, 2, 180.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(12, 2, 2, 150.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(13, 3, 2, 160.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(14, 4, 2, 110.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(12, 1, 2, 180.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(13, 2, 2, 150.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(14, 3, 2, 160.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(15, 4, 2, 110.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
 
-(15, 1, 3, 200.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(16, 2, 3, 170.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(17, 3, 3, 180.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(18, 4, 3, 120.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(16, 1, 3, 200.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(17, 2, 3, 170.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(18, 3, 3, 180.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(19, 4, 3, 120.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
 
-(19, 1, 4, 180.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(20, 2, 4, 150.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(21, 3, 4, 160.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
-(22, 4, 4, 110.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1);
+(20, 1, 4, 180.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(21, 2, 4, 150.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(22, 3, 4, 160.00, 12.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1),
+(23, 4, 4, 110.00, 10.00, 9.0, 9.0, '2026-01-01', '2099-12-31', 1);
 
 -- 9. Tax / GST Master Configuration
 INSERT OR IGNORE INTO tax_configs (id, cgst_pct, sgst_pct, service_charge_amount, service_charge_is_pct, apply_gst_default, gst_on_service_charge, tax_calculation_method, rounding_rule) VALUES
@@ -339,14 +339,14 @@ INSERT OR IGNORE INTO report_parameters (id, column_key, column_label, is_visibl
 
 -- 14. System Settings
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value, group_name) VALUES
-('ticket_layout_mode', 'side-by-side', 'printer'),
-('ticket_width_cm', '10.5', 'printer'),
+('ticket_layout_mode', 'side-by-side-y', 'printer'),
+('ticket_width_cm', '10.2', 'printer'),
 ('ticket_height_cm', '10.2', 'printer'),
 ('ticket_orientation', 'portrait', 'printer'),
 ('ticket_rotation', '0', 'printer'),
 ('ticket_margin_mm', '1.5', 'printer'),
 ('ticket_font_scale', '100', 'printer'),
-('ticket_auto_cut', 'true', 'printer'),
+('ticket_auto_cut', 'false', 'printer'),
 ('ticket_feed_lines', '0', 'printer'),
 ('ticket_font_family', 'system-sans', 'printer'),
 ('ticket_font_size_pt', '8.0', 'printer'),

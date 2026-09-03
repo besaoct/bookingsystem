@@ -94,8 +94,8 @@ export const OFFLINE_FONT_MAP: Record<string, string> = {
   'impact': "Impact, 'Arial Black', sans-serif",
 };
 
-/** Single source of truth for the ticket stock. Default continuous 3-part roll liner is 10.5 cm across x 10.2 cm feed. */
-export const DEFAULT_TICKET_WIDTH_CM = 10.5;
+/** Single source of truth for the ticket stock. Default continuous 3-part roll liner is 10.2 cm across x 10.2 cm feed. */
+export const DEFAULT_TICKET_WIDTH_CM = 10.2;
 export const DEFAULT_TICKET_HEIGHT_CM = 10.2;
 
 /**
@@ -211,7 +211,7 @@ function ticketAutoFitScriptTag(): string {
 export function generateThermalTicketHTML(data: TicketPrintData): string {
   const { cinema, booking, copyConfigs, invoiceSeries } = data;
   const { widthCm, heightCm } = resolveTicketDimensions(data);
-  const layoutMode = data.layoutMode || 'side-by-side';
+  const layoutMode = data.layoutMode || 'side-by-side-y';
   const rotation = data.rotation || '0';
   const rotationDeg = Number(rotation) || 0;
 
@@ -287,9 +287,9 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     fontFamilyKey ||
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-  const marginMm = data.marginMm !== undefined ? Number(data.marginMm) : 2;
-  const padV = isSideBySideY ? 1.0 : Math.max(1, Math.min(marginMm, 3));
-  const padH = isSideBySideY ? 2.5 : Math.max(2, Math.min(marginMm * 1.5, 5));
+  const marginMm = data.marginMm !== undefined ? Number(data.marginMm) : 1.5;
+  const padV = isSideBySideY ? 0.7 : Math.max(1, Math.min(marginMm, 3));
+  const padH = isSideBySideY ? 2.0 : Math.max(2, Math.min(marginMm * 1.5, 5));
 
   const rawMovieName = booking.movie_name || (booking as any).movieTitle || '';
   const rawMovieType = booking.movie_type_name || '';
@@ -299,7 +299,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     ? `${displayMovieTitle} ${displayMovieType}`
     : displayMovieTitle;
 
-  // Standard continuous roll stock has 3 fixed parts/columns (e.g. 10.5 cm / 3 = 3.5 cm each).
+  // Standard continuous roll stock has 3 fixed parts/columns (e.g. 10.2 cm / 3 = 3.4 cm each).
   // Ticket width and height are fixed to 1 part so single-ticket prints never stretch across the roll.
   const TOTAL_ROLL_PARTS_X = 3;
   const effectivePartsX = isSideBySideX ? Math.max(TOTAL_ROLL_PARTS_X, copiesToPrint.length) : 1;
@@ -322,16 +322,19 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
       ? false
       : (data.orientation === 'portrait' && Number(blockHeightCm) > Number(blockWidthCm));
 
+  // If autoCut is unchecked, do not print borders or dashed cut lines because the paper roll already has pre-perforated lines
+  const showCutLines = data.autoCut === true;
+
   const slipsHtml = copiesToPrint
     .map((copy, idx) => {
       const copyBadge = copy.header_label ? copy.header_label.trim() : 'C';
       const badgeFontSize = copyBadge.length > 2 ? '7.5px' : '9px';
 
       const slipWidthStyle = isSideBySideX
-        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; border: 1px solid #000; border-left: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};`
+        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; ${showCutLines ? `border: 1px solid #000; border-left: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};` : 'border: none;'}`
         : isSideBySideY || isContinuous
-        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; border: 1px solid #000; border-top: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};`
-        : `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: always; border: 1px solid #000;`;
+        ? `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; page-break-after: avoid; page-break-inside: avoid; ${showCutLines ? `border: 1px solid #000; border-top: ${idx > 0 ? '1.5px dashed #000' : '1px solid #000'};` : 'border: none;'}`
+        : `width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; ${showCutLines ? 'page-break-after: always; border: 1px solid #000;' : 'border: none;'}`;
 
       // Landscape content — used for landscape slips directly, rotated 90° inside portrait slips
       const contentHtml = `
@@ -347,15 +350,15 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         </div>
 
         <!-- Movie Title Line -->
-        <div style="font-weight: ${semiWeight}; font-size: 1.05em; text-transform: uppercase; margin: 1px 0; line-height: 1.18; min-height: 1.18em; flex-shrink: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <div style="font-weight: ${semiWeight}; font-size: 1.05em; text-transform: uppercase; margin: 0.5px 0; line-height: 1.15; min-height: 1.15em; flex-shrink: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
           ${esc(fullMovieName)}
         </div>
 
         <!-- Middle 3-Column Section -->
-        <div style="display: grid; grid-template-columns: 1.35fr 1.15fr 1fr; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 0; font-size: 0.9em; line-height: 1.12; flex-shrink: 0 !important;">
+        <div style="display: grid; grid-template-columns: 1.35fr 1.15fr 1fr; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 0.5px 0; font-size: 0.88em; line-height: 1.10; flex-shrink: 0 !important;">
           
           <!-- Column 1: Financial & Tax Breakup -->
-          <div style="border-right: 1px solid #000; padding-right: 0.3em; line-height: 1.12; overflow: hidden;">
+          <div style="border-right: 1px solid #000; padding-right: 0.3em; line-height: 1.10; overflow: hidden;">
             <div style="display: flex; justify-content: space-between;">
               <span style="font-weight: ${normalWeight};">ADM</span>
               <span style="font-weight: ${semiWeight};">${admNet}</span>
@@ -373,20 +376,20 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
               <span style="font-weight: ${normalWeight};">S.CH</span>
               <span style="font-weight: ${semiWeight};">${booking.total_service_charge.toFixed(2)}</span>
             </div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.05em; margin-top: 1px; border-top: 0.5px solid #000;">
+            <div style="font-weight: ${boldWeight}; font-size: 1.05em; margin-top: 0.5px; border-top: 0.5px solid #000;">
               Total: ${booking.total_gross.toFixed(2)}
             </div>
           </div>
 
           <!-- Column 2: Date, Showtime & SAC Code -->
-          <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.15; overflow: hidden;">
+          <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.12; overflow: hidden;">
             <div style="font-weight: ${semiWeight}; font-size: 1.0em; white-space: nowrap;">${esc(formattedDate)}</div>
             <div style="font-weight: ${semiWeight}; font-size: 1.05em; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(showTimeDisplay)}</div>
             <div style="font-weight: ${semiWeight}; font-size: 0.85em; margin-top: 1px;">SAC 997321</div>
           </div>
 
           <!-- Column 3: Auditorium, Seat Numbers & Class -->
-          <div style="padding-left: 0.3em; line-height: 1.15; text-align: left; overflow: hidden;">
+          <div style="padding-left: 0.3em; line-height: 1.12; text-align: left; overflow: hidden;">
             <div style="font-weight: ${semiWeight}; font-size: 1.0em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(booking.screen_name)}</div>
             <div style="font-weight: ${boldWeight}; font-size: 1.15em; letter-spacing: 0.03em; word-break: break-all;">${esc(seatLabels)}</div>
             <div style="font-weight: ${boldWeight}; font-size: 1.05em; text-transform: uppercase; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(seatClass)}</div>
@@ -394,7 +397,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         </div>
 
         <!-- Footer Section: Tax IDs and Audit Tracking -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.75em; line-height: 1.1; padding-top: 1px; font-weight: ${normalWeight}; flex-shrink: 0 !important;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.74em; line-height: 1.08; padding-top: 0.5px; font-weight: ${normalWeight}; flex-shrink: 0 !important;">
           <div style="overflow: hidden; max-width: 50%;">
             ${cinema.show_gstin_on_ticket && cinema.gstin ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">GSTIN: ${esc(cinema.gstin)}</div>` : ''}
             ${cinema.cin ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CIN: ${esc(cinema.cin)}</div>` : ''}
@@ -439,13 +442,13 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     const blanksCount = effectivePartsX - copiesToPrint.length;
     for (let b = 0; b < blanksCount; b++) {
       blankSlipsHtml += `
-      <div class="ticket-slip ticket-slip-blank" style="width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; box-sizing: border-box; border: 1px solid #000; border-left: 1.5px dashed #000; background: #fff;"></div>`;
+      <div class="ticket-slip ticket-slip-blank" style="width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; box-sizing: border-box; ${showCutLines ? 'border: 1px solid #000; border-left: 1.5px dashed #000;' : 'border: none;'} background: #fff;"></div>`;
     }
   } else if (isSideBySideY && copiesToPrint.length < effectivePartsY) {
     const blanksCount = effectivePartsY - copiesToPrint.length;
     for (let b = 0; b < blanksCount; b++) {
       blankSlipsHtml += `
-      <div class="ticket-slip ticket-slip-blank" style="width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; box-sizing: border-box; border: 1px solid #000; border-top: 1.5px dashed #000; background: #fff;"></div>`;
+      <div class="ticket-slip ticket-slip-blank" style="width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; box-sizing: border-box; ${showCutLines ? 'border: 1px solid #000; border-top: 1.5px dashed #000;' : 'border: none;'} background: #fff;"></div>`;
     }
   }
 

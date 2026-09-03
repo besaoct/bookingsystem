@@ -126,7 +126,7 @@ export const PrinterSettingsPage: React.FC = () => {
   const [ticketFontFamily, setTicketFontFamily] = useState('system-sans');
   const [ticketFontSizePt, setTicketFontSizePt] = useState('8.0');
   const [ticketFontWeight, setTicketFontWeight] = useState('600');
-  const [ticketAutoCut, setTicketAutoCut] = useState(true);
+  const [ticketAutoCut, setTicketAutoCut] = useState(false);
   const [ticketFeedLines, setTicketFeedLines] = useState('0');
   const [printerName, setPrinterName] = useState('Default Thermal POS-80');
   const [invoiceSeries, setInvoiceSeries] = useState('NC-LKP-26');
@@ -193,7 +193,7 @@ export const PrinterSettingsPage: React.FC = () => {
       setTicketFontFamily(systemSettings['ticket_font_family'] || 'system-sans');
       setTicketFontSizePt(systemSettings['ticket_font_size_pt'] || '8.0');
       setTicketFontWeight(systemSettings['ticket_font_weight'] || '600');
-      setTicketAutoCut(systemSettings['ticket_auto_cut'] !== 'false');
+      setTicketAutoCut(systemSettings['ticket_auto_cut'] !== undefined ? systemSettings['ticket_auto_cut'] === 'true' : false);
       setTicketFeedLines(systemSettings['ticket_feed_lines'] || '0');
       setPrinterName(systemSettings['thermal_printer_name'] || 'Default Thermal POS-80');
       setInvoiceSeries(systemSettings['invoice_series'] || 'NC-LKP-26');
@@ -508,31 +508,31 @@ export const PrinterSettingsPage: React.FC = () => {
         </div>
 
         {/* Movie Title Line */}
-        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.18, minHeight: '1.18em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.5px 0', lineHeight: 1.15, minHeight: '1.15em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           AVATAR : FIRE AND ASH 3D
         </div>
 
         {/* Middle 3-Column Section */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '1px 0', fontSize: '0.9em', lineHeight: 1.12, flexShrink: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '0.5px 0', fontSize: '0.88em', lineHeight: 1.10, flexShrink: 0 }}>
           {/* Column 1: Financial & Tax Breakup */}
-          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.10, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>ADM</span><span style={{ fontWeight: semiWeight }}>160.00</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>3D</span><span style={{ fontWeight: semiWeight }}>80.00</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>CGST</span><span style={{ fontWeight: semiWeight }}>21.60</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>SGST</span><span style={{ fontWeight: semiWeight }}>21.60</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: normalWeight }}>S.CH</span><span style={{ fontWeight: semiWeight }}>24.00</span></div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '1px', borderTop: '0.5px solid #000' }}>Total: 307.20</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '0.5px', borderTop: '0.5px solid #000' }}>Total: 307.20</div>
           </div>
 
           {/* Column 2: Date, Showtime & SAC Code */}
-          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap' }}>Tue, 25-08-2026</div>
             <div style={{ fontWeight: semiWeight, fontSize: '1.05em', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Evening, 06:30 PM</div>
             <div style={{ fontWeight: semiWeight, fontSize: '0.85em', marginTop: '1px' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Auditorium, Seat Numbers & Class */}
-          <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden' }}>
+          <div style={{ paddingLeft: '0.3em', lineHeight: 1.12, textAlign: 'left', overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AUDI 1</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>A-1, A-2</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GOLD</div>
@@ -540,7 +540,7 @@ export const PrinterSettingsPage: React.FC = () => {
         </div>
 
         {/* Footer Section: Tax IDs and Audit Tracking */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.75em', lineHeight: 1.1, paddingTop: '1px', fontWeight: normalWeight, flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.74em', lineHeight: 1.08, paddingTop: '0.5px', fontWeight: normalWeight, flexShrink: 0 }}>
           <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
             {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
             {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
@@ -818,7 +818,7 @@ export const PrinterSettingsPage: React.FC = () => {
                                 maxHeight: `${blockH}cm`,
                                 padding: `${padV}mm ${padH}mm`,
                                 boxSizing: 'border-box',
-                                borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                                borderTop: idx > 0 && ticketAutoCut ? '1.5px dashed #64748b' : 'none',
                               }}
                             >
                               {renderTicketInnerContent(c, blockW, blockH)}
@@ -836,7 +836,7 @@ export const PrinterSettingsPage: React.FC = () => {
                                 minHeight: `${blockH}cm`,
                                 maxHeight: `${blockH}cm`,
                                 boxSizing: 'border-box',
-                                borderTop: '1.5px dashed #64748b',
+                                borderTop: ticketAutoCut ? '1.5px dashed #64748b' : 'none',
                               }}
                             >
                               <span>Part {activeList.length + bIdx + 1} (Blank / Unprinted)</span>
@@ -886,7 +886,7 @@ export const PrinterSettingsPage: React.FC = () => {
                                 maxHeight: `${blockH}cm`,
                                 padding: isSlipVert ? 0 : `${padV}mm ${padH}mm`,
                                 boxSizing: 'border-box',
-                                borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                                borderLeft: idx > 0 && ticketAutoCut ? '1.5px dashed #64748b' : 'none',
                               }}
                             >
                               {renderTicketInnerContent(c, blockW, blockH)}
@@ -905,7 +905,7 @@ export const PrinterSettingsPage: React.FC = () => {
                                 minHeight: `${blockH}cm`,
                                 maxHeight: `${blockH}cm`,
                                 boxSizing: 'border-box',
-                                borderLeft: '1.5px dashed #64748b',
+                                borderLeft: ticketAutoCut ? '1.5px dashed #64748b' : 'none',
                               }}
                             >
                               <span>Part {activeList.length + bIdx + 1}</span>
@@ -1414,7 +1414,7 @@ export const PrinterSettingsPage: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Scissors className="w-3.5 h-3.5 text-primary" />
                     <label htmlFor="autoCutToggle" className="text-xs font-semibold text-foreground cursor-pointer">
-                      Auto-Cutter / Page Break Between Copies
+                      Print Tear &amp; Cut Division Lines (Between Copies)
                     </label>
                   </div>
                   <input
@@ -1427,7 +1427,7 @@ export const PrinterSettingsPage: React.FC = () => {
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Sends page break cut instructions between each ticket copy (Security, Office, Customer).
+                  Prints dashed cut/tear lines between copies. Uncheck this if your thermal roller paper already has pre-perforated tear lines.
                 </p>
               </div>
 

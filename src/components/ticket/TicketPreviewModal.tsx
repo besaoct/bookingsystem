@@ -49,7 +49,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const fontFamily = systemSettings?.['ticket_font_family'] || 'system-sans';
   const fontSizePt = systemSettings?.['ticket_font_size_pt'] !== undefined ? Number(systemSettings['ticket_font_size_pt']) : 8.0;
   const fontWeight = systemSettings?.['ticket_font_weight'] || '600';
-  const autoCut = systemSettings?.['ticket_auto_cut'] !== 'false';
+  const autoCut = systemSettings?.['ticket_auto_cut'] === 'true';
   const feedLines = systemSettings?.['ticket_feed_lines'] !== undefined ? Number(systemSettings['ticket_feed_lines']) : 0;
 
   const resolvedFontFamily =
@@ -58,7 +58,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
   const effectiveFontSize = `${(Number(fontSizePt) * (fontScale / 100)).toFixed(1)}pt`;
-  const padV = Math.max(1, Math.min(marginMm, 3));
+  const padV = Math.max(0.7, Math.min(marginMm, 3));
   const padH = Math.max(2, Math.min(marginMm * 1.5, 5));
 
   const activeCopies = copyConfigs
@@ -100,7 +100,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const now = new Date();
   const issuedOn = `${dStr}-${bookingDateObj.toLocaleString('en-US', { month: 'short' })}-${String(yStr).slice(-2)} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}`;
 
-  const layoutMode = (systemSettings?.['ticket_layout_mode'] as 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential') || 'side-by-side';
+  const layoutMode = (systemSettings?.['ticket_layout_mode'] as 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential') || 'side-by-side-y';
   const rotation = (systemSettings?.['ticket_rotation'] as '0' | '90' | '180' | '270') || '0';
   const rotationDeg = Number(rotation) || 0;
 
@@ -206,14 +206,14 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
         </div>
 
         {/* Movie Title Line */}
-        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.18, minHeight: '1.18em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.5px 0', lineHeight: 1.15, minHeight: '1.15em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {fullMovieName}
         </div>
 
         {/* Middle 3 Columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '1px 0', fontSize: '0.9em', lineHeight: 1.12, flexShrink: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '0.5px 0', fontSize: '0.88em', lineHeight: 1.10, flexShrink: 0 }}>
           {/* Column 1: Financials */}
-          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', paddingRight: '0.3em', lineHeight: 1.10, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontWeight: normalWeight }}>ADM</span>
               <span style={{ fontWeight: semiWeight }}>{admNet}</span>
@@ -236,20 +236,20 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
               <span style={{ fontWeight: normalWeight }}>S.CH</span>
               <span style={{ fontWeight: semiWeight }}>{booking.total_service_charge.toFixed(2)}</span>
             </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '1px', borderTop: '0.5px solid #000' }}>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.05em', marginTop: '0.5px', borderTop: '0.5px solid #000' }}>
               Total: {booking.total_gross.toFixed(2)}
             </div>
           </div>
 
           {/* Column 2: Date & Time */}
-          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.12, overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap' }}>{formattedDate}</div>
             <div style={{ fontWeight: semiWeight, fontSize: '1.05em', margin: '1px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
             <div style={{ fontWeight: semiWeight, fontSize: '0.85em', marginTop: '1px' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Screen & Seat */}
-          <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden' }}>
+          <div style={{ paddingLeft: '0.3em', lineHeight: 1.12, textAlign: 'left', overflow: 'hidden' }}>
             <div style={{ fontWeight: semiWeight, fontSize: '1.0em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.15em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '1px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
@@ -257,7 +257,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
         </div>
 
         {/* Footer Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.75em', lineHeight: 1.1, paddingTop: '1px', fontWeight: normalWeight, flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.74em', lineHeight: 1.08, paddingTop: '0.5px', fontWeight: normalWeight, flexShrink: 0 }}>
           <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
             {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
             {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
@@ -392,7 +392,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                             maxHeight: `${blockH}cm`,
                             padding: isSlipVert ? 0 : `${padV}mm ${padH}mm`,
                             boxSizing: 'border-box',
-                            borderLeft: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                            borderLeft: idx > 0 && autoCut ? '1.5px dashed #64748b' : 'none',
                           }}
                         >
                           {renderModalTicketContent(copy, blockW, blockH)}
@@ -410,7 +410,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                             minHeight: `${blockH}cm`,
                             maxHeight: `${blockH}cm`,
                             boxSizing: 'border-box',
-                            borderLeft: '1.5px dashed #64748b',
+                            borderLeft: autoCut ? '1.5px dashed #64748b' : 'none',
                           }}
                         >
                           <span>Part {activeCopies.length + bIdx + 1}</span>
@@ -457,7 +457,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                             maxHeight: `${blockH}cm`,
                             padding: isSlipVert ? 0 : `${padV}mm ${padH}mm`,
                             boxSizing: 'border-box',
-                            borderTop: idx > 0 ? '1.5px dashed #64748b' : 'none',
+                            borderTop: idx > 0 && autoCut ? '1.5px dashed #64748b' : 'none',
                           }}
                         >
                           {renderModalTicketContent(copy, blockW, blockH)}
@@ -475,7 +475,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                             minHeight: `${blockH}cm`,
                             maxHeight: `${blockH}cm`,
                             boxSizing: 'border-box',
-                            borderTop: '1.5px dashed #64748b',
+                            borderTop: autoCut ? '1.5px dashed #64748b' : 'none',
                           }}
                         >
                           <span>Part {activeCopies.length + bIdx + 1} (Blank)</span>
