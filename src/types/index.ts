@@ -32,6 +32,7 @@ export interface Cinema {
   header_text?: string;
   contact_numbers?: string;
   show_gstin_on_ticket?: boolean;
+  sac_code?: string;
 }
 
 export interface Distributor {
@@ -189,6 +190,7 @@ export interface TaxConfig {
   gst_on_service_charge: boolean;
   tax_calculation_method: 'INCLUSIVE' | 'EXCLUSIVE';
   rounding_rule: 'NORMAL' | 'FLOOR' | 'CEILING';
+  sac_code?: string;
 }
 
 export interface PaymentMode {

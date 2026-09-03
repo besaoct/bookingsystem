@@ -184,7 +184,7 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-foreground">GSTIN (15 Digits) *</label>
                     <Input
@@ -201,6 +201,15 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                       value={formData.cin || ''}
                       onChange={(e) => setFormData({ ...formData, cin: e.target.value })}
                       placeholder="U92100AS2018PTC018500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">GST SAC Code</label>
+                    <Input
+                      value={formData.sac_code ?? '999615'}
+                      onChange={(e) => setFormData({ ...formData, sac_code: e.target.value })}
+                      placeholder="e.g. 999615"
                     />
                   </div>
                 </div>
@@ -333,7 +342,7 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                         <span style={{ fontWeight: 800, fontSize: '9.5px', whiteSpace: 'nowrap' }}>06:30 PM</span>
                       </div>
                     </div>
-                    <div style={{ fontWeight: 600, fontSize: '7px', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC 997321</div>
+                    <div style={{ fontWeight: 600, fontSize: '7px', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC {formData.sac_code || '999615'}</div>
                   </div>
 
                   {/* Column 3: Auditorium, Seat Numbers & Class */}

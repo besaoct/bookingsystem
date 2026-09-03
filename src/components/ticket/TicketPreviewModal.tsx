@@ -73,6 +73,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const firstTicketNo = tickets[0]?.ticket_no || (booking.booking_no ? booking.booking_no.slice(-7) : '');
   const txnNo = `A${String(booking.id).padStart(6, '0')}-${firstTicketNo ? firstTicketNo.slice(-2) : '01'}W`;
   const invoiceSeries = systemSettings?.['invoice_series'] || '';
+  const sacCode = cinema?.sac_code || taxConfig?.sac_code || '999615';
   const invSeq = `000${String(booking.id).padStart(6, '0')}`;
   const invNo = invoiceSeries ? `${invoiceSeries}/${invSeq}` : invSeq;
 
@@ -261,7 +262,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                 <span style={{ fontWeight: boldWeight, fontSize: '1.22em', whiteSpace: 'nowrap' }}>{showTime}</span>
               </div>
             </div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC 997321</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC {sacCode}</div>
           </div>
 
           {/* Column 3: Screen & Seat */}

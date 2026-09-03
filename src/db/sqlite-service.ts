@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS cinemas (
   logo_path TEXT,
   header_text TEXT,
   contact_numbers TEXT,
-  show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0
+  show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0,
+  sac_code TEXT DEFAULT '999615'
 );
 
 -- Masters
@@ -173,7 +174,8 @@ CREATE TABLE IF NOT EXISTS tax_configs (
   apply_gst_default INTEGER NOT NULL DEFAULT 1,
   gst_on_service_charge INTEGER NOT NULL DEFAULT 0,
   tax_calculation_method TEXT NOT NULL DEFAULT 'INCLUSIVE',
-  rounding_rule TEXT NOT NULL DEFAULT 'NORMAL'
+  rounding_rule TEXT NOT NULL DEFAULT 'NORMAL',
+  sac_code TEXT DEFAULT '999615'
 );
 
 -- Masters
@@ -365,6 +367,8 @@ class SQLiteService {
             "ALTER TABLE movie_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE categories ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE cinemas ADD COLUMN show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE cinemas ADD COLUMN sac_code TEXT DEFAULT '999615'",
+            "ALTER TABLE tax_configs ADD COLUMN sac_code TEXT DEFAULT '999615'",
           ];
           for (const m of columnMigrations) {
             try { this.db!.run(m); } catch (_) { /* column already exists, skip */ }
@@ -525,6 +529,8 @@ class SQLiteService {
       "ALTER TABLE languages ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
       "ALTER TABLE movie_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
       "ALTER TABLE categories ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+      "ALTER TABLE cinemas ADD COLUMN sac_code TEXT DEFAULT '999615'",
+      "ALTER TABLE tax_configs ADD COLUMN sac_code TEXT DEFAULT '999615'",
     ];
     for (const m of colMigrations) {
       try { this.db.run(m); } catch (_) { /* already added by schema */ }
@@ -575,6 +581,8 @@ class SQLiteService {
       "ALTER TABLE languages ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
       "ALTER TABLE movie_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
       "ALTER TABLE categories ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+      "ALTER TABLE cinemas ADD COLUMN sac_code TEXT DEFAULT '999615'",
+      "ALTER TABLE tax_configs ADD COLUMN sac_code TEXT DEFAULT '999615'",
     ];
     for (const m of colMigrations) {
       try { this.db.run(m); } catch (_) {}

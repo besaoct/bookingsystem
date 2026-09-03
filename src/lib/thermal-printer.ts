@@ -210,6 +210,7 @@ function ticketAutoFitScriptTag(): string {
 
 export function generateThermalTicketHTML(data: TicketPrintData): string {
   const { cinema, booking, copyConfigs, invoiceSeries } = data;
+  const sacCode = cinema?.sac_code || data.taxConfig?.sac_code || '999615';
   const { widthCm, heightCm } = resolveTicketDimensions(data);
   const layoutMode = data.layoutMode || 'side-by-side-x';
   const rotation = data.rotation || '0';
@@ -400,7 +401,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
                 <span style="font-weight: ${boldWeight}; font-size: 1.22em; white-space: nowrap;">${esc(showTime)}</span>
               </div>
             </div>
-            <div style="font-weight: ${semiWeight}; font-size: 0.80em; margin-top: 1px; white-space: nowrap;">SAC 997321</div>
+            <div style="font-weight: ${semiWeight}; font-size: 0.80em; margin-top: 1px; white-space: nowrap;">SAC ${esc(sacCode)}</div>
           </div>
 
           <!-- Column 3: Auditorium, Seat Numbers & Class -->

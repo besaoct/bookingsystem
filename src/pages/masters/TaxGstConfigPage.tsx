@@ -105,6 +105,21 @@ export const TaxGstConfigPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-foreground">
+                GST Services Accounting Code (SAC Code)
+              </label>
+              <Input
+                type="text"
+                value={formData.sac_code ?? '999615'}
+                onChange={(e) => setFormData({ ...formData, sac_code: e.target.value })}
+                placeholder="e.g. 999615"
+              />
+              <p className="text-2xs text-muted-foreground">
+                Printed on tickets and tax invoices (standard Indian cinema exhibition code is 999615).
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">
                 Tax Calculation Method
               </label>
               <Select

@@ -100,6 +100,7 @@ export const PrinterSettingsPage: React.FC = () => {
 
   const {
     cinema,
+    taxConfig,
     ticketCopies,
     updateTicketCopies,
     addTicketCopy,
@@ -463,6 +464,7 @@ export const PrinterSettingsPage: React.FC = () => {
     const cinemaName = cinema?.header_text || cinema?.name || 'GRAND MULTIPLEX CINEMAS';
     const gstin = cinema?.show_gstin_on_ticket && cinema?.gstin ? cinema.gstin : null;
     const cin = cinema?.cin || null;
+    const sacCode = cinema?.sac_code || taxConfig?.sac_code || '999615';
 
     const baseWeight = Number(ticketFontWeight) || 600;
     const boldWeight = Math.min(900, baseWeight + 200);
@@ -539,7 +541,7 @@ export const PrinterSettingsPage: React.FC = () => {
                 <span style={{ fontWeight: boldWeight, fontSize: '1.22em', whiteSpace: 'nowrap' }}>06:30 PM</span>
               </div>
             </div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC 997321</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC {sacCode}</div>
           </div>
 
           {/* Column 3: Auditorium, Seat Numbers & Class */}

@@ -9,6 +9,7 @@ export const settingsService = {
     return {
       ...res,
       show_gstin_on_ticket: Boolean(res.show_gstin_on_ticket),
+      sac_code: res.sac_code || '999615',
     };
   },
 
@@ -19,7 +20,7 @@ export const settingsService = {
     if (existing) {
       dbService.run(
         `UPDATE cinemas 
-         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ?, show_gstin_on_ticket = ? 
+         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ?, show_gstin_on_ticket = ?, sac_code = ? 
          WHERE id = ?`,
         [
           cinema.name ?? '',
@@ -29,13 +30,14 @@ export const settingsService = {
           cinema.contact_numbers ?? '',
           cinema.header_text ?? '',
           showGstin,
+          cinema.sac_code ?? '999615',
           existing.id,
         ]
       );
     } else {
       dbService.run(
-        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text, show_gstin_on_ticket)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text, show_gstin_on_ticket, sac_code)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           cinema.name ?? '',
           cinema.address ?? '',
@@ -44,6 +46,7 @@ export const settingsService = {
           cinema.contact_numbers ?? '',
           cinema.header_text ?? '',
           showGstin,
+          cinema.sac_code ?? '999615',
         ]
       );
     }
@@ -51,7 +54,11 @@ export const settingsService = {
 
   async getTaxConfigs(): Promise<TaxConfig[]> {
     await dbService.init();
-    return dbService.query<TaxConfig>("SELECT * FROM tax_configs ORDER BY id ASC");
+    const rows = dbService.query<any>("SELECT * FROM tax_configs ORDER BY id ASC");
+    return rows.map((r) => ({
+      ...r,
+      sac_code: r.sac_code || '999615',
+    }));
   },
 
   async saveTaxConfig(tax: Partial<TaxConfig>): Promise<void> {
@@ -60,7 +67,7 @@ export const settingsService = {
       dbService.run(
         `UPDATE tax_configs 
          SET cgst_pct = ?, sgst_pct = ?, service_charge_amount = ?, service_charge_is_pct = ?, 
-             apply_gst_default = ?, gst_on_service_charge = ?, tax_calculation_method = ?, rounding_rule = ? 
+             apply_gst_default = ?, gst_on_service_charge = ?, tax_calculation_method = ?, rounding_rule = ?, sac_code = ? 
          WHERE id = ?`,
         [
           tax.cgst_pct ?? 9,
@@ -71,13 +78,14 @@ export const settingsService = {
           tax.gst_on_service_charge ? 1 : 0,
           tax.tax_calculation_method || 'INCLUSIVE',
           tax.rounding_rule || 'NORMAL',
+          tax.sac_code ?? '999615',
           tax.id,
         ]
       );
     } else {
       dbService.run(
-        `INSERT INTO tax_configs (cgst_pct, sgst_pct, service_charge_amount, service_charge_is_pct, apply_gst_default, gst_on_service_charge, tax_calculation_method, rounding_rule) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO tax_configs (cgst_pct, sgst_pct, service_charge_amount, service_charge_is_pct, apply_gst_default, gst_on_service_charge, tax_calculation_method, rounding_rule, sac_code) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           tax.cgst_pct ?? 9,
           tax.sgst_pct ?? 9,
@@ -87,6 +95,7 @@ export const settingsService = {
           tax.gst_on_service_charge ? 1 : 0,
           tax.tax_calculation_method || 'INCLUSIVE',
           tax.rounding_rule || 'NORMAL',
+          tax.sac_code ?? '999615',
         ]
       );
     }
