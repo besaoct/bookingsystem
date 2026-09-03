@@ -88,13 +88,22 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const threeDNet = is3D ? (40.00 * qty).toFixed(2) : '00.00';
   const admNet = is3D ? Math.max(0, booking.total_net - Number(threeDNet)).toFixed(2) : booking.total_net.toFixed(2);
 
-  let showTimeDisplay = booking.show_name || '';
-  if (booking.show_name) {
-    const cleanName = booking.show_name.replace(/^(morning|matinee|first|second|night|late|early)\s*(show)?\s*[-–:]*\s*/i, '').trim();
-    if (booking.start_time && !cleanName.includes(booking.start_time)) {
-      showTimeDisplay = `${cleanName}, ${booking.start_time || ''}`;
+  let showPeriod = '';
+  let showTime = booking.start_time || '';
+  if (booking.show_name && booking.show_name.trim()) {
+    const cleanName = booking.show_name.trim();
+    const isTimeString = /^\d{1,2}:\d{2}/.test(cleanName);
+    if (!isTimeString) {
+      showPeriod = cleanName.replace(/,\s*$/, '');
     } else if (!booking.start_time) {
-      showTimeDisplay = cleanName;
+      showTime = cleanName;
+    }
+  }
+  if (!showPeriod && showTime && /^(morning|matinee|first|second|night|evening|noon|late|early)[,\s]/i.test(showTime)) {
+    const parts = showTime.split(/[,\s]+(?=\d{1,2}:\d{2})/i);
+    if (parts.length === 2) {
+      showPeriod = parts[0].trim();
+      showTime = parts[1].trim();
     }
   }
   const now = new Date();
@@ -196,7 +205,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5em', height: '1.5em', border: '1.5px solid #000', fontWeight: boldWeight, fontSize: badgeFontSize, borderRadius: '2px', flexShrink: 0 }}>
               {copyBadge}
             </span>
-            <span style={{ fontWeight: boldWeight, fontSize: '1.1em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontWeight: boldWeight, fontSize: '1.1em', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.1, wordBreak: 'break-word' }}>
               {cinemaName}
             </span>
           </div>
@@ -206,7 +215,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
         </div>
 
         {/* Movie Title Line */}
-        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.5px 0', lineHeight: 1.15, minHeight: '1.15em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.5px 0', lineHeight: 1.15, minHeight: '1.15em', flexShrink: 0, wordBreak: 'break-word' }}>
           {fullMovieName}
         </div>
 
@@ -246,29 +255,32 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           {/* Column 2: Date & Time */}
           <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.15em', whiteSpace: 'nowrap' }}>{formattedDate}</div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.22em', margin: '1px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{showTimeDisplay}</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.12em', lineHeight: 1.12, wordBreak: 'break-word' }}>{formattedDate}</div>
+              <div style={{ marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
+                {showPeriod ? <span style={{ fontWeight: semiWeight, fontSize: '0.82em', textTransform: 'capitalize' }}>{showPeriod}, </span> : null}
+                <span style={{ fontWeight: boldWeight, fontSize: '1.22em', whiteSpace: 'nowrap' }}>{showTime}</span>
+              </div>
             </div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px' }}>SAC 997321</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Screen & Seat */}
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{booking.screen_name || ''}</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{booking.screen_name || ''}</div>
               <div style={{ fontWeight: boldWeight, fontSize: '1.22em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
             </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seatClass}</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>{seatClass}</div>
           </div>
         </div>
 
         {/* Footer Section */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.74em', lineHeight: 1.08, paddingTop: '0.5px', fontWeight: normalWeight, flexShrink: 0 }}>
-          <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
-            {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
-            {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
+          <div style={{ maxWidth: '50%', lineHeight: 1.1, wordBreak: 'break-all' }}>
+            {gstin ? <div>GSTIN: {gstin}</div> : null}
+            {cin ? <div>CIN: {cin}</div> : null}
           </div>
-          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+          <div style={{ textAlign: 'right', lineHeight: 1.1, wordBreak: 'break-word' }}>
             <div>Ticket No: {firstTicketNo}&nbsp;&nbsp;L.No. Txn: {txnNo}</div>
             <div>INV No. : {invNo}&nbsp;&nbsp;{issuedOn}</div>
           </div>

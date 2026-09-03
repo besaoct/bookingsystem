@@ -253,14 +253,22 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const threeDNet = is3D ? (40.00 * qty).toFixed(2) : '00.00';
   const admNet = is3D ? Math.max(0, booking.total_net - Number(threeDNet)).toFixed(2) : booking.total_net.toFixed(2);
 
-  let showTimeDisplay = booking.start_time || '';
+  let showPeriod = '';
+  let showTime = booking.start_time || '';
   if (booking.show_name && booking.show_name.trim()) {
     const cleanName = booking.show_name.trim();
     const isTimeString = /^\d{1,2}:\d{2}/.test(cleanName);
     if (!isTimeString) {
-      showTimeDisplay = `${cleanName}, ${booking.start_time || ''}`;
+      showPeriod = cleanName.replace(/,\s*$/, '');
     } else if (!booking.start_time) {
-      showTimeDisplay = cleanName;
+      showTime = cleanName;
+    }
+  }
+  if (!showPeriod && showTime && /^(morning|matinee|first|second|night|evening|noon|late|early)[,\s]/i.test(showTime)) {
+    const parts = showTime.split(/[,\s]+(?=\d{1,2}:\d{2})/i);
+    if (parts.length === 2) {
+      showPeriod = parts[0].trim();
+      showTime = parts[1].trim();
     }
   }
   const now = new Date();
@@ -342,7 +350,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 1px; min-width: 0; flex-shrink: 0 !important;">
           <div style="display: flex; align-items: center; gap: 0.3em; min-width: 0; overflow: hidden; flex: 1;">
             <span style="display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; border: 1.5px solid #000; font-weight: ${boldWeight}; font-size: ${badgeFontSize}; border-radius: 2px; flex-shrink: 0;">${esc(copyBadge)}</span>
-            <span style="font-weight: ${boldWeight}; font-size: 1.1em; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(cinema.header_text || cinema.name)}</span>
+            <span style="font-weight: ${boldWeight}; font-size: 1.1em; letter-spacing: 0.02em; text-transform: uppercase; line-height: 1.1; word-break: break-word;">${esc(cinema.header_text || cinema.name)}</span>
           </div>
           <div style="display: inline-flex; align-items: center; justify-content: center; width: 1.6em; height: 1.6em; border: 1.5px solid #000; border-radius: 50%; font-weight: ${boldWeight}; font-size: 1.0em; flex-shrink: 0; margin-left: 0.2em;">
             ${qty}
@@ -350,7 +358,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
         </div>
 
         <!-- Movie Title Line -->
-        <div style="font-weight: ${semiWeight}; font-size: 1.05em; text-transform: uppercase; margin: 0.5px 0; line-height: 1.15; min-height: 1.15em; flex-shrink: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <div style="font-weight: ${semiWeight}; font-size: 1.05em; text-transform: uppercase; margin: 0.5px 0; line-height: 1.15; min-height: 1.15em; flex-shrink: 0 !important; word-break: break-word;">
           ${esc(fullMovieName)}
         </div>
 
@@ -386,29 +394,32 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
           <!-- Column 2: Date, Showtime & SAC Code -->
           <div style="border-right: 1px solid #000; padding: 0 0.3em; line-height: 1.15; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-              <div style="font-weight: ${boldWeight}; font-size: 1.15em; white-space: nowrap;">${esc(formattedDate)}</div>
-              <div style="font-weight: ${boldWeight}; font-size: 1.22em; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(showTimeDisplay)}</div>
+              <div style="font-weight: ${boldWeight}; font-size: 1.12em; line-height: 1.12; word-break: break-word;">${esc(formattedDate)}</div>
+              <div style="margin-top: 1px; line-height: 1.15; word-break: break-word;">
+                ${showPeriod ? `<span style="font-weight: ${semiWeight}; font-size: 0.82em; text-transform: capitalize;">${esc(showPeriod)}, </span>` : ''}
+                <span style="font-weight: ${boldWeight}; font-size: 1.22em; white-space: nowrap;">${esc(showTime)}</span>
+              </div>
             </div>
-            <div style="font-weight: ${semiWeight}; font-size: 0.80em; margin-top: 1px;">SAC 997321</div>
+            <div style="font-weight: ${semiWeight}; font-size: 0.80em; margin-top: 1px; white-space: nowrap;">SAC 997321</div>
           </div>
 
           <!-- Column 3: Auditorium, Seat Numbers & Class -->
           <div style="padding-left: 0.3em; line-height: 1.15; text-align: left; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-              <div style="font-weight: ${boldWeight}; font-size: 1.20em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(booking.screen_name)}</div>
+              <div style="font-weight: ${boldWeight}; font-size: 1.20em; text-transform: uppercase; line-height: 1.12; word-break: break-word;">${esc(booking.screen_name)}</div>
               <div style="font-weight: ${boldWeight}; font-size: 1.22em; letter-spacing: 0.03em; word-break: break-all;">${esc(seatLabels)}</div>
             </div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.10em; text-transform: uppercase; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(seatClass)}</div>
+            <div style="font-weight: ${boldWeight}; font-size: 1.10em; text-transform: uppercase; margin-top: 1px; line-height: 1.12; word-break: break-word;">${esc(seatClass)}</div>
           </div>
         </div>
 
         <!-- Footer Section: Tax IDs and Audit Tracking -->
         <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.74em; line-height: 1.08; padding-top: 0.5px; font-weight: ${normalWeight}; flex-shrink: 0 !important;">
-          <div style="overflow: hidden; max-width: 50%;">
-            ${cinema.show_gstin_on_ticket && cinema.gstin ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">GSTIN: ${esc(cinema.gstin)}</div>` : ''}
-            ${cinema.cin ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CIN: ${esc(cinema.cin)}</div>` : ''}
+          <div style="max-width: 50%; line-height: 1.1; word-break: break-all;">
+            ${cinema.show_gstin_on_ticket && cinema.gstin ? `<div>GSTIN: ${esc(cinema.gstin)}</div>` : ''}
+            ${cinema.cin ? `<div>CIN: ${esc(cinema.cin)}</div>` : ''}
           </div>
-          <div style="text-align: right; white-space: nowrap;">
+          <div style="text-align: right; line-height: 1.1; word-break: break-word;">
             <div>Ticket No: ${esc(firstTicketNo)}&nbsp;&nbsp;L.No. Txn: ${esc(txnNo)}</div>
             <div>INV No. : ${esc(invNo)}&nbsp;&nbsp;${esc(issuedOn)}</div>
           </div>

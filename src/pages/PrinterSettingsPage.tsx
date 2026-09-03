@@ -502,7 +502,7 @@ export const PrinterSettingsPage: React.FC = () => {
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5em', height: '1.5em', border: '1.5px solid #000', fontWeight: boldWeight, fontSize: badgeFontSize, borderRadius: 2, flexShrink: 0 }}>
               {copyBadge}
             </span>
-            <span style={{ fontWeight: boldWeight, fontSize: '1.1em', letterSpacing: '0.02em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontWeight: boldWeight, fontSize: '1.1em', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.1, wordBreak: 'break-word' }}>
               {cinemaName}
             </span>
           </div>
@@ -512,7 +512,7 @@ export const PrinterSettingsPage: React.FC = () => {
         </div>
 
         {/* Movie Title Line */}
-        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.5px 0', lineHeight: 1.15, minHeight: '1.15em', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontWeight: semiWeight, fontSize: '1.05em', textTransform: 'uppercase', margin: '0.5px 0', lineHeight: 1.15, minHeight: '1.15em', flexShrink: 0, wordBreak: 'break-word' }}>
           AVATAR : FIRE AND ASH 3D
         </div>
 
@@ -533,29 +533,32 @@ export const PrinterSettingsPage: React.FC = () => {
           {/* Column 2: Date, Showtime & SAC Code */}
           <div style={{ borderRight: '1px solid #000', padding: '0 0.3em', lineHeight: 1.15, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.15em', whiteSpace: 'nowrap' }}>Tue, 25-08-2026</div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.22em', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Evening, 06:30 PM</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.12em', lineHeight: 1.12, wordBreak: 'break-word' }}>Tue, 25-08-2026</div>
+              <div style={{ marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
+                <span style={{ fontWeight: semiWeight, fontSize: '0.82em', textTransform: 'capitalize' }}>Evening, </span>
+                <span style={{ fontWeight: boldWeight, fontSize: '1.22em', whiteSpace: 'nowrap' }}>06:30 PM</span>
+              </div>
             </div>
-            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px' }}>SAC 997321</div>
+            <div style={{ fontWeight: semiWeight, fontSize: '0.80em', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC 997321</div>
           </div>
 
           {/* Column 3: Auditorium, Seat Numbers & Class */}
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>NAKSHATRA</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>NAKSHATRA</div>
               <div style={{ fontWeight: boldWeight, fontSize: '1.22em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>A-1, A-2</div>
             </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>BOX</div>
+            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
           </div>
         </div>
 
         {/* Footer Section: Tax IDs and Audit Tracking */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.74em', lineHeight: 1.08, paddingTop: '0.5px', fontWeight: normalWeight, flexShrink: 0 }}>
-          <div style={{ overflow: 'hidden', maxWidth: '50%' }}>
-            {gstin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>GSTIN: {gstin}</div> : null}
-            {cin ? <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CIN: {cin}</div> : null}
+          <div style={{ maxWidth: '50%', lineHeight: 1.1, wordBreak: 'break-all' }}>
+            {gstin ? <div>GSTIN: {gstin}</div> : null}
+            {cin ? <div>CIN: {cin}</div> : null}
           </div>
-          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+          <div style={{ textAlign: 'right', lineHeight: 1.1, wordBreak: 'break-word' }}>
             <div>Ticket No: 009571&nbsp;&nbsp;L.No. Txn: A000001-71W</div>
             <div>INV No. : {invoiceSeries}/000001&nbsp;&nbsp;25-Aug-26 06:30 PM</div>
           </div>
