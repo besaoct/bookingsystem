@@ -782,12 +782,14 @@ export const PrinterSettingsPage: React.FC = () => {
                   }}
                 >
                   {ticketLayoutMode === 'side-by-side' || ticketLayoutMode === 'side-by-side-x' ? (
-                    /* Single sheet multi-copy side-by-side across X */
+                    /* Single sheet multi-copy side-by-side across X with fixed 3-part roll stock slots */
                     (() => {
                       const activeList = copies.filter((c) => c.is_enabled).length > 0
                         ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
                         : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }];
-                      const blockW = Number((Number(ticketWidth || 10.5) / activeList.length).toFixed(4));
+                      const TOTAL_PARTS_X = 3;
+                      const effectivePartsX = Math.max(TOTAL_PARTS_X, activeList.length);
+                      const blockW = Number((Number(ticketWidth || 10.5) / effectivePartsX).toFixed(4));
                       const blockH = Number(ticketHeight || 10.2);
                       const isSlipVert = ticketOrientation === 'portrait' || blockH > blockW;
                       return (
@@ -806,6 +808,7 @@ export const PrinterSettingsPage: React.FC = () => {
                             lineHeight: 1.15,
                           }}
                         >
+                          {/* Active copy slots */}
                           {activeList.map((c, idx) => (
                             <div
                               key={c.id || idx}
@@ -826,17 +829,39 @@ export const PrinterSettingsPage: React.FC = () => {
                               {renderTicketInnerContent(c, blockW, blockH)}
                             </div>
                           ))}
+                          {/* Blank placeholder slots when fewer copies are enabled on the 3-part roll */}
+                          {Array.from({ length: effectivePartsX - activeList.length }).map((_, bIdx) => (
+                            <div
+                              key={`blank-${bIdx}`}
+                              className="flex flex-col items-center justify-center overflow-hidden relative shrink-0 bg-neutral-50/70 text-neutral-400 text-[10px] select-none italic"
+                              style={{
+                                width: `${blockW}cm`,
+                                minWidth: `${blockW}cm`,
+                                maxWidth: `${blockW}cm`,
+                                height: `${blockH}cm`,
+                                minHeight: `${blockH}cm`,
+                                maxHeight: `${blockH}cm`,
+                                boxSizing: 'border-box',
+                                borderLeft: '1.5px dashed #64748b',
+                              }}
+                            >
+                              <span>Part {activeList.length + bIdx + 1}</span>
+                              <span className="text-[9px] opacity-70">(Blank / Unprinted)</span>
+                            </div>
+                          ))}
                         </div>
                       );
                     })()
                   ) : ticketLayoutMode === 'side-by-side-y' ? (
-                    /* Single sheet multi-copy side-by-side along Y */
+                    /* Single sheet multi-copy side-by-side along Y with fixed slots */
                     (() => {
                       const activeList = copies.filter((c) => c.is_enabled).length > 0
                         ? copies.filter((c) => c.is_enabled).sort((a, b) => a.print_order - b.print_order)
                         : [{ id: 1, header_label: 'C', copy_name: 'Customer', is_enabled: true, print_order: 1, purpose: 'Customer' }];
+                      const TOTAL_PARTS_Y = 3;
+                      const effectivePartsY = Math.max(TOTAL_PARTS_Y, activeList.length);
                       const blockW = Number(ticketWidth || 10.5);
-                      const blockH = Number((Number(ticketHeight || 10.2) / activeList.length).toFixed(4));
+                      const blockH = Number((Number(ticketHeight || 10.2) / effectivePartsY).toFixed(4));
                       const isSlipVert = ticketOrientation === 'portrait' || blockH > blockW;
                       return (
                         <div
@@ -872,6 +897,24 @@ export const PrinterSettingsPage: React.FC = () => {
                               }}
                             >
                               {renderTicketInnerContent(c, blockW, blockH)}
+                            </div>
+                          ))}
+                          {Array.from({ length: effectivePartsY - activeList.length }).map((_, bIdx) => (
+                            <div
+                              key={`blank-y-${bIdx}`}
+                              className="flex flex-col items-center justify-center overflow-hidden relative shrink-0 bg-neutral-50/70 text-neutral-400 text-[10px] select-none italic"
+                              style={{
+                                width: `${blockW}cm`,
+                                minWidth: `${blockW}cm`,
+                                maxWidth: `${blockW}cm`,
+                                height: `${blockH}cm`,
+                                minHeight: `${blockH}cm`,
+                                maxHeight: `${blockH}cm`,
+                                boxSizing: 'border-box',
+                                borderTop: '1.5px dashed #64748b',
+                              }}
+                            >
+                              <span>Part {activeList.length + bIdx + 1} (Blank)</span>
                             </div>
                           ))}
                         </div>
@@ -1057,7 +1100,7 @@ export const PrinterSettingsPage: React.FC = () => {
                     disabled={!canUpdate}
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    Total width of entire continuous roll liner across all 3 ticket copies ({((Number(ticketWidth || 10.5)) / (copies.filter(c => c.is_enabled).length || 3)).toFixed(2)} cm per ticket block)
+                    Total roll liner width across all 3 parts ({((Number(ticketWidth || 10.5)) / 3).toFixed(2)} cm per part). Single tickets print strictly inside Part 1 without stretching across the roll.
                   </p>
                 </div>
 

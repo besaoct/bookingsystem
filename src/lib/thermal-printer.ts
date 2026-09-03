@@ -304,14 +304,18 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const isSideBySideY = layoutMode === 'side-by-side-y';
   const isContinuous = layoutMode === 'vertical-continuous';
 
-  // In multi-copy side-by-side across roll X:
-  // widthCm is the TOTAL roll/liner page width (e.g. 10.5 cm).
-  // Each ticket copy block occupies an equal partition across the roll width:
+  // Standard continuous roll stock has 3 fixed parts/columns (e.g. 10.5 cm / 3 = 3.5 cm each).
+  // Ticket width and height are fixed to 1 part so single-ticket prints never stretch across the roll.
+  const TOTAL_ROLL_PARTS_X = 3;
+  const effectivePartsX = isSideBySideX ? Math.max(TOTAL_ROLL_PARTS_X, copiesToPrint.length) : 1;
   const blockWidthCm = isSideBySideX
-    ? Number((Number(widthCm) / copiesToPrint.length).toFixed(4))
+    ? Number((Number(widthCm) / effectivePartsX).toFixed(4))
     : Number(widthCm);
+
+  const TOTAL_ROLL_PARTS_Y = 3;
+  const effectivePartsY = isSideBySideY ? Math.max(TOTAL_ROLL_PARTS_Y, copiesToPrint.length) : 1;
   const blockHeightCm = isSideBySideY
-    ? Number((Number(heightCm) / copiesToPrint.length).toFixed(4))
+    ? Number((Number(heightCm) / effectivePartsY).toFixed(4))
     : Number(heightCm);
 
   // Each individual ticket block is vertical if its height > width or explicitly portrait
@@ -430,18 +434,36 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     })
     .join('');
 
+  // When printing fewer copies than the physical roll's part count (e.g. 1 copy on a 3-part roll),
+  // generate blank placeholder slots so the active ticket stays strictly in Slot 1 and does not stretch.
+  let blankSlipsHtml = '';
+  if (isSideBySideX && copiesToPrint.length < effectivePartsX) {
+    const blanksCount = effectivePartsX - copiesToPrint.length;
+    for (let b = 0; b < blanksCount; b++) {
+      blankSlipsHtml += `
+      <div class="ticket-slip ticket-slip-blank" style="width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; box-sizing: border-box; border: 1px solid #000; border-left: 1.5px dashed #000; background: #fff;"></div>`;
+    }
+  } else if (isSideBySideY && copiesToPrint.length < effectivePartsY) {
+    const blanksCount = effectivePartsY - copiesToPrint.length;
+    for (let b = 0; b < blanksCount; b++) {
+      blankSlipsHtml += `
+      <div class="ticket-slip ticket-slip-blank" style="width: ${blockWidthCm}cm; min-width: ${blockWidthCm}cm; max-width: ${blockWidthCm}cm; height: ${blockHeightCm}cm; min-height: ${blockHeightCm}cm; max-height: ${blockHeightCm}cm; flex-shrink: 0; box-sizing: border-box; border: 1px solid #000; border-top: 1.5px dashed #000; background: #fff;"></div>`;
+    }
+  }
+
+  const allSlipsHtml = `${slipsHtml}${blankSlipsHtml}`;
   const autoFitScript = ticketAutoFitScriptTag();
 
   if (layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') {
     return `
-    <div class="ticket-page-grid" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: row; flex-wrap: nowrap; background: #fff; margin: 0; padding: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid;">
-      ${slipsHtml}
+    <div class="ticket-page-grid" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: row; flex-wrap: nowrap; background: #fff; margin: 0; padding: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; break-after: avoid;">
+      ${allSlipsHtml}
     </div>
     ${autoFitScript}`;
   } else if (layoutMode === 'side-by-side-y') {
     return `
-    <div class="ticket-page-grid-y" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: column; flex-wrap: nowrap; background: #fff; margin: 0; padding: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid;">
-      ${slipsHtml}
+    <div class="ticket-page-grid-y" style="width: ${widthCm}cm; min-width: ${widthCm}cm; max-width: ${widthCm}cm; height: ${heightCm}cm; min-height: ${heightCm}cm; max-height: ${heightCm}cm; box-sizing: border-box; display: flex; flex-direction: column; flex-wrap: nowrap; background: #fff; margin: 0; padding: 0; overflow: hidden; page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; break-after: avoid;">
+      ${allSlipsHtml}
     </div>
     ${autoFitScript}`;
   } else if (layoutMode === 'vertical-continuous') {

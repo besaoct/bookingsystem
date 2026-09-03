@@ -357,9 +357,11 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
               }}
             >
               {(layoutMode === 'side-by-side' || layoutMode === 'side-by-side-x') && selectedCopyTab === 'ALL' ? (
-                /* Multi-Column Single Perforated Sheet across X */
+                /* Multi-Column Single Perforated Sheet across X with fixed 3-part slots */
                 (() => {
-                  const blockW = Number((Number(ticketWidth) / activeCopies.length).toFixed(4));
+                  const TOTAL_PARTS_X = 3;
+                  const effectivePartsX = Math.max(TOTAL_PARTS_X, activeCopies.length);
+                  const blockW = Number((Number(ticketWidth) / effectivePartsX).toFixed(4));
                   const blockH = Number(ticketHeight);
                   const isSlipVert = orientation === 'portrait' || blockH > blockW;
                   return (
@@ -398,14 +400,35 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                           {renderModalTicketContent(copy, blockW, blockH)}
                         </div>
                       ))}
+                      {Array.from({ length: effectivePartsX - activeCopies.length }).map((_, bIdx) => (
+                        <div
+                          key={`blank-${bIdx}`}
+                          className="flex flex-col items-center justify-center overflow-hidden relative shrink-0 bg-neutral-50/70 text-neutral-400 text-[10px] select-none italic"
+                          style={{
+                            width: `${blockW}cm`,
+                            minWidth: `${blockW}cm`,
+                            maxWidth: `${blockW}cm`,
+                            height: `${blockH}cm`,
+                            minHeight: `${blockH}cm`,
+                            maxHeight: `${blockH}cm`,
+                            boxSizing: 'border-box',
+                            borderLeft: '1.5px dashed #64748b',
+                          }}
+                        >
+                          <span>Part {activeCopies.length + bIdx + 1}</span>
+                          <span className="text-[9px] opacity-70">(Blank / Unprinted)</span>
+                        </div>
+                      ))}
                     </div>
                   );
                 })()
               ) : layoutMode === 'side-by-side-y' && selectedCopyTab === 'ALL' ? (
-                /* Multi-Copy Single Perforated Sheet along Y */
+                /* Multi-Copy Single Perforated Sheet along Y with fixed slots */
                 (() => {
+                  const TOTAL_PARTS_Y = 3;
+                  const effectivePartsY = Math.max(TOTAL_PARTS_Y, activeCopies.length);
                   const blockW = Number(ticketWidth);
-                  const blockH = Number((Number(ticketHeight) / activeCopies.length).toFixed(4));
+                  const blockH = Number((Number(ticketHeight) / effectivePartsY).toFixed(4));
                   const isSlipVert = orientation === 'portrait' || blockH > blockW;
                   return (
                     <div
@@ -441,6 +464,24 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
                           }}
                         >
                           {renderModalTicketContent(copy, blockW, blockH)}
+                        </div>
+                      ))}
+                      {Array.from({ length: effectivePartsY - activeCopies.length }).map((_, bIdx) => (
+                        <div
+                          key={`blank-y-${bIdx}`}
+                          className="flex flex-col items-center justify-center overflow-hidden relative shrink-0 bg-neutral-50/70 text-neutral-400 text-[10px] select-none italic"
+                          style={{
+                            width: `${blockW}cm`,
+                            minWidth: `${blockW}cm`,
+                            maxWidth: `${blockW}cm`,
+                            height: `${blockH}cm`,
+                            minHeight: `${blockH}cm`,
+                            maxHeight: `${blockH}cm`,
+                            boxSizing: 'border-box',
+                            borderTop: '1.5px dashed #64748b',
+                          }}
+                        >
+                          <span>Part {activeCopies.length + bIdx + 1} (Blank)</span>
                         </div>
                       ))}
                     </div>

@@ -330,19 +330,21 @@ ipcMain.handle(
               margin: 0;
             }
             html, body {
-              margin: 0;
-              padding: 0;
-              width: ${printPageWidthCm}cm;
-              height: ${printPageHeightCm}cm;
+              margin: 0 !important;
+              padding: 0 !important;
+              width: ${printPageWidthCm}cm !important;
+              height: ${printPageHeightCm}cm !important;
+              max-width: ${printPageWidthCm}cm !important;
+              max-height: ${printPageHeightCm}cm !important;
               font-family: ${resolvedFontFamily} !important;
               font-size: ${effectiveFontSize}pt;
               font-weight: ${fontWeight};
               line-height: 1.15;
-              background: #fff;
-              color: #000;
+              background: #fff !important;
+              color: #000 !important;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
-              overflow: hidden;
+              overflow: hidden !important;
               position: relative;
             }
             .ticket-sheet-wrapper {
@@ -351,9 +353,16 @@ ipcMain.handle(
               left: ${wrapperLeftCm}cm;
               width: ${sheetWidthCm}cm;
               height: ${sheetHeightCm}cm;
+              max-width: ${sheetWidthCm}cm;
+              max-height: ${sheetHeightCm}cm;
               box-sizing: border-box;
               margin: 0;
               padding: 0;
+              overflow: hidden;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              page-break-after: avoid;
+              break-after: avoid;
               ${sheetTransform}
             }
             .ticket-page-grid {
@@ -455,6 +464,7 @@ ipcMain.handle(
             margins: { marginType: 'none' },
             printBackground: true,
             pageSize: { width: widthMicrons, height: heightMicrons },
+            ...({ preferCSSPageSize: true } as any),
           },
           (success, failureReason) => {
             try { if (!printWindow.isDestroyed()) printWindow.close(); } catch (_) {}
