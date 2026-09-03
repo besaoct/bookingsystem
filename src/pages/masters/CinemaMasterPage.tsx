@@ -272,10 +272,9 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
             </CardHeader>
             <CardContent className="p-3 text-xs flex flex-col items-center bg-slate-100 dark:bg-slate-900/50">
               <div
-                className="bg-white text-black rounded-xs shadow-sm select-text w-full max-w-85"
+                className="bg-white text-black shadow-sm select-text w-full max-w-85"
                 style={{
-                  padding: '5px 8px',
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                   fontSize: '8px',
                   lineHeight: 1.15,
                   display: 'flex',
@@ -283,78 +282,79 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                   gap: '3px',
                   background: '#fff',
                   color: '#000',
-                  border: '1px solid #000',
+                  border: '1.5px solid #000',
+                  borderRadius: '2px',
+                  padding: '6px 8px',
+                  boxSizing: 'border-box',
                 }}
               >
                 {/* Header Top: Copy Code Badge + Cinema Name + Quantity Circle */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '3px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', fontWeight: 900, fontSize: '9px', borderRadius: '2px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #000', paddingBottom: '2px', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, flex: 1 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #000', fontWeight: 900, fontSize: '9px', borderRadius: '2px', flexShrink: 0 }}>
                       C
                     </span>
-                    <span style={{ fontWeight: 900, fontSize: '9.5px', letterSpacing: '0.2px', textTransform: 'uppercase' }}>
-                      {formData.header_text || formData.name || 'GRAND MULTIPLEX CINEMAS'}
+                    <span style={{ fontWeight: 800, fontSize: '9.5px', letterSpacing: '0.2px', textTransform: 'uppercase', lineHeight: 1.1, wordBreak: 'break-word' }}>
+                      {formData.header_text || formData.name || 'NAKSHATRA CINEMAS - LAKHIMPUR'}
                     </span>
                   </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 900, fontSize: '9px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', border: '1.5px solid #000', borderRadius: '50%', fontWeight: 800, fontSize: '9px', flexShrink: 0, marginLeft: '4px' }}>
                     2
                   </div>
                 </div>
 
                 {/* Movie Title Line */}
-                <div style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontWeight: 700, fontSize: '9.5px', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.15, minHeight: '1.15em', wordBreak: 'break-word' }}>
                   AVATAR : FIRE AND ASH 3D
                 </div>
 
                 {/* Middle 3-Column Section */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.1fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '7.5px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1.15fr 1fr', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '7.5px' }}>
                   {/* Column 1: Financial & Tax Breakup */}
-                  <div style={{ borderRight: '1px solid #000', paddingRight: '4px', lineHeight: 1.15 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>ADM</span>
-                      <span style={{ fontWeight: 700 }}>240.00</span>
+                  <div style={{ borderRight: '1px solid #000', paddingRight: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '7px', lineHeight: 1.05 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>ADM</span><span style={{ fontWeight: 700 }}>160.00</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>3D</span><span style={{ fontWeight: 700 }}>80.00</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>CGST</span><span style={{ fontWeight: 700 }}>21.60</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SGST</span><span style={{ fontWeight: 700 }}>21.60</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>S.CH</span><span style={{ fontWeight: 700 }}>24.00</span></div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>CGST</span>
-                      <span style={{ fontWeight: 700 }}>21.60</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>SGST</span>
-                      <span style={{ fontWeight: 700 }}>21.60</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>S.CH</span>
-                      <span style={{ fontWeight: 700 }}>24.00</span>
-                    </div>
-                    <div style={{ fontWeight: 900, fontSize: '8.5px', marginTop: '1px' }}>
+                    <div style={{ fontWeight: 900, fontSize: '10px', marginTop: '1px', borderTop: '0.5px solid #000', whiteSpace: 'nowrap' }}>
                       Total: 307.20
                     </div>
                   </div>
 
                   {/* Column 2: Date, Showtime & SAC Code */}
-                  <div style={{ borderRight: '1px solid #000', padding: '0 4px', lineHeight: 1.25 }}>
-                    <div style={{ fontWeight: 800, fontSize: '8.5px' }}>Tue, 25-08-2026</div>
-                    <div style={{ fontWeight: 800, fontSize: '9px', marginTop: '1px' }}>Evening, 06:30 PM</div>
-                    <div style={{ fontWeight: 700, fontSize: '7.5px', marginTop: '2px' }}>SAC 997321</div>
+                  <div style={{ borderRight: '1px solid #000', padding: '0 4px', lineHeight: 1.15, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '9px', lineHeight: 1.12, wordBreak: 'break-word' }}>Tue, 25-08-2026</div>
+                      <div style={{ marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
+                        <span style={{ fontWeight: 600, fontSize: '7px', textTransform: 'capitalize' }}>Evening, </span>
+                        <span style={{ fontWeight: 800, fontSize: '9.5px', whiteSpace: 'nowrap' }}>06:30 PM</span>
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: '7px', marginTop: '1px', whiteSpace: 'nowrap' }}>SAC 997321</div>
                   </div>
 
                   {/* Column 3: Auditorium, Seat Numbers & Class */}
-                  <div style={{ paddingLeft: '4px', lineHeight: 1.2, textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, fontSize: '8.5px' }}>{screens[0]?.name || 'Nakshatra'}</div>
-                    <div style={{ fontWeight: 900, fontSize: '9.5px', letterSpacing: '0.3px' }}>A-1, A-2</div>
-                    <div style={{ fontWeight: 900, fontSize: '9px', textTransform: 'uppercase', marginTop: '1px' }}>GOLD</div>
+                  <div style={{ paddingLeft: '4px', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '9.5px', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{screens[0]?.name?.toUpperCase() || 'NAKSHATRA'}</div>
+                      <div style={{ fontWeight: 800, fontSize: '9.5px', letterSpacing: '0.3px', wordBreak: 'break-all' }}>A-1, A-2</div>
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
                   </div>
                 </div>
 
                 {/* Footer Section: Tax IDs & Audit Tracking */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6.5px', lineHeight: 1.1, paddingTop: '1px', fontWeight: 600 }}>
-                  <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '6.5px', lineHeight: 1.08, paddingTop: '1px', fontWeight: 600 }}>
+                  <div style={{ maxWidth: '50%', lineHeight: 1.1, wordBreak: 'break-all' }}>
                     {formData.show_gstin_on_ticket && formData.gstin ? <div>GSTIN: {formData.gstin}</div> : null}
                     {formData.cin ? <div>CIN: {formData.cin}</div> : null}
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div>Ticket No: 009571&nbsp;&nbsp;L.No. Transaction No: A000001-71W</div>
-                    <div>INV No. : 000000001&nbsp;&nbsp;Issued on: 25-Aug-26 06:30:15 PM</div>
+                  <div style={{ textAlign: 'right', lineHeight: 1.1, wordBreak: 'break-word' }}>
+                    <div>Ticket No: 009571&nbsp;&nbsp;L.No. Txn: A000001-71W</div>
+                    <div>INV No. : NC/00000001&nbsp;&nbsp;25-Aug-26 06:30:15 PM</div>
                   </div>
                 </div>
               </div>
