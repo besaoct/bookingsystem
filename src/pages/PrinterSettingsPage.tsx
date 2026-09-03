@@ -548,7 +548,7 @@ export const PrinterSettingsPage: React.FC = () => {
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>NAKSHATRA</div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.22em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>A-1, A-2</div>
+              <div style={{ fontWeight: boldWeight, fontSize: '1.14em', letterSpacing: '0.02em', lineHeight: 1.12, wordBreak: 'break-word' }}>A-1, A-2</div>
             </div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
           </div>

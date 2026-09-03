@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Booking, BookingSeat, CancellationReason } from '@/types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { bookingService } from '@/services';
+import { formatSeatRanges } from '@/lib/thermal-printer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -283,7 +284,7 @@ export const TicketCancellationPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredBookings.map((b) => {
-                  const seatsList = b.seats?.map((s: any) => `${s.row_name}-${s.seat_number}`).join(', ') || '--';
+                  const seatsList = formatSeatRanges(b.seats) || '--';
                   const isCancelled = b.status === 'CANCELLED';
 
                   // Calculate ticket number range
@@ -406,7 +407,7 @@ export const TicketCancellationPage: React.FC = () => {
                 <span>Gross: ₹{cancelModalBooking.total_gross.toFixed(2)}</span>
               </div>
               <div className="text-xs text-muted-foreground font-medium">
-                Seats: <strong className="text-foreground">{cancelModalBooking.seats?.map((s: any) => `${s.row_name}-${s.seat_number}`).join(', ')}</strong> ({cancelModalBooking.movie_name})
+                Seats: <strong className="text-foreground">{formatSeatRanges(cancelModalBooking.seats)}</strong> ({cancelModalBooking.movie_name})
               </div>
             </div>
 

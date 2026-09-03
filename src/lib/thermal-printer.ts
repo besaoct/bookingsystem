@@ -208,6 +208,108 @@ function ticketAutoFitScriptTag(): string {
   return '';
 }
 
+/**
+ * Formats a list of booking seats into clean, compact seat label strings.
+ * Sequential seats are formatted with ranges:
+ * - Same row sequence: e.g. A-1, A-2, A-3, A-4 -> "A-1 to A-4"
+ * - Cross-row sequence: e.g. A-3, A-4, B-1, B-2, B-3, B-4, B-5 -> "A-3 to B-5"
+ * - Non-sequential or mixed: e.g. A-1, A-3, B-1 to B-4
+ */
+export function formatSeatRanges(
+  seats?: Array<{ row_name?: string; seat_number?: number | string; seat_id?: number }> | null
+): string {
+  if (!seats || seats.length === 0) return '';
+  if (seats.length === 1) {
+    const s = seats[0];
+    return `${s.row_name || ''}-${s.seat_number || ''}`.replace(/^-|-$/, '');
+  }
+
+  interface ParsedSeat {
+    rowName: string;
+    seatNum: number;
+    seatId?: number;
+  }
+
+  const parsed: ParsedSeat[] = seats.map((s) => {
+    const rowName = (s.row_name || '').trim().toUpperCase();
+    const seatNum = typeof s.seat_number === 'number' ? s.seat_number : parseInt(String(s.seat_number || 0), 10) || 0;
+    return {
+      rowName,
+      seatNum,
+      seatId: s.seat_id,
+    };
+  });
+
+  // Sort by row name (alphabetical/natural) then by seat number
+  parsed.sort((a, b) => {
+    const rowCmp = a.rowName.localeCompare(b.rowName, undefined, { numeric: true });
+    if (rowCmp !== 0) return rowCmp;
+    return a.seatNum - b.seatNum;
+  });
+
+  const isNextRow = (r1: string, r2: string): boolean => {
+    if (!r1 || !r2) return false;
+    if (r1.length === 1 && r2.length === 1) {
+      return r2.charCodeAt(0) === r1.charCodeAt(0) + 1;
+    }
+    return false;
+  };
+
+  const blocks: ParsedSeat[][] = [];
+  let currentBlock: ParsedSeat[] = [parsed[0]];
+
+  for (let i = 1; i < parsed.length; i++) {
+    const prev = parsed[i - 1];
+    const curr = parsed[i];
+
+    // 1. Same row & consecutive seat number
+    const isSameRowContiguous = prev.rowName === curr.rowName && prev.seatNum + 1 === curr.seatNum;
+
+    // 2. Cross-row contiguous: either consecutive seat_id, OR adjacent row with curr starting at 1
+    const isCrossRowContiguous =
+      Boolean(prev.seatId && curr.seatId && curr.seatId === prev.seatId + 1) ||
+      (isNextRow(prev.rowName, curr.rowName) && curr.seatNum === 1);
+
+    if (isSameRowContiguous || isCrossRowContiguous) {
+      currentBlock.push(curr);
+    } else {
+      blocks.push(currentBlock);
+      currentBlock = [curr];
+    }
+  }
+  if (currentBlock.length > 0) {
+    blocks.push(currentBlock);
+  }
+
+  const blockStrings = blocks.map((block) => {
+    if (block.length === 1) {
+      return `${block[0].rowName}-${block[0].seatNum}`;
+    }
+    if (block.length === 2) {
+      return `${block[0].rowName}-${block[0].seatNum}, ${block[1].rowName}-${block[1].seatNum}`;
+    }
+    const start = `${block[0].rowName}-${block[0].seatNum}`;
+    const end = `${block[block.length - 1].rowName}-${block[block.length - 1].seatNum}`;
+    return `${start} to ${end}`;
+  });
+
+  return blockStrings.join(', ');
+}
+
+/**
+ * Calculates a dynamically scaled font size for seat numbers
+ * so that single/few seats remain crisp and prominent,
+ * while large/many seat bookings automatically scale down.
+ */
+export function getSeatFontSize(seatLabels: string, seatCount: number = 1): string {
+  const len = seatLabels.length;
+  if (len > 36 || seatCount > 10) return '0.75em';
+  if (len > 26 || seatCount > 7) return '0.84em';
+  if (len > 18 || seatCount > 4) return '0.96em';
+  if (len > 12 || seatCount > 2) return '1.05em';
+  return '1.14em'; // crisp, prominent, slightly smaller than the previous 1.22em
+}
+
 export function generateThermalTicketHTML(data: TicketPrintData): string {
   const { cinema, booking, copyConfigs, invoiceSeries } = data;
   const sacCode = cinema?.sac_code || data.taxConfig?.sac_code || '999615';
@@ -231,7 +333,8 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   }];
 
   const seatsList = booking.seats || [];
-  const seatLabels = seatsList.map((s) => `${s.row_name}-${s.seat_number}`).join(', ');
+  const seatLabels = formatSeatRanges(seatsList);
+  const seatFontSize = getSeatFontSize(seatLabels, seatsList.length);
   const seatClass = seatsList[0]?.seat_class_name?.toUpperCase() || '';
   const qty = seatsList.length;
 
@@ -408,7 +511,7 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
           <div style="padding-left: 0.3em; line-height: 1.15; text-align: left; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
               <div style="font-weight: ${boldWeight}; font-size: 1.20em; text-transform: uppercase; line-height: 1.12; word-break: break-word;">${esc(booking.screen_name)}</div>
-              <div style="font-weight: ${boldWeight}; font-size: 1.22em; letter-spacing: 0.03em; word-break: break-all;">${esc(seatLabels)}</div>
+              <div style="font-weight: ${boldWeight}; font-size: ${seatFontSize}; letter-spacing: 0.02em; line-height: 1.12; word-break: break-word;">${esc(seatLabels)}</div>
             </div>
             <div style="font-weight: ${boldWeight}; font-size: 1.10em; text-transform: uppercase; margin-top: 1px; line-height: 1.12; word-break: break-word;">${esc(seatClass)}</div>
           </div>

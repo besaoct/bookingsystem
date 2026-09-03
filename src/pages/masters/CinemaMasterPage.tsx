@@ -349,7 +349,7 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                   <div style={{ paddingLeft: '4px', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ fontWeight: 800, fontSize: '9.5px', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{screens[0]?.name?.toUpperCase() || 'NAKSHATRA'}</div>
-                      <div style={{ fontWeight: 800, fontSize: '9.5px', letterSpacing: '0.3px', wordBreak: 'break-all' }}>A-1, A-2</div>
+                      <div style={{ fontWeight: 800, fontSize: '8.5px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>A-1, A-2</div>
                     </div>
                     <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
                   </div>

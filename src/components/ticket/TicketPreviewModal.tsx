@@ -4,7 +4,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Printer, CheckCircle, Copy, FileText } from 'lucide-react';
-import { printTickets, fitTicketContent, resolveTicketDimensions, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
+import { printTickets, fitTicketContent, resolveTicketDimensions, OFFLINE_FONT_MAP, formatSeatRanges, getSeatFontSize } from '@/lib/thermal-printer';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 interface TicketPreviewModalProps {
@@ -66,7 +66,8 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     .sort((a, b) => a.print_order - b.print_order);
 
   const seatsList = booking.seats || [];
-  const seatLabels = seatsList.map((s) => `${s.row_name}-${s.seat_number}`).join(', ');
+  const seatLabels = formatSeatRanges(seatsList);
+  const seatFontSize = getSeatFontSize(seatLabels, seatsList.length);
   const seatClass = seatsList[0]?.seat_class_name?.toUpperCase() || '';
   const qty = seatsList.length;
   const tickets = booking.tickets || [];
@@ -269,7 +270,7 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{booking.screen_name || ''}</div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.22em', letterSpacing: '0.03em', wordBreak: 'break-all' }}>{seatLabels}</div>
+              <div style={{ fontWeight: boldWeight, fontSize: seatFontSize, letterSpacing: '0.02em', lineHeight: 1.12, wordBreak: 'break-word' }}>{seatLabels}</div>
             </div>
             <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>{seatClass}</div>
           </div>
