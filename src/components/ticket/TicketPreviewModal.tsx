@@ -51,6 +51,16 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   const fontWeight = systemSettings?.['ticket_font_weight'] || '600';
   const autoCut = systemSettings?.['ticket_auto_cut'] === 'true';
   const feedLines = systemSettings?.['ticket_feed_lines'] !== undefined ? Number(systemSettings['ticket_feed_lines']) : 0;
+  const screenFontSize =
+    systemSettings?.['ticket_screen_font_size'] ||
+    cinema?.screen_font_size ||
+    '1.20em';
+  const showSeatClass =
+    systemSettings?.['ticket_show_seat_class'] !== undefined
+      ? systemSettings['ticket_show_seat_class'] !== 'false'
+      : cinema?.show_seat_class_on_ticket !== undefined
+      ? Boolean(cinema.show_seat_class_on_ticket)
+      : true;
 
   const resolvedFontFamily =
     OFFLINE_FONT_MAP[fontFamily] ||
@@ -95,8 +105,13 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
   if (booking.show_name && booking.show_name.trim()) {
     const cleanName = booking.show_name.trim();
     const isTimeString = /^\d{1,2}:\d{2}/.test(cleanName);
-    if (!isTimeString) {
-      showPeriod = cleanName.replace(/,\s*$/, '');
+    if (!isTimeString && cleanName.toLowerCase() !== 'show') {
+      const matchPeriod = cleanName.match(/^(morning|matinee|first|second|night|evening|noon|early|late)(\s+show)?$/i);
+      if (matchPeriod) {
+        showPeriod = matchPeriod[1].charAt(0).toUpperCase() + matchPeriod[1].slice(1).toLowerCase();
+      } else {
+        showPeriod = cleanName.replace(/,\s*$/, '');
+      }
     } else if (!booking.start_time) {
       showTime = cleanName;
     }
@@ -106,6 +121,21 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     if (parts.length === 2) {
       showPeriod = parts[0].trim();
       showTime = parts[1].trim();
+    }
+  }
+  // Smart fallback: if showPeriod is still empty, infer from showTime (e.g. 06:30 PM -> Evening)
+  if (!showPeriod && showTime) {
+    const timeMatch = showTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      const isPM = timeMatch[3] && timeMatch[3].toUpperCase() === 'PM';
+      const isAM = timeMatch[3] && timeMatch[3].toUpperCase() === 'AM';
+      if (isPM && hours < 12) hours += 12;
+      if (isAM && hours === 12) hours = 0;
+      if (hours >= 4 && hours < 12) showPeriod = 'Morning';
+      else if (hours >= 12 && hours < 16) showPeriod = 'Matinee';
+      else if (hours >= 16 && hours < 20) showPeriod = 'Evening';
+      else showPeriod = 'Night';
     }
   }
   const now = new Date();
@@ -139,6 +169,8 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           fontFamily,
           fontSizePt,
           fontWeight,
+          screenFontSize,
+          showSeatClass,
           autoCut,
           feedLines,
           layoutMode,
@@ -269,10 +301,12 @@ export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
           {/* Column 3: Screen & Seat */}
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{booking.screen_name || ''}</div>
+              <div style={{ fontWeight: boldWeight, fontSize: screenFontSize, textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{booking.screen_name || ''}</div>
               <div style={{ fontWeight: boldWeight, fontSize: seatFontSize, letterSpacing: '0.02em', lineHeight: 1.12, wordBreak: 'break-word' }}>{seatLabels}</div>
             </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>{seatClass}</div>
+            {showSeatClass && seatClass ? (
+              <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>{seatClass}</div>
+            ) : null}
           </div>
         </div>
 

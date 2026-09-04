@@ -23,7 +23,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { printTickets,  TicketPrintData, OFFLINE_FONT_MAP } from '@/lib/thermal-printer';
+import { printTickets, TicketPrintData, OFFLINE_FONT_MAP, TICKET_SCREEN_FONT_SIZES } from '@/lib/thermal-printer';
 
 export const TICKET_FONT_FAMILIES = [
   {
@@ -107,6 +107,7 @@ export const PrinterSettingsPage: React.FC = () => {
     deleteTicketCopy,
     systemSettings,
     updateSystemSetting,
+    updateCinema,
     fetchSettings,
   } = useSettingsStore();
 
@@ -127,6 +128,8 @@ export const PrinterSettingsPage: React.FC = () => {
   const [ticketFontFamily, setTicketFontFamily] = useState('system-sans');
   const [ticketFontSizePt, setTicketFontSizePt] = useState('8.0');
   const [ticketFontWeight, setTicketFontWeight] = useState('600');
+  const [ticketScreenFontSize, setTicketScreenFontSize] = useState('1.20em');
+  const [ticketShowSeatClass, setTicketShowSeatClass] = useState(true);
   const [ticketAutoCut, setTicketAutoCut] = useState(false);
   const [ticketFeedLines, setTicketFeedLines] = useState('0');
   const [printerName, setPrinterName] = useState('Default Thermal POS-80');
@@ -194,6 +197,14 @@ export const PrinterSettingsPage: React.FC = () => {
       setTicketFontFamily(systemSettings['ticket_font_family'] || 'system-sans');
       setTicketFontSizePt(systemSettings['ticket_font_size_pt'] || '8.0');
       setTicketFontWeight(systemSettings['ticket_font_weight'] || '600');
+      setTicketScreenFontSize(systemSettings['ticket_screen_font_size'] || cinema?.screen_font_size || '1.20em');
+      setTicketShowSeatClass(
+        systemSettings['ticket_show_seat_class'] !== undefined
+          ? systemSettings['ticket_show_seat_class'] !== 'false'
+          : cinema?.show_seat_class_on_ticket !== undefined
+          ? Boolean(cinema.show_seat_class_on_ticket)
+          : true
+      );
       setTicketAutoCut(systemSettings['ticket_auto_cut'] !== undefined ? systemSettings['ticket_auto_cut'] === 'true' : false);
       setTicketFeedLines(systemSettings['ticket_feed_lines'] || '0');
       setPrinterName(systemSettings['thermal_printer_name'] || 'Default Thermal POS-80');
@@ -286,12 +297,21 @@ export const PrinterSettingsPage: React.FC = () => {
     await updateSystemSetting('ticket_font_family', ticketFontFamily);
     await updateSystemSetting('ticket_font_size_pt', ticketFontSizePt);
     await updateSystemSetting('ticket_font_weight', ticketFontWeight);
+    await updateSystemSetting('ticket_screen_font_size', ticketScreenFontSize);
+    await updateSystemSetting('ticket_show_seat_class', ticketShowSeatClass ? 'true' : 'false');
     await updateSystemSetting('ticket_auto_cut', ticketAutoCut ? 'true' : 'false');
     await updateSystemSetting('ticket_feed_lines', ticketFeedLines);
     await updateSystemSetting('thermal_printer_name', printerName);
     await updateSystemSetting('silent_print', silentPrint ? 'true' : 'false');
     await updateSystemSetting('invoice_series', invoiceSeries);
     await updateSystemSetting('financial_year', financialYear);
+    if (cinema) {
+      await updateCinema({
+        ...cinema,
+        screen_font_size: ticketScreenFontSize,
+        show_seat_class_on_ticket: ticketShowSeatClass,
+      });
+    }
 
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
@@ -338,6 +358,7 @@ export const PrinterSettingsPage: React.FC = () => {
         status: 'BOOKED',
         customer_phone: '9876543210',
         created_at: new Date().toISOString(),
+        show_name: 'Evening',
         start_time: '06:30 PM',
         movie_name: 'AVATAR : FIRE AND ASH',
         movie_type_name: '3D',
@@ -430,6 +451,8 @@ export const PrinterSettingsPage: React.FC = () => {
         fontFamily: ticketFontFamily,
         fontSizePt: Number(ticketFontSizePt) || 8.0,
         fontWeight: ticketFontWeight,
+        screenFontSize: ticketScreenFontSize,
+        showSeatClass: ticketShowSeatClass,
         autoCut: ticketAutoCut,
         feedLines: Number(ticketFeedLines) || 0,
         layoutMode: ticketLayoutMode,
@@ -547,10 +570,12 @@ export const PrinterSettingsPage: React.FC = () => {
           {/* Column 3: Auditorium, Seat Numbers & Class */}
           <div style={{ paddingLeft: '0.3em', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: boldWeight, fontSize: '1.20em', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>NAKSHATRA</div>
+              <div style={{ fontWeight: boldWeight, fontSize: ticketScreenFontSize, textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>NAKSHATRA</div>
               <div style={{ fontWeight: boldWeight, fontSize: '1.14em', letterSpacing: '0.02em', lineHeight: 1.12, wordBreak: 'break-word' }}>A-1, A-2</div>
             </div>
-            <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
+            {ticketShowSeatClass ? (
+              <div style={{ fontWeight: boldWeight, fontSize: '1.10em', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
+            ) : null}
           </div>
         </div>
 
@@ -1013,6 +1038,12 @@ export const PrinterSettingsPage: React.FC = () => {
               <span className="px-2 py-0.5 rounded-xs bg-card border border-border text-foreground text-xs font-medium shadow-2xs">
                 Scale: <strong className="text-primary font-bold">{ticketFontScale}%</strong>
               </span>
+              <span className="px-2 py-0.5 rounded-xs bg-card border border-border text-foreground text-xs font-medium shadow-2xs">
+                Screen Font: <strong className="text-primary font-bold">{ticketScreenFontSize}</strong>
+              </span>
+              <span className="px-2 py-0.5 rounded-xs bg-card border border-border text-foreground text-xs font-medium shadow-2xs">
+                Seat Class: <strong className="text-primary font-bold">{ticketShowSeatClass ? 'Visible' : 'Hidden'}</strong>
+              </span>
             </div>
           </Card>
         </div>
@@ -1396,6 +1427,53 @@ export const PrinterSettingsPage: React.FC = () => {
                       <option value="100">100% (Standard)</option>
                       <option value="110">110% (High-DPI)</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* Theatre Screen Font Size & Seat Class Visibility */}
+                <div className="pt-2.5 border-t border-border/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-foreground flex items-center justify-between">
+                      <span>Theatre Screen Name Font Size</span>
+                      <span className="text-2xs text-primary font-mono">{ticketScreenFontSize}</span>
+                    </label>
+                    <select
+                      value={ticketScreenFontSize}
+                      onChange={(e) => setTicketScreenFontSize(e.target.value)}
+                      disabled={!canUpdate}
+                      className="w-full h-8 px-2 bg-background border border-border rounded-xs text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {TICKET_SCREEN_FONT_SIZES.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground">
+                      Controls font scaling for the auditorium / screen name on slips
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-foreground">
+                      Seat Class Display (e.g. BOX, BALCONY)
+                    </label>
+                    <div className="pt-1.5 flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="ticketShowSeatClassToggle"
+                        checked={ticketShowSeatClass}
+                        onChange={(e) => setTicketShowSeatClass(e.target.checked)}
+                        className="rounded-xs text-primary h-4 w-4 cursor-pointer align-middle"
+                        disabled={!canUpdate}
+                      />
+                      <label htmlFor="ticketShowSeatClassToggle" className="text-xs font-semibold text-foreground cursor-pointer select-none">
+                        Show Seat Class on Tickets
+                      </label>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      When unchecked, the seat class name is omitted from ticket slips
+                    </p>
                   </div>
                 </div>
               </div>

@@ -32,6 +32,8 @@ export interface Cinema {
   header_text?: string;
   contact_numbers?: string;
   show_gstin_on_ticket?: boolean;
+  show_seat_class_on_ticket?: boolean;
+  screen_font_size?: string;
   sac_code?: string;
 }
 

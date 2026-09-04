@@ -23,6 +23,7 @@ export interface CreateBookingParams {
   movieTypeName?: string;
   screenName?: string;
   startTime?: string;
+  showName?: string;
 }
 
 export const bookingService = {
@@ -51,7 +52,15 @@ export const bookingService = {
       movieTypeName,
       screenName,
       startTime,
+      showName,
     } = params;
+
+    const showRow = dbService.queryOne<{ show_name: string; start_time: string }>(
+      "SELECT show_name, start_time FROM shows WHERE id = ?",
+      [showId]
+    );
+    const resolvedShowName = showName || showRow?.show_name || '';
+    const resolvedStartTime = startTime || showRow?.start_time || '';
 
     let totalNet = 0;
     let totalCgst = 0;
@@ -194,8 +203,8 @@ export const bookingService = {
       booked_by: bookedByUserId,
       status: 'BOOKED',
       created_at: new Date().toISOString(),
-      show_name: startTime ? `${startTime} Show` : 'Show',
-      start_time: startTime,
+      show_name: resolvedShowName || (resolvedStartTime ? `${resolvedStartTime} Show` : 'Show'),
+      start_time: resolvedStartTime,
       movie_name: movieName || '',
       movie_type_name: movieTypeName,
       screen_name: screenName || '',

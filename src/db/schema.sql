@@ -31,7 +31,11 @@ CREATE TABLE IF NOT EXISTS cinemas (
   cin TEXT,
   logo_path TEXT,
   header_text TEXT,
-  contact_numbers TEXT
+  contact_numbers TEXT,
+  show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0,
+  show_seat_class_on_ticket INTEGER NOT NULL DEFAULT 1,
+  screen_font_size TEXT DEFAULT '1.20em',
+  sac_code TEXT DEFAULT '999615'
 );
 
 -- 3. Core Masters

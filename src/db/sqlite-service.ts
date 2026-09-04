@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS cinemas (
   header_text TEXT,
   contact_numbers TEXT,
   show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0,
+  show_seat_class_on_ticket INTEGER NOT NULL DEFAULT 1,
+  screen_font_size TEXT DEFAULT '1.20em',
   sac_code TEXT DEFAULT '999615'
 );
 
@@ -367,6 +369,8 @@ class SQLiteService {
             "ALTER TABLE movie_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE categories ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE cinemas ADD COLUMN show_gstin_on_ticket INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE cinemas ADD COLUMN show_seat_class_on_ticket INTEGER NOT NULL DEFAULT 1",
+            "ALTER TABLE cinemas ADD COLUMN screen_font_size TEXT DEFAULT '1.20em'",
             "ALTER TABLE cinemas ADD COLUMN sac_code TEXT DEFAULT '999615'",
             "ALTER TABLE tax_configs ADD COLUMN sac_code TEXT DEFAULT '999615'",
           ];

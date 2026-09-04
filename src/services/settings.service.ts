@@ -9,6 +9,8 @@ export const settingsService = {
     return {
       ...res,
       show_gstin_on_ticket: Boolean(res.show_gstin_on_ticket),
+      show_seat_class_on_ticket: res.show_seat_class_on_ticket !== undefined ? Boolean(res.show_seat_class_on_ticket) : true,
+      screen_font_size: res.screen_font_size || '1.20em',
       sac_code: res.sac_code || '999615',
     };
   },
@@ -17,10 +19,12 @@ export const settingsService = {
     await dbService.init();
     const existing = dbService.queryOne<Cinema>("SELECT id FROM cinemas ORDER BY id ASC LIMIT 1");
     const showGstin = cinema.show_gstin_on_ticket ? 1 : 0;
+    const showSeatClass = cinema.show_seat_class_on_ticket !== false ? 1 : 0;
+    const screenFontSize = cinema.screen_font_size || '1.20em';
     if (existing) {
       dbService.run(
         `UPDATE cinemas 
-         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ?, show_gstin_on_ticket = ?, sac_code = ? 
+         SET name = ?, address = ?, gstin = ?, cin = ?, contact_numbers = ?, header_text = ?, show_gstin_on_ticket = ?, sac_code = ?, show_seat_class_on_ticket = ?, screen_font_size = ? 
          WHERE id = ?`,
         [
           cinema.name ?? '',
@@ -31,13 +35,15 @@ export const settingsService = {
           cinema.header_text ?? '',
           showGstin,
           cinema.sac_code ?? '999615',
+          showSeatClass,
+          screenFontSize,
           existing.id,
         ]
       );
     } else {
       dbService.run(
-        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text, show_gstin_on_ticket, sac_code)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cinemas (name, address, gstin, cin, contact_numbers, header_text, show_gstin_on_ticket, sac_code, show_seat_class_on_ticket, screen_font_size)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           cinema.name ?? '',
           cinema.address ?? '',
@@ -47,6 +53,8 @@ export const settingsService = {
           cinema.header_text ?? '',
           showGstin,
           cinema.sac_code ?? '999615',
+          showSeatClass,
+          screenFontSize,
         ]
       );
     }

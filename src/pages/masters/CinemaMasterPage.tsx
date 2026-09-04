@@ -12,6 +12,7 @@ import { Building2, Save, Plus, Pencil, Trash2, Armchair, FileText, CheckCircle 
 import { useAuthStore } from '@/store/useAuthStore';
 import { licenseService } from '@/services/license.service';
 import { LicenseUpgradeModal } from '@/components/license/LicenseUpgradeModal';
+import { TICKET_SCREEN_FONT_SIZES } from '@/lib/thermal-printer';
 
 export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = ({ onNavigate }) => {
   const { hasPermission, user } = useAuthStore();
@@ -21,7 +22,7 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
   const canUpdateScreen = isSystemAdmin || hasPermission('seat_layout', 'can_update');
   const canDeleteScreen = isSystemAdmin || hasPermission('seat_layout', 'can_delete');
 
-  const { cinema, fetchSettings, updateCinema } = useSettingsStore();
+  const { cinema, fetchSettings, updateCinema, systemSettings, updateSystemSetting } = useSettingsStore();
   const [formData, setFormData] = useState<Partial<Cinema>>({});
   const [screens, setScreens] = useState<Screen[]>([]);
   const [isSaved, setIsSaved] = useState(false);
@@ -71,13 +72,28 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
 
   useEffect(() => {
     if (cinema && cinema.name) {
-      setFormData(cinema);
+      setFormData({
+        ...cinema,
+        screen_font_size: cinema.screen_font_size || systemSettings?.['ticket_screen_font_size'] || '1.20em',
+        show_seat_class_on_ticket:
+          cinema.show_seat_class_on_ticket !== undefined
+            ? cinema.show_seat_class_on_ticket
+            : systemSettings?.['ticket_show_seat_class'] !== undefined
+            ? systemSettings['ticket_show_seat_class'] !== 'false'
+            : true,
+      });
     }
-  }, [cinema]);
+  }, [cinema, systemSettings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateCinema(formData);
+    if (formData.screen_font_size) {
+      await updateSystemSetting('ticket_screen_font_size', formData.screen_font_size);
+    }
+    if (formData.show_seat_class_on_ticket !== undefined) {
+      await updateSystemSetting('ticket_show_seat_class', formData.show_seat_class_on_ticket ? 'true' : 'false');
+    }
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -233,6 +249,49 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                     />
                   </div>
 
+                  {/* Theatre Screen Name Font Size */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                      <span>Theatre Screen Name Font Size</span>
+                      <span className="text-2xs text-primary font-mono">{formData.screen_font_size || '1.20em'}</span>
+                    </label>
+                    <select
+                      value={formData.screen_font_size || '1.20em'}
+                      onChange={(e) => setFormData({ ...formData, screen_font_size: e.target.value })}
+                      disabled={!canUpdate}
+                      className="w-full h-8 px-2 bg-background border border-border rounded-xs text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {TICKET_SCREEN_FONT_SIZES.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground">
+                      Controls font scaling for the auditorium / screen name on printed tickets.
+                    </p>
+                  </div>
+
+                  {/* Show Seat Class on Ticket Toggle */}
+                  <div className="space-y-1 pt-1 border-t border-border/60">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="showSeatClassOnTicketToggle"
+                        checked={formData.show_seat_class_on_ticket !== false}
+                        onChange={(e) => setFormData({ ...formData, show_seat_class_on_ticket: e.target.checked })}
+                        className="rounded-xs text-primary h-4 w-4 cursor-pointer align-middle"
+                        disabled={!canUpdate}
+                      />
+                      <label htmlFor="showSeatClassOnTicketToggle" className="text-xs font-semibold text-foreground cursor-pointer select-none">
+                        Show Seat Class Name on Printed Tickets
+                      </label>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Display or hide the seating class name (e.g. BOX, BALCONY) on ticket slips.
+                    </p>
+                  </div>
+
                   {/* GSTIN on Ticket Toggle */}
                   <div className="space-y-1 pt-1 border-t border-border/60">
                     <div className="flex items-center space-x-2">
@@ -348,10 +407,14 @@ export const CinemaMasterPage: React.FC<{ onNavigate?: (page: any) => void }> = 
                   {/* Column 3: Auditorium, Seat Numbers & Class */}
                   <div style={{ paddingLeft: '4px', lineHeight: 1.15, textAlign: 'left', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '9.5px', textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>{screens[0]?.name?.toUpperCase() || 'NAKSHATRA'}</div>
+                      <div style={{ fontWeight: 800, fontSize: `${(8 * (parseFloat(formData.screen_font_size || '1.2') || 1.2)).toFixed(1)}px`, textTransform: 'uppercase', lineHeight: 1.12, wordBreak: 'break-word' }}>
+                        {screens[0]?.name?.toUpperCase() || 'NAKSHATRA'}
+                      </div>
                       <div style={{ fontWeight: 800, fontSize: '8.5px', letterSpacing: '0.2px', wordBreak: 'break-word' }}>A-1, A-2</div>
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
+                    {formData.show_seat_class_on_ticket !== false ? (
+                      <div style={{ fontWeight: 800, fontSize: '8.5px', textTransform: 'uppercase', margin: '1px 0', lineHeight: 1.12, wordBreak: 'break-word' }}>BOX</div>
+                    ) : null}
                   </div>
                 </div>
 

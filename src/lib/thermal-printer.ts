@@ -75,7 +75,20 @@ export interface TicketPrintData {
   autoCut?: boolean;
   feedLines?: number;
   layoutMode?: 'side-by-side' | 'side-by-side-x' | 'side-by-side-y' | 'vertical-continuous' | 'sequential';
+  screenFontSize?: string;
+  showSeatClass?: boolean;
 }
+
+export const TICKET_SCREEN_FONT_SIZES = [
+  { value: '0.85em', label: '0.85em (Extra-Compact / 85%)' },
+  { value: '0.95em', label: '0.95em (Compact / 95%)' },
+  { value: '1.10em', label: '1.10em (Medium / 110%)' },
+  { value: '1.20em', label: '1.20em (Standard - Recommended)' },
+  { value: '1.35em', label: '1.35em (Large / 135%)' },
+  { value: '1.50em', label: '1.50em (Extra-Large / 150%)' },
+  { value: '1.65em', label: '1.65em (Huge / 165%)' },
+  { value: '1.80em', label: '1.80em (Maximum / 180%)' },
+];
 
 /**
  * Font stacks quote family names with SINGLE quotes on purpose: these strings are interpolated into
@@ -357,13 +370,29 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
   const threeDNet = is3D ? (40.00 * qty).toFixed(2) : '00.00';
   const admNet = is3D ? Math.max(0, booking.total_net - Number(threeDNet)).toFixed(2) : booking.total_net.toFixed(2);
 
+  const screenFontSize =
+    data.screenFontSize ||
+    cinema?.screen_font_size ||
+    '1.20em';
+  const showSeatClass =
+    data.showSeatClass !== undefined
+      ? data.showSeatClass
+      : cinema?.show_seat_class_on_ticket !== undefined
+      ? Boolean(cinema.show_seat_class_on_ticket)
+      : true;
+
   let showPeriod = '';
   let showTime = booking.start_time || '';
   if (booking.show_name && booking.show_name.trim()) {
     const cleanName = booking.show_name.trim();
     const isTimeString = /^\d{1,2}:\d{2}/.test(cleanName);
-    if (!isTimeString) {
-      showPeriod = cleanName.replace(/,\s*$/, '');
+    if (!isTimeString && cleanName.toLowerCase() !== 'show') {
+      const matchPeriod = cleanName.match(/^(morning|matinee|first|second|night|evening|noon|early|late)(\s+show)?$/i);
+      if (matchPeriod) {
+        showPeriod = matchPeriod[1].charAt(0).toUpperCase() + matchPeriod[1].slice(1).toLowerCase();
+      } else {
+        showPeriod = cleanName.replace(/,\s*$/, '');
+      }
     } else if (!booking.start_time) {
       showTime = cleanName;
     }
@@ -373,6 +402,21 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
     if (parts.length === 2) {
       showPeriod = parts[0].trim();
       showTime = parts[1].trim();
+    }
+  }
+  // Smart fallback: if showPeriod is still empty, infer from showTime (e.g. 06:30 PM -> Evening)
+  if (!showPeriod && showTime) {
+    const timeMatch = showTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      const isPM = timeMatch[3] && timeMatch[3].toUpperCase() === 'PM';
+      const isAM = timeMatch[3] && timeMatch[3].toUpperCase() === 'AM';
+      if (isPM && hours < 12) hours += 12;
+      if (isAM && hours === 12) hours = 0;
+      if (hours >= 4 && hours < 12) showPeriod = 'Morning';
+      else if (hours >= 12 && hours < 16) showPeriod = 'Matinee';
+      else if (hours >= 16 && hours < 20) showPeriod = 'Evening';
+      else showPeriod = 'Night';
     }
   }
   const now = new Date();
@@ -510,10 +554,10 @@ export function generateThermalTicketHTML(data: TicketPrintData): string {
           <!-- Column 3: Auditorium, Seat Numbers & Class -->
           <div style="padding-left: 0.3em; line-height: 1.15; text-align: left; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-              <div style="font-weight: ${boldWeight}; font-size: 1.20em; text-transform: uppercase; line-height: 1.12; word-break: break-word;">${esc(booking.screen_name)}</div>
+              <div style="font-weight: ${boldWeight}; font-size: ${screenFontSize}; text-transform: uppercase; line-height: 1.12; word-break: break-word;">${esc(booking.screen_name)}</div>
               <div style="font-weight: ${boldWeight}; font-size: ${seatFontSize}; letter-spacing: 0.02em; line-height: 1.12; word-break: break-word;">${esc(seatLabels)}</div>
             </div>
-            <div style="font-weight: ${boldWeight}; font-size: 1.10em; text-transform: uppercase; margin-top: 1px; line-height: 1.12; word-break: break-word;">${esc(seatClass)}</div>
+            ${showSeatClass && seatClass ? `<div style="font-weight: ${boldWeight}; font-size: 1.10em; text-transform: uppercase; margin-top: 1px; line-height: 1.12; word-break: break-word;">${esc(seatClass)}</div>` : ''}
           </div>
         </div>
 

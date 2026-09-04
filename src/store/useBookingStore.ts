@@ -352,6 +352,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         movieTypeName: movie?.movie_type_name,
         screenName: screen?.name,
         startTime: show?.start_time,
+        showName: show?.show_name,
       });
 
       // Refresh seat layout and clear selection
